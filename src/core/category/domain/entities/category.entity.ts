@@ -4,10 +4,15 @@ import { Data } from '@/shared/domain/decorators/data.decorator';
 import { BaseEntity } from '@/shared/domain/entity/base-entity';
 import { CategoryValidatorFactory } from '../validators/category-validator';
 
+export type CategoryParentRef = {
+  id: string;
+  name: string;
+};
+
 export type CategoryProps = {
   name: string;
   company: Company;
-  parent?: Category | null;
+  parent?: CategoryParentRef | null;
   children?: Category[];
   createdBy: string;
   updatedBy: string;
@@ -17,14 +22,14 @@ export type CategoryProps = {
 type CreateCategoryProps = {
   name: string;
   company: Company;
-  parent: Category | null;
+  parent: CategoryParentRef | null;
   createdBy: string;
   updatedBy: string;
 };
 
 type UpdateCategoryProps = {
   name: string;
-  parent: Category | null;
+  parent: CategoryParentRef | null;
   updatedBy: string;
 };
 

@@ -6,7 +6,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { CategoryOutput } from '@/shared/application/output/category/category.output';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
-import { Category } from '../../domain/entities/category.entity';
+import { Category, CategoryParentRef } from '../../domain/entities/category.entity';
 
 type Input = {
   id: string;
@@ -39,7 +39,7 @@ export class UpdateCategoryByCompanyUseCase implements UseCase<Input, Output> {
       );
     }
 
-    let parent: Category | null = existCategory?.parent ? existCategory.parent : null;
+    let parent: CategoryParentRef | null = existCategory?.parent ? existCategory.parent : null;
 
     if (parent && parentId) {
       if (parentId === id) {
