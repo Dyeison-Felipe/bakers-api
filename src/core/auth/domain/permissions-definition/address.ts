@@ -11,8 +11,8 @@ export const PermissionAddress = {
     action: 'delete',
     resource: 'address',
   },
-  ADDRESS_RERDER: {
-    action: 'rerder',
+  ADDRESS_READER: {
+    action: 'reader',
     resource: 'address',
   },
 } as const;

@@ -1,4 +1,5 @@
 import { PermissionAddress } from "./address";
+import { PermissionCategory } from "./category";
 import { PermissionPlan } from "./plan";
 import { PermissionState } from "./state";
 
@@ -14,4 +15,5 @@ export const Permissions = {
   ...PermissionAddress,
   ...PermissionState,
   ...PermissionPlan,
+  ...PermissionCategory
 }

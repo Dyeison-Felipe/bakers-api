@@ -11,8 +11,8 @@ export const PermissionState = {
     action: 'delete',
     resource: 'state',
   },
-  STATE_RERDER: {
-    action: 'rerder',
+  STATE_READER: {
+    action: 'reader',
     resource: 'state',
   },
 } as const;
