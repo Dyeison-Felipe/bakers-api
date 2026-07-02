@@ -44,6 +44,7 @@ export class PlanRepositoryImpl implements PlanRepository {
   async findById(id: string): Promise<Plan | null> {
     const planSchema = await this.planRepository.findOne({
       where: { id },
+      relations: ['planPermission', 'planPermission.permission'],
     });
 
     if (!planSchema) return null;

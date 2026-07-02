@@ -18,6 +18,8 @@ import { HashService } from '@/shared/application/hash/hash.service';
 import { CompanyController } from './controllers/company.controller';
 import { CityModule } from '@/core/city/infra/city.module';
 import { CityRepository } from '@/core/city/domain/repositories/city.repository';
+import { UserPermissionRepository } from '@/core/user-permission/domain/repositories/user-permission.repository';
+import { UserPermissionModule } from '@/core/user-permission/infra/user-permission.module';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { CityRepository } from '@/core/city/domain/repositories/city.repository'
     RoleModule,
     PlanModule,
     CityModule,
+    UserPermissionModule,
   ],
   controllers: [CompanyController],
   providers: [
@@ -45,6 +48,7 @@ import { CityRepository } from '@/core/city/domain/repositories/city.repository'
         cityRepository: CityRepository,
         roleRepository: RoleRepository,
         hashService: HashService,
+        userPermissionRepository: UserPermissionRepository,
       ) => {
         return new CreateCompanyUseCase(
           companyRepository,
@@ -54,6 +58,7 @@ import { CityRepository } from '@/core/city/domain/repositories/city.repository'
           cityRepository,
           roleRepository,
           hashService,
+          userPermissionRepository,
         );
       },
       inject: [
@@ -64,6 +69,7 @@ import { CityRepository } from '@/core/city/domain/repositories/city.repository'
         PROVIDERS.CITY_REPOSITORY,
         PROVIDERS.ROLE_REPOSITORY,
         PROVIDERS.HASH_SERVICE,
+        PROVIDERS.USER_PERMISSION_REPOSITORY,
       ],
     },
   ],

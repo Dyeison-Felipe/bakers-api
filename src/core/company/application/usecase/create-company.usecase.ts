@@ -20,6 +20,8 @@ import { HashService } from '@/shared/application/hash/hash.service';
 import { getErrorStack } from '@/shared/application/helpers/error.helper';
 import { CreateCompanyOutput } from '@/shared/application/output/company/create-company-output';
 import { CityRepository } from '@/core/city/domain/repositories/city.repository';
+import { UserPermissionRepository } from '@/core/user-permission/domain/repositories/user-permission.repository';
+import { UserPermissionEntity } from '@/core/user-permission/domain/entities/user-permission.entity';
 
 type UserInput = {
   username: string;
@@ -56,6 +58,8 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.ROLE_REPOSITORY)
     private readonly roleRepository: RoleRepository,
     @Inject(PROVIDERS.HASH_SERVICE) private readonly hashService: HashService,
+    @Inject(PROVIDERS.USER_PERMISSION_REPOSITORY)
+    private readonly userPermissionRepository: UserPermissionRepository,
   ) {}
 
   private readonly logger = new Logger(CreateCompanyUseCase.name);
@@ -125,7 +129,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       cnpj: company.cnpj,
       email: company.email,
       phoneNumber: company.phoneNumber,
-      active: company.active, 
+      active: company.active,
       stateRegistration: company.stateRegistration,
       plan: company.plan!,
       address: company.address!,
@@ -176,7 +180,25 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
         updatedBy: ID_USER_DEFAULT,
       });
 
-      await this.userRepository.save(user);
+      const saveUser = await this.userRepository.save(user);
+
+      const userPermissions = saveUser.company.plan.permissions?.map(
+        (permission) => {
+          return UserPermissionEntity.create({
+            user: saveUser,
+            permission: permission,
+          });
+        },
+      );
+
+      if (!userPermissions || userPermissions.length === 0) {
+        this.logger.error(
+          'Ocorreu um erro ao criar o usuário da empresa, pois não há permissões associadas ao plano',
+        );
+        throw new BadRequestError(`Ocorreu um erro ao criar o usuário`);
+      }
+
+      await this.userPermissionRepository.saveMany(userPermissions);
     } catch (error) {
       this.logger.error(
         'Ocorreu um erro ao criar o usuário da empresa',

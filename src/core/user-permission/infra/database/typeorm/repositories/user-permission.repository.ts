@@ -11,6 +11,18 @@ export class UserPermissionRepositoryImpl implements UserPermissionRepository {
     private readonly userPermissionRepository: Repository<UserPermissionSchema>,
   ) {}
 
+  async saveMany(entities: UserPermissionEntity[]): Promise<UserPermissionEntity[]> {
+    const schemas = entities.map((entity) =>
+      UserPermissionRepositoryMapper.toSchema(entity),
+    );
+
+    const save = await this.userPermissionRepository.save(schemas);
+
+    return save.map((userPermissionSchema) =>
+      UserPermissionRepositoryMapper.toEntity(userPermissionSchema),
+    );
+  }
+
   async create(entity: UserPermissionEntity): Promise<UserPermissionEntity> {
     const userPermissionSchema =
       UserPermissionRepositoryMapper.toSchema(entity);
