@@ -1,4 +1,5 @@
 import { CompanySchema } from '@/core/company/infra/database/typeorm/schema/company.schema';
+import { ProductSchema } from '@/core/product/infra/database/typeorm/schema/product.schema';
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
@@ -32,4 +33,7 @@ export class CategorySchema extends BaseSchema {
 
   @OneToMany(() => CategorySchema, (category) => category.parent)
   children: CategorySchema[];
+
+  @OneToMany(() => ProductSchema, (product) => product.category)
+  product: ProductSchema[];
 }

@@ -19,9 +19,11 @@ import { CityModule } from './core/city/infra/city.module';
 import { PermissionModule } from './core/permission/infra/permission.module';
 import { UserPermissionModule } from './core/user-permission/infra/user-permission.module';
 import { CategoryModule } from './core/category/infra/category.module';
+import { ProductModule } from './core/product/infra/product.module';
 
 @Module({
   imports: [
+    ProductModule,
     CategoryModule,
     CategoryModule,
     PlanPermissionModule,

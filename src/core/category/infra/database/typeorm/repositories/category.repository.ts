@@ -58,7 +58,10 @@ export class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   async save(entity: Category): Promise<Category> {
-    const schema = await this.categoryRepository.save(entity);
+
+    const categorySchema = CategoryMapper.toSchema(entity);
+
+    const schema = await this.categoryRepository.save(categorySchema);
 
     const categoryEntity = CategoryMapper.toEntity(schema);
 
@@ -81,9 +84,12 @@ export class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   async update(entity: Category): Promise<Category> {
-    const schema = await this.categoryRepository.save(entity);
 
-    const categoryEntity = CategoryMapper.toEntity(schema);
+    const categorySchema = CategoryMapper.toSchema(entity);
+
+    const saveCategorySchema = await this.categoryRepository.save(categorySchema);
+
+    const categoryEntity = CategoryMapper.toEntity(saveCategorySchema);
 
     return categoryEntity;
   }

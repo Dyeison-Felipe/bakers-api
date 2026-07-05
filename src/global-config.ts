@@ -30,13 +30,10 @@ export async function globalConfig(
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, documentFactory, {
     customCss: `
-    .required-label::after {
-      content: " *";
+    .required {
       color: red;
     }
-    /* marca campos required no schema */
-    td.required div::after {
-      content: " *";
+    .star {
       color: red;
     }
   `,

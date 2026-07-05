@@ -11,9 +11,13 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Public } from '@/shared/infra/decorators/permission.decorator';
+import {
+  Permission,
+  Public,
+} from '@/shared/infra/decorators/permission.decorator';
 import { UpdateUserUseCase } from '../../application/usecase/update-user.usecase';
 import { UpdateUserDto } from '../dtos/update-user.dto';
+import { PermissionUser } from '@/core/auth/domain/permissions-definition/user';
 
 @ApiTags('Users')
 @Controller('/v1/user')
@@ -24,7 +28,7 @@ export class UserController {
   ) {}
 
   @Post()
-  @Public()
+  @Permission(PermissionUser.USER_CREATE)
   @ApiOperation({ summary: 'Usuário' })
   @ApiBody({ type: CreateUserDto })
   @ApiCreatedResponse({
@@ -44,7 +48,7 @@ export class UserController {
   }
 
   @Put()
-  @Public()
+  @Permission(PermissionUser.USER_UPDATE)
   async update(@Body() body: UpdateUserDto): Promise<UserPresenter> {
     const output = await this.updateUserUseCase.execute(body);
 

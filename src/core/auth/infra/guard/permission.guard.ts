@@ -77,7 +77,7 @@ export class PermissionGuard implements CanActivate {
       if (!policies || policies.length === 0) return true;
 
       //5. Verifica se a permissão está inclusa no plano da empresa
-      const planPermissions = user.company.plan.permissions ?? [];
+      const planPermissions = user.company.plan?.permissions ?? [];
 
       const allInPlan = policies.every(({ action, resource }) =>
         planPermissions.some(

@@ -76,32 +76,21 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
 
     const newUser = await this.userRepository.save(userEntity);
 
-    const userPermissions = await this.createUserPermission(
+    await this.createUserPermission(
       permissions,
       newUser,
     );
 
-    const output = this.outputUser(newUser, userPermissions);
+    const output = this.outputUser(newUser);
 
     return output;
   }
 
   outputUser(
     userEntity: UserEntity,
-    userPermissions: UserPermissionEntity[],
   ): Output {
     const output: Output = {
       id: userEntity.id,
-      username: userEntity.username,
-      email: userEntity.email,
-      role: userEntity.role,
-      company: userEntity.company,
-      permissions: userPermissions.map((userPermission) => ({
-        id: userPermission.permission.id,
-        action: userPermission.permission.action,
-        subject: userPermission.permission.subject,
-        description: userPermission.permission.description
-      })),
     };
 
     return output;

@@ -182,7 +182,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
       const saveUser = await this.userRepository.save(user);
 
-      const userPermissions = saveUser.company.plan.permissions?.map(
+      const userPermissions = saveUser?.company?.plan?.permissions?.map(
         (permission) => {
           return UserPermissionEntity.create({
             user: saveUser,

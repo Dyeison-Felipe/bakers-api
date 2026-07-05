@@ -1,7 +1,8 @@
 import { PermissionAddress } from "./address";
 import { PermissionCategory } from "./category";
 import { PermissionPlan } from "./plan";
-import { PermissionState } from "./state";
+import { PermissionProduct } from "./product";
+import { PermissionUser } from "./user";
 
 export type PermissionRef = (typeof Permissions)[keyof typeof Permissions];
 
@@ -13,7 +14,8 @@ export type Perm = Record<string, Record<'action' | 'resource', string>>;
 
 export const Permissions = {
   ...PermissionAddress,
-  ...PermissionState,
   ...PermissionPlan,
-  ...PermissionCategory
+  ...PermissionCategory,
+  ...PermissionProduct,
+  ...PermissionUser,
 }

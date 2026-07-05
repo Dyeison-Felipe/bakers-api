@@ -71,31 +71,20 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
       updatedBy: loggedUser?.id ?? ID_USER_DEFAULT,
     });
 
-    const userPermissions = await this.updateUserPermission(permissions, user);
+    await this.updateUserPermission(permissions, user);
 
     const userUpdated = await this.userRepository.update(user);
 
-    const output = this.outputUser(userUpdated, userPermissions);
+    const output = this.outputUser(userUpdated);
 
     return output;
   }
 
   outputUser(
     userEntity: UserEntity,
-    userPermissions: UserPermissionEntity[],
   ): Output {
     const output: Output = {
       id: userEntity.id,
-      username: userEntity.username,
-      email: userEntity.email,
-      role: userEntity.role,
-      company: userEntity.company,
-      permissions: userPermissions.map((userPermission) => ({
-        id: userPermission.permission.id,
-        action: userPermission.permission.action,
-        subject: userPermission.permission.subject,
-        description: userPermission.permission.description
-      })),
     };
 
     return output;

@@ -15,8 +15,8 @@ export type CompanyProps = {
   logotipo?: string;
   active: boolean;
   stateRegistration: string;
-  address: Address;
-  plan: Plan;
+  address?: Address | null;
+  plan?: Plan | null;
   createdBy: string;
   updatedBy: string;
   deletedBy?: string | null;
@@ -43,7 +43,7 @@ type UpdateCompanyProps = {
   plan: Plan;
   phoneNumber: string;
   stateRegistration: string;
-  address: Address;
+  address?: Address;
   updatedBy: string;
 };
 

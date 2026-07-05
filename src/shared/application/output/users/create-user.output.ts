@@ -4,9 +4,9 @@ import { RoleOutput } from "../role/role.output";
 
 export type CreateUserOutput = {
   id: string;
-  username: string;
-  email: string;
-  role: RoleOutput;
-  company: CompanyOutput;
-  permissions: PermissionsOutput[]
+  // username: string;
+  // email: string;
+  // role: RoleOutput;
+  // company: CompanyOutput;
+  // permissions: PermissionsOutput[]
 }
