@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CreateProductUseCase } from '../../application/usecase/create-product.usecase';
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { CreateProductPresenter } from '@/shared/infra/presenter/product/create-product.presenter';
@@ -12,10 +12,14 @@ import {
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
+import { FindAllProductByCompanyUseCase } from '../../application/usecase/find-all-product-by-company.usecase';
 
 @Controller('v1/product')
 export class ProductController {
-  constructor(private readonly createProductUseCase: CreateProductUseCase) {}
+  constructor(
+    private readonly createProductUseCase: CreateProductUseCase,
+    private readonly findAllProductByCompanyUseCase: FindAllProductByCompanyUseCase,
+  ) {}
 
   @Post()
   @Permission(PermissionProduct.PRODUCT_CREATE)

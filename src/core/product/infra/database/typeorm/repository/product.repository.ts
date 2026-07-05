@@ -1,7 +1,7 @@
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductSchema } from '../schema/product.schema';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { ProductMapper } from './product.mapper';
 
@@ -10,6 +10,26 @@ export class ProductRepositoryImpl implements ProductRepository {
     @InjectRepository(ProductSchema)
     private readonly productRepository: Repository<ProductSchema>,
   ) {}
+
+  async findAllProductsByCompanyIdAndFilterCategoryId(
+    companyId: string,
+    categoryId?: string,
+  ): Promise<Product[]> {
+    const where: FindOptionsWhere<ProductSchema> = {
+      company: { id: companyId },
+    };
+
+    if (categoryId) {
+      where.category = { id: categoryId };
+    }
+
+    const productsSchema = await this.productRepository.find({
+      where,
+      relations: ['category'],
+    });
+
+    return productsSchema.map((product) => ProductMapper.toEntity(product));
+  }
 
   async findProductByNameAndCompanyId(
     name: string,

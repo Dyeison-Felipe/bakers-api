@@ -1,0 +1,24 @@
+import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { CategoryOutput } from '../category/category.output';
+
+export type FindAllProductOutput = {
+  name: string;
+  scaleReference: string | null;
+  barCode: string | null;
+  ncm: string;
+  costPrice: number;
+  salePrice: number;
+  profitPrice: number;
+  unitOfMeasurement: TypeUnitOfMeasurement;
+  expirationDateInDays: string | null;
+  stockManagement: boolean;
+  resale: boolean;
+  rowMaterial: boolean;
+  ownProduction: boolean;
+  rowMaterialResale: boolean;
+  stockAtual: number | null;
+  stockMin: number | null;
+  active: boolean;
+  description: string | null;
+  category: CategoryOutput;
+};
