@@ -7,7 +7,7 @@ import { RoleValidatorFactory } from '../validators/role-validators';
 
 export type RoleProps = {
   name: string;
-  company: Company;
+  company?: Company | null;
   createdBy: string;
   updatedBy: string;
   deletedBy?: string | null;

@@ -58,6 +58,8 @@ export class PermissionGuard implements CanActivate {
         payload.sub,
       );
 
+     
+
       if (!user || !user.active || user.expiredAtCode)
         throw new UnauthorizedError();
 

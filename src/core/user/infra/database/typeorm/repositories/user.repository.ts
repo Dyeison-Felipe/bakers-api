@@ -88,16 +88,7 @@ export class UserRepositoryImpl implements UserRepository {
 
   private getRelations(): FindOptionsRelations<UserSchema> {
     return {
-      role: {
-        company: {
-          address: {
-            city: {
-              state: true,
-            },
-          },
-          plan: true,
-        },
-      },
+      role: true,
       company: {
         address: {
           city: {

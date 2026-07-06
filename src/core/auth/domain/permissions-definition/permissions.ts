@@ -1,4 +1,3 @@
-import { PermissionAddress } from "./address";
 import { PermissionCategory } from "./category";
 import { PermissionPlan } from "./plan";
 import { PermissionProduct } from "./product";
@@ -13,7 +12,6 @@ export type PermissionResources = PermissionRef['resource'];
 export type Perm = Record<string, Record<'action' | 'resource', string>>;
 
 export const Permissions = {
-  ...PermissionAddress,
   ...PermissionPlan,
   ...PermissionCategory,
   ...PermissionProduct,
