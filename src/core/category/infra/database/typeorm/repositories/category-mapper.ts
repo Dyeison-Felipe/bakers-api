@@ -9,7 +9,7 @@ export class CategoryMapper {
     return new Category({
       id: schema.id,
       name: schema.name,
-      company: CompanyRepositoryMapper.toEntity(schema.company),
+      company: schema.company ? CompanyRepositoryMapper.toEntity(schema.company) : null,
       parent: schema.parent
       ? { id: schema.parent.id, name: schema.parent.name } // referência leve
       : null,

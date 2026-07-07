@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
 import { FindAllCategoriesByCompanyUseCase } from '../../application/usecase/find-all-categories.usecase';
 import { CreateCategoryUseCase } from '../../application/usecase/create-category.usecase';
 import { UpdateCategoryByCompanyUseCase } from '../../application/usecase/update-category.usecase';
@@ -12,6 +12,9 @@ import {
   Public,
 } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionCategory } from '@/core/auth/domain/permissions-definition/category';
+import { PaginationPresenter } from '@/shared/infra/presenter/pagination/pagination.presenter';
+import { ConvertPresenter } from '@/shared/infra/presenter/converter/converter.presenter';
+import { PaginationDto } from '@/shared/infra/dto/pagination.dto';
 
 @Controller('v1/category')
 export class CategoryController {
@@ -23,8 +26,21 @@ export class CategoryController {
 
   @Get()
   @Permission(PermissionCategory.CATEGORY_READER)
-  async findAll(): Promise<FindAllCategoryPresenter[]> {
-    return await this.findAllCategoriesByCompanyUseCase.execute();
+  async findAll(
+    @Query() pagination?: PaginationDto,
+  ): Promise<PaginationPresenter<FindAllCategoryPresenter>> {
+    const output = await this.findAllCategoriesByCompanyUseCase.execute({
+      pagination: {
+        page: pagination?.page,
+        direction: pagination?.direction,
+        limit: pagination?.limit,
+      },
+    });
+
+    return ConvertPresenter.toPaginationPresenter(
+      output,
+      FindAllCategoryPresenter,
+    );
   }
 
   @Post()

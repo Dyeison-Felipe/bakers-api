@@ -11,7 +11,7 @@ export type CategoryParentRef = {
 
 export type CategoryProps = {
   name: string;
-  company: Company;
+  company?: Company | null;
   parent?: CategoryParentRef | null;
   children?: Category[];
   createdBy: string;

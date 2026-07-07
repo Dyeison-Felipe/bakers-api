@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsEmail,
+  IsInstance,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -11,6 +12,8 @@ import { AddressRules } from '@/core/address/domain/validators/address-validator
 import { Type } from 'class-transformer';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { PlanRules } from '@/core/plan/domain/validators/plan-validate';
+import { Address } from '@/core/address/domain/entities/address.entity';
+import { Plan } from '@/core/plan/domain/entities/plan.entity';
 
 export class CompanyRules {
   @IsString()
@@ -47,12 +50,12 @@ export class CompanyRules {
   @IsNotEmpty()
   active: boolean;
 
-  @Type(() => AddressRules)
-  @IsNotEmpty()
+  @IsOptional()
+  @IsInstance(Address)
   address: AddressRules;
 
-  @Type(() => PlanRules)
-  @IsNotEmpty()
+  @IsOptional()
+  @IsInstance(Plan)
   plan: PlanRules;
 
   @IsString()

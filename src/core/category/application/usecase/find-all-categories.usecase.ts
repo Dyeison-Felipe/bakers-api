@@ -4,15 +4,22 @@ import { Inject } from '@nestjs/common';
 import { CategoryRepository } from '../../domain/repositories/category.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { CategoryOutput } from '@/shared/application/output/category/category.output';
-import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { UserEntity } from '@/core/user/domain/entities/user.entity';
 import { Category } from '../../domain/entities/category.entity';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 
-type Input = void;
+type Input = {
+  pagination?: PaginationInput;
+};
 
-type Output = CategoryOutput[];
+type Output = Pagination<CategoryOutput>;
 
-export class FindAllCategoriesByCompanyUseCase implements UseCase<Input, Output> {
+export class FindAllCategoriesByCompanyUseCase
+  implements UseCase<Input, Output>
+{
   constructor(
     @Inject(PROVIDERS.CATEGORY_REPOSITORY)
     private readonly categoryRepository: CategoryRepository,
@@ -22,23 +29,23 @@ export class FindAllCategoriesByCompanyUseCase implements UseCase<Input, Output>
 
   private loggedUser: UserEntity;
 
-  async execute(input: Input): Promise<Output> {
+  async execute({ pagination }: Input): Promise<Output> {
     this.loggedUser = this.loggedUserService.getLoggedUser();
 
     const categories = await this.categoryRepository.findAllByCompanyId(
       this.loggedUser.company.id,
+      pagination,
     );
 
-    // if (!categories.length) {
-    //   throw new NotFoundError(`Nenhuma categoria encontrada`);
-    // }
+    const items = this.mapToOutput(categories.items);
 
-    const output = this.mapToOutput(categories);
-
-    return output;
+    return {
+      items,
+      meta: categories.meta,
+    };
   }
 
-  private mapToOutput(categories: Category[]): Output {
+  private mapToOutput(categories: Category[]): CategoryOutput[] {
     const map = new Map<string, CategoryOutput>();
 
     categories.forEach((category) => {
@@ -50,14 +57,18 @@ export class FindAllCategoriesByCompanyUseCase implements UseCase<Input, Output>
       });
     });
 
-    const roots: Output = [];
+    const roots: CategoryOutput[] = [];
 
     categories.forEach((category) => {
       const node = map.get(category.id)!;
 
       if (category.parent) {
         const parentNode = map.get(category.parent.id);
-        parentNode?.children.push(node);
+        if (parentNode) {
+          parentNode.children.push(node);
+        } else {
+          roots.push(node);
+        }
       } else {
         roots.push(node);
       }

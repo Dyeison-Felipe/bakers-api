@@ -12,9 +12,9 @@ export type Pagination<Item> = {
 };
 
 export type PaginationInput = {
-  page: number;
-  direction: 'ASC' | 'DESC' | null;
-  limit: number;
+  page?: number | null;
+  direction?: 'ASC' | 'DESC' | null;
+  limit?: number | null;
 };
 
 

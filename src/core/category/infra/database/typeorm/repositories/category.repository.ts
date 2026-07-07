@@ -5,6 +5,10 @@ import { CategorySchema } from '../schema/category.schema';
 import { FindOptionsRelations, Repository } from 'typeorm';
 import { Category } from '@/core/category/domain/entities/category.entity';
 import { CategoryMapper } from './category-mapper';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 
 export class CategoryRepositoryImpl implements CategoryRepository {
   constructor(
@@ -28,17 +32,37 @@ export class CategoryRepositoryImpl implements CategoryRepository {
     return categoryEntity;
   }
 
-  async findAllByCompanyId(companyId: string): Promise<Category[]> {
-    const categoriesSchema = await this.categoryRepository.find({
-      where: { company: { id: companyId } },
-      relations: this.getRelations()
-    });
-    // TODO
+  async findAllByCompanyId(
+    companyId: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<Category>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const direction = pagination?.direction ?? 'DESC';
+
+    const [categoriesSchema, totalItems] = await this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.parent', 'parent')
+      .where('category.company = :companyId', { companyId })
+      .orderBy('category.createdAt', direction)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
     const categoriesEntity = categoriesSchema.map((categorySchema) =>
       CategoryMapper.toEntity(categorySchema),
     );
 
-    return categoriesEntity;
+    return {
+      items: categoriesEntity,
+      meta: {
+        totalItems,
+        itemCount: categoriesEntity.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findCategoryByNameAndCompanyId(
@@ -58,7 +82,6 @@ export class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   async save(entity: Category): Promise<Category> {
-
     const categorySchema = CategoryMapper.toSchema(entity);
 
     const schema = await this.categoryRepository.save(categorySchema);
@@ -84,10 +107,10 @@ export class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   async update(entity: Category): Promise<Category> {
-
     const categorySchema = CategoryMapper.toSchema(entity);
 
-    const saveCategorySchema = await this.categoryRepository.save(categorySchema);
+    const saveCategorySchema =
+      await this.categoryRepository.save(categorySchema);
 
     const categoryEntity = CategoryMapper.toEntity(saveCategorySchema);
 
