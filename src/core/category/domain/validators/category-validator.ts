@@ -1,8 +1,15 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsInstance,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { CategoryProps } from '../entities/category.entity';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { CompanyRules } from '@/core/company/domain/validators/company-validator';
 import { Type } from 'class-transformer';
+import { Company } from '@/core/company/domain/entities/company.entity';
 
 export class CategoryRules {
   @IsString()
@@ -10,9 +17,9 @@ export class CategoryRules {
   @IsNotEmpty()
   name: string;
 
-  @Type(() => CompanyRules)
-  @IsNotEmpty()
-  company: CompanyRules;
+  @IsOptional()
+  @IsInstance(Company)
+  company: Company;
 
   @IsOptional()
   @Type(() => CategoryRules)
