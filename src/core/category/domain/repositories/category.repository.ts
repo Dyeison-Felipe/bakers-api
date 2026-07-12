@@ -7,7 +7,7 @@ export interface CategoryRepository extends BaseRepository<Category> {
     categoryName: string,
     companyId: string,
   ): Promise<Category | null>;
-  findAllByCompanyId(companyId: string, paginattion?: PaginationInput): Promise<Pagination<Category>>;
+  findAllByCompanyId(companyId: string, pagination?: PaginationInput): Promise<Pagination<Category>>;
   findCategoryByIdAndCompanyId(
     categoryId: string,
     companyId: string,

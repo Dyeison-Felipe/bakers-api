@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { FindAllCategoriesByCompanyUseCase } from '../../application/usecase/find-all-categories.usecase';
 import { CreateCategoryUseCase } from '../../application/usecase/create-category.usecase';
 import { UpdateCategoryByCompanyUseCase } from '../../application/usecase/update-category.usecase';
@@ -13,8 +22,8 @@ import {
 } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionCategory } from '@/core/auth/domain/permissions-definition/category';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateCompanyPresenter } from '@/shared/infra/presenter/company/create-company.presenter';
-import { CreateCompanyDto } from '@/core/company/infra/dtos/create-company.dto';
+import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
+import { DeleteCategoryByCompanyUseCase } from '../../application/usecase/delete-category.usecase';
 
 @Controller('v1/category')
 export class CategoryController {
@@ -22,6 +31,7 @@ export class CategoryController {
     private readonly findAllCategoriesByCompanyUseCase: FindAllCategoriesByCompanyUseCase,
     private readonly createCategoryByCompanyUseCase: CreateCategoryUseCase,
     private readonly updateCategoryByCompanyUseCase: UpdateCategoryByCompanyUseCase,
+    private readonly deleteCategoryByCompanyUseCase: DeleteCategoryByCompanyUseCase,
   ) {}
 
   @Get()
@@ -39,8 +49,14 @@ export class CategoryController {
     status: 500,
     description: 'Erro ao listar categorias',
   })
-  async findAll(): Promise<FindAllCategoryPresenter[]> {
-    return await this.findAllCategoriesByCompanyUseCase.execute();
+  async findAll(
+    @Param('page') page: number = 1,
+    @Param('direction') direction: 'ASC' | 'DESC' = 'ASC',
+    @Param('limit') limit = 100,
+  ): Promise<Pagination<FindAllCategoryPresenter>> {
+    return await this.findAllCategoriesByCompanyUseCase.execute({
+      pagination: { page, direction, limit },
+    });
   }
 
   @Post()
@@ -97,5 +113,28 @@ export class CategoryController {
     @Body() dto: UpdateCategoryDto,
   ): Promise<UpdateCategoryPresenter> {
     return await this.updateCategoryByCompanyUseCase.execute(dto);
+  }
+
+  @Delete(':id')
+  @Permission(PermissionCategory.CATEGORY_DELETE)
+  @ApiOperation({
+    summary: 'Deletar categoria',
+    description: 'Realiza a deleção de uma categoria existente no sistema.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Categoria deletada com sucesso',
+    type: UpdateCategoryPresenter,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erro ao atualizar categoria',
+  })
+  async delete(@Param('id') id: string): Promise<void> {
+    return await this.deleteCategoryByCompanyUseCase.execute({ id });
   }
 }

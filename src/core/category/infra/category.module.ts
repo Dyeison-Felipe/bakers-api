@@ -9,6 +9,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { CreateCategoryUseCase } from '../application/usecase/create-category.usecase';
 import { UpdateCategoryByCompanyUseCase } from '../application/usecase/update-category.usecase';
 import { CategoryController } from './controllers/category.controller';
+import { DeleteCategoryByCompanyUseCase } from '../application/usecase/delete-category.usecase';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CategorySchema])],
@@ -48,6 +49,19 @@ import { CategoryController } from './controllers/category.controller';
         loggedUserService: LoggedUserService,
       ) => {
         return new UpdateCategoryByCompanyUseCase(
+          categoryRepository,
+          loggedUserService,
+        );
+      },
+      inject: [PROVIDERS.CATEGORY_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: DeleteCategoryByCompanyUseCase,
+      useFactory: (
+        categoryRepository: CategoryRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new DeleteCategoryByCompanyUseCase(
           categoryRepository,
           loggedUserService,
         );
