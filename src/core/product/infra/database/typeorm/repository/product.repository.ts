@@ -4,6 +4,10 @@ import { ProductSchema } from '../schema/product.schema';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { ProductMapper } from './product.mapper';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 
 export class ProductRepositoryImpl implements ProductRepository {
   constructor(
@@ -14,21 +18,43 @@ export class ProductRepositoryImpl implements ProductRepository {
   async findAllProductsByCompanyIdAndFilterCategoryId(
     companyId: string,
     categoryId?: string,
-  ): Promise<Product[]> {
-    const where: FindOptionsWhere<ProductSchema> = {
-      company: { id: companyId },
-    };
+    pagination?: PaginationInput,
+  ): Promise<Pagination<Product>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 100;
+    const direction = pagination?.direction ?? 'DESC';
+
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.company', 'company')
+      .where('company.id = :companyId', { companyId });
 
     if (categoryId) {
-      where.category = { id: categoryId };
+      query.andWhere('category.id = :categoryId', { categoryId });
     }
 
-    const productsSchema = await this.productRepository.find({
-      where,
-      relations: ['category'],
-    });
+    query
+      .orderBy('product.createdAt', direction)
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    return productsSchema.map((product) => ProductMapper.toEntity(product));
+    const [productsSchema, totalItems] = await query.getManyAndCount();
+
+    const items = productsSchema.map((product) =>
+      ProductMapper.toEntity(product),
+    );
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findProductByNameAndCompanyId(

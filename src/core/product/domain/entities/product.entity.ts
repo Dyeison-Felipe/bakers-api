@@ -21,7 +21,7 @@ export type ProductProps = {
   rowMaterial: boolean;
   ownProduction: boolean;
   rowMaterialResale: boolean;
-  stockAtual: number | null;
+  currentStock: number | null;
   stockMin: number | null;
   active: boolean;
   description: string | null;
@@ -110,7 +110,7 @@ export class Product extends BaseEntity<ProductProps> {
       rowMaterial: props.rowMaterial,
       ownProduction: props.ownProduction,
       rowMaterialResale: props.rowMaterialResale,
-      stockAtual: props.stockAtual,
+      currentStock: props.stockAtual,
       stockMin: props.stockMin,
       active: props.active,
       description: props.description,
@@ -136,7 +136,7 @@ export class Product extends BaseEntity<ProductProps> {
     this.rowMaterial = props.rowMaterial;
     this.ownProduction = props.ownProduction;
     this.rowMaterialResale = props.rowMaterialResale;
-    this.stockAtual = props.stockAtual;
+    this.currentStock = props.stockAtual;
     this.stockMin = props.stockMin;
     this.active = props.active;
     this.description = props.description;

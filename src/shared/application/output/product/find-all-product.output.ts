@@ -2,6 +2,7 @@ import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { CategoryOutput } from '../category/category.output';
 
 export type FindAllProductOutput = {
+  id: string;
   name: string;
   scaleReference: string | null;
   barCode: string | null;
@@ -16,7 +17,7 @@ export type FindAllProductOutput = {
   rowMaterial: boolean;
   ownProduction: boolean;
   rowMaterialResale: boolean;
-  stockAtual: number | null;
+  currentStock: number | null;
   stockMin: number | null;
   active: boolean;
   description: string | null;

@@ -5,12 +5,13 @@ import { ProductRepository } from '../../domain/repositories/product.repository'
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { FindAllProductOutput } from '@/shared/application/output/product/find-all-product.output';
 import { Product } from '../../domain/entities/product.entity';
+import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
 
 type Input = {
   categoryId?: string;
 };
 
-type Output = FindAllProductOutput[];
+type Output = PaginationOutput<FindAllProductOutput>;
 
 export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
   constructor(
@@ -29,11 +30,8 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
         categoryId,
       );
 
-    return this.mapToOutput(products);
-  }
-
-  private mapToOutput(products: Product[]): Output {
-    return products.map((product) => ({
+    const results = products.items.map((product) => ({
+      id: product.id,
       name: product.name,
       scaleReference: product.scaleReference,
       barCode: product.barCode,
@@ -48,7 +46,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       rowMaterial: product.rowMaterial,
       ownProduction: product.ownProduction,
       rowMaterialResale: product.rowMaterialResale,
-      stockAtual: product.stockAtual,
+      currentStock: product.currentStock,
       stockMin: product.stockMin,
       active: product.active,
       description: product.description,
@@ -59,5 +57,10 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
         children: [],
       },
     }));
+
+    return {
+      items: results,
+      meta: products.meta,
+    };
   }
 }

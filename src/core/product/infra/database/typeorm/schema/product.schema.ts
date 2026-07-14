@@ -1,6 +1,7 @@
 import { CategorySchema } from '@/core/category/infra/database/typeorm/schema/category.schema';
 import { CompanySchema } from '@/core/company/infra/database/typeorm/schema/company.schema';
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
+import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
@@ -24,6 +25,7 @@ export class ProductSchema extends BaseSchema {
     type: 'decimal',
     precision: 10,
     scale: 2,
+    transformer: new DecimalColumnTransformer(),
   })
   costPrice: number;
 
@@ -33,6 +35,7 @@ export class ProductSchema extends BaseSchema {
     type: 'decimal',
     precision: 10,
     scale: 2,
+    transformer: new DecimalColumnTransformer(),
   })
   salePrice: number;
 
@@ -42,6 +45,7 @@ export class ProductSchema extends BaseSchema {
     type: 'decimal',
     precision: 10,
     scale: 2,
+    transformer: new DecimalColumnTransformer(),
   })
   profitPrice: number;
 
@@ -92,13 +96,14 @@ export class ProductSchema extends BaseSchema {
   rowMaterialResale: boolean;
 
   @Column({
-    name: 'stock_atual',
+    name: 'current_stock',
     nullable: true,
     type: 'decimal',
     precision: 10,
     scale: 2,
+    transformer: new DecimalColumnTransformer(),
   })
-  stockAtual: number | null;
+  currentStock: number | null;
 
   @Column({
     name: 'stock_min',
@@ -106,6 +111,7 @@ export class ProductSchema extends BaseSchema {
     type: 'decimal',
     precision: 10,
     scale: 2,
+    transformer: new DecimalColumnTransformer(),
   })
   stockMin: number | null;
 

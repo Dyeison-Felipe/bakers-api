@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { CreateProductUseCase } from '../../application/usecase/create-product.usecase';
 import { CreateProductDto } from '../dtos/create-product.dto';
 import { CreateProductPresenter } from '@/shared/infra/presenter/product/create-product.presenter';
@@ -13,6 +13,9 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { FindAllProductByCompanyUseCase } from '../../application/usecase/find-all-product-by-company.usecase';
+import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
+import { FindAllProductPresenter } from '@/shared/infra/presenter/product/find-all-products';
+import { ConvertPresenter } from '@/shared/infra/presenter/converter/converter.presenter';
 
 @Controller('v1/product')
 export class ProductController {
@@ -20,6 +23,17 @@ export class ProductController {
     private readonly createProductUseCase: CreateProductUseCase,
     private readonly findAllProductByCompanyUseCase: FindAllProductByCompanyUseCase,
   ) {}
+
+  @Get()
+  @Permission(PermissionProduct.PRODUCT_READER)
+  async findAllPaginate(
+    @Query('categoryId') categoryId?: string,
+  ): Promise<Pagination<FindAllProductPresenter>> {
+    return await this.findAllProductByCompanyUseCase.execute({
+      categoryId,
+    });
+
+  }
 
   @Post()
   @Permission(PermissionProduct.PRODUCT_CREATE)

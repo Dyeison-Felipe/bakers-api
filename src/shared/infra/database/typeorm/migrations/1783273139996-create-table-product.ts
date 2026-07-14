@@ -104,7 +104,7 @@ export class CreateTableProduct1783273139996 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'stock_atual',
+            name: 'current_stock',
             type: 'decimal',
             precision: 10,
             scale: 2,
