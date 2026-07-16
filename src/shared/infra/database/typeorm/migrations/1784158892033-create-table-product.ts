@@ -1,10 +1,9 @@
-import { TypeUnitOfMeasurement } from "@/shared/infra/enums/product";
-import { MigrationInterface, QueryRunner, Table } from "typeorm";
+import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class CreateTableProduct1783273139996 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-            await queryRunner.createTable(
+export class CreateTableProduct1784158892033 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.createTable(
       new Table({
         name: 'product',
         columns: [
@@ -186,9 +185,7 @@ export class CreateTableProduct1783273139996 implements MigrationInterface {
         ],
       }),
     );
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {}
 }

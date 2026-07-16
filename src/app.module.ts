@@ -20,9 +20,15 @@ import { PermissionModule } from './core/permission/infra/permission.module';
 import { UserPermissionModule } from './core/user-permission/infra/user-permission.module';
 import { CategoryModule } from './core/category/infra/category.module';
 import { ProductModule } from './core/product/infra/product.module';
+import { NcmModule } from './core/ncm/infra/ncm.module';
+import { SiscomexModule } from './shared/infra/siscomex/siscomex.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
+    SiscomexModule,
+    NcmModule,
     ProductModule,
     CategoryModule,
     CategoryModule,
