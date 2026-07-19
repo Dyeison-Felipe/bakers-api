@@ -3,9 +3,9 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('ncm')
 export class NcmSchema extends BaseSchema {
-  @PrimaryColumn({ type: 'varchar', length: 8 })
+  @Column({ type: 'varchar', length: 8, unique: true })
   code: string;
 
-  @Column({ name: 'description', type: 'varchar' })
+  @Column({ name: 'description', type: 'text' })
   description: string;
 }

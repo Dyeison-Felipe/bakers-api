@@ -12,6 +12,7 @@ import { pipeline } from 'stream/promises';
 interface SiscomexResponseItem {
   Codigo: string;
   Descricao: string;
+  Data_Fim: string;
 }
 
 interface SiscomexResponse {
@@ -41,10 +42,10 @@ export class SiscomexServiceImpl implements SiscomexService {
       const data: SiscomexResponse = JSON.parse(rawText);
       this.logger.log(`Total de itens brutos: ${data.Nomenclaturas.length}`);
 
-      const mapeados = data.Nomenclaturas.filter((item) => !!item.Codigo).map(
+      const mapeados = data.Nomenclaturas.filter((item) => !!item.Codigo && item.Data_Fim === '31/12/9999').map(
         (item) => ({
           code: item.Codigo.replace(/\./g, '').trim(),
-          description: (item.Descricao ?? '').trim(),
+          description: this.sanitizeDescription(item.Descricao ?? ''),
         }),
       );
 
@@ -99,5 +100,12 @@ export class SiscomexServiceImpl implements SiscomexService {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private sanitizeDescription(raw: string): string {
+    return raw
+      .replace(/<\/?i>/gi, '') // remove tags <i> e </i>, mantém o texto
+      .replace(/^-+\s*/, '') // remove hífens de hierarquia no início
+      .trim();
   }
 }

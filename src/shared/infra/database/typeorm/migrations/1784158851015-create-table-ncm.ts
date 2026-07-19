@@ -19,11 +19,11 @@ export class CreateTableNcm1784158851015 implements MigrationInterface {
             type: 'varchar',
             length: '8',
             isNullable: false,
+            isUnique: true
           },
           {
             name: 'description',
-            type: 'varchar',
-            length: '255',
+            type: 'text',
             isNullable: true,
           },
           {
