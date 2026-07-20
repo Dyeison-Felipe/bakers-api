@@ -10,15 +10,13 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { ProductController } from './controllers/product.controller';
 import { FindAllProductByCompanyUseCase } from '../application/usecase/find-all-product-by-company.usecase';
+import { ProductPersistenceModule } from './product-persistence.module';
+import { CategoryPersistenceModule } from '@/core/category/infra/category-persistence.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductSchema]), CategoryModule],
+  imports: [ProductPersistenceModule, CategoryPersistenceModule],
   controllers: [ProductController],
   providers: [
-    {
-      provide: PROVIDERS.PRODUCT_REPOSITORY,
-      useClass: ProductRepositoryImpl,
-    },
     {
       provide: CreateProductUseCase,
       useFactory: (
@@ -52,6 +50,6 @@ import { FindAllProductByCompanyUseCase } from '../application/usecase/find-all-
       inject: [PROVIDERS.PRODUCT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
-  exports: [PROVIDERS.PRODUCT_REPOSITORY],
+  exports: [],
 })
 export class ProductModule {}

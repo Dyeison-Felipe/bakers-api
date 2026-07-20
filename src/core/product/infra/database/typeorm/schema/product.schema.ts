@@ -21,7 +21,7 @@ export class ProductSchema extends BaseSchema {
 
   @Column({
     name: 'cost_price',
-    nullable: false,
+    nullable: true,
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -31,13 +31,13 @@ export class ProductSchema extends BaseSchema {
 
   @Column({
     name: 'sale_price',
-    nullable: false,
+    nullable: true,
     type: 'decimal',
     precision: 10,
     scale: 2,
     transformer: new DecimalColumnTransformer(),
   })
-  salePrice: number;
+  salePrice: number | null;
 
   @Column({
     name: 'profit_price',
@@ -47,7 +47,7 @@ export class ProductSchema extends BaseSchema {
     scale: 2,
     transformer: new DecimalColumnTransformer(),
   })
-  profitPrice: number;
+  profitPrice: number | null;
 
   @Column({
     name: 'unit_of_measurement',
@@ -141,4 +141,5 @@ export class ProductSchema extends BaseSchema {
   @ManyToOne(() => CategorySchema, (category) => category.product)
   @JoinColumn({ name: 'category' })
   category: CategorySchema;
+
 }

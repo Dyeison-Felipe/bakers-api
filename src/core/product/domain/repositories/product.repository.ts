@@ -15,4 +15,5 @@ export interface ProductRepository extends BaseRepository<Product> {
     categoryId?: string,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>>;
+  existsByCategoryIds(categoryIds: string[], companyId: string): Promise<boolean>;
 }

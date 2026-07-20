@@ -10,15 +10,14 @@ import { CreateCategoryUseCase } from '../application/usecase/create-category.us
 import { UpdateCategoryByCompanyUseCase } from '../application/usecase/update-category.usecase';
 import { CategoryController } from './controllers/category.controller';
 import { DeleteCategoryByCompanyUseCase } from '../application/usecase/delete-category.usecase';
+import { CategoryPersistenceModule } from './category-persistence.module';
+import { ProductPersistenceModule } from '@/core/product/infra/product-persistence.module';
+import { ProductQueryRepository } from '@/core/product/domain/repositories/product.query';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CategorySchema])],
+  imports: [CategoryPersistenceModule, ProductPersistenceModule],
   controllers: [CategoryController],
   providers: [
-    {
-      provide: PROVIDERS.CATEGORY_REPOSITORY,
-      useClass: CategoryRepositoryImpl,
-    },
     {
       provide: FindAllCategoriesByCompanyUseCase,
       useFactory: (
@@ -59,16 +58,22 @@ import { DeleteCategoryByCompanyUseCase } from '../application/usecase/delete-ca
       provide: DeleteCategoryByCompanyUseCase,
       useFactory: (
         categoryRepository: CategoryRepository,
+        productQueryRepository: ProductQueryRepository,
         loggedUserService: LoggedUserService,
       ) => {
         return new DeleteCategoryByCompanyUseCase(
           categoryRepository,
+          productQueryRepository,
           loggedUserService,
         );
       },
-      inject: [PROVIDERS.CATEGORY_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+      inject: [
+        PROVIDERS.CATEGORY_REPOSITORY,
+        PROVIDERS.PRODUCT_QUERY_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
     },
   ],
-  exports: [PROVIDERS.CATEGORY_REPOSITORY],
+  exports: [],
 })
 export class CategoryModule {}

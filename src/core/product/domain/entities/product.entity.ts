@@ -12,8 +12,8 @@ export type ProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
-  salePrice: number;
-  profitPrice: number;
+  salePrice: number | null;
+  profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement;
   expirationDateInDays: string | null;
   stockManagement: boolean;
@@ -38,8 +38,8 @@ type CreateProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
-  salePrice: number;
-  profitPrice: number;
+  salePrice: number | null;
+  profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement;
   expirationDateInDays: string | null;
   stockManagement: boolean;
@@ -63,8 +63,8 @@ type UpdateProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
-  salePrice: number;
-  profitPrice: number;
+  salePrice: number | null;
+  profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement;
   expirationDateInDays: string | null;
   stockManagement: boolean;

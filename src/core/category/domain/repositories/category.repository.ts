@@ -12,4 +12,6 @@ export interface CategoryRepository extends BaseRepository<Category> {
     categoryId: string,
     companyId: string,
   ): Promise<Category | null>;
+  findChildrenByParentId(parentId: string, companyId: string): Promise<Category[]>;
+  deleteMany(ids: string[]): Promise<void>;
 }

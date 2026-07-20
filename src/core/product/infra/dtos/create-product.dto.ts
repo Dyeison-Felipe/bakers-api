@@ -17,7 +17,7 @@ export class CreateProductDto {
     description: 'Nome do produto',
     example: 'Pão Francês',
     maxLength: 255,
-    required: true
+    required: true,
   })
   @IsString()
   @MaxLength(255)
@@ -28,7 +28,7 @@ export class CreateProductDto {
     description: 'Referência de balança do produto',
     example: 'PF001',
     maxLength: 255,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -64,23 +64,25 @@ export class CreateProductDto {
   @Min(0)
   costPrice: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Preço de venda do produto',
     example: 0.75,
     minimum: 0,
   })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  salePrice: number;
+  salePrice?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Margem de lucro do produto',
     example: 0.4,
     minimum: 0,
   })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  profitPrice: number;
+  profitPrice?: number;
 
   @ApiProperty({
     description: 'Unidade de medida do produto',
@@ -144,7 +146,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  stockAtual?: number;
+  currentStock?: number;
 
   @ApiPropertyOptional({
     description: 'Quantidade mínima em estoque',

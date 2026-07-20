@@ -1,7 +1,7 @@
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductSchema } from '../schema/product.schema';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { ProductMapper } from './product.mapper';
 import {
@@ -103,6 +103,20 @@ export class ProductRepositoryImpl implements ProductRepository {
     const productEntity = ProductMapper.toEntity(saveSchema);
 
     return productEntity;
+  }
+
+  async existsByCategoryIds(
+    categoryIds: string[],
+    companyId: string,
+  ): Promise<boolean> {
+    const count = await this.productRepository.count({
+      where: {
+        category: { id: In(categoryIds) },
+        company: { id: companyId },
+      },
+    });
+
+    return count > 0;
   }
 
   async delete(id: string): Promise<void> {

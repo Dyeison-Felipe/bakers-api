@@ -9,6 +9,8 @@ import { Product } from '../../domain/entities/product.entity';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { CreateProductOutput } from '@/shared/application/output/product/create-product.output';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { FieldsError } from '@/shared/application/validators/validator-field.interface';
+import { EntityValidationError } from '@/shared/application/errors/validation-error';
 
 type Input = {
   name: string;
@@ -16,8 +18,8 @@ type Input = {
   barCode?: string;
   ncm: string;
   costPrice: number;
-  salePrice: number;
-  profitPrice: number;
+  salePrice?: number;
+  profitPrice?: number; // recebido do front, mas ignorado — o backend recalcula
   unitOfMeasurement: TypeUnitOfMeasurement;
   expirationDateInDays?: string;
   stockManagement: boolean;
@@ -25,7 +27,7 @@ type Input = {
   rowMaterial: boolean;
   ownProduction: boolean;
   rowMaterialResale: boolean;
-  stockAtual?: number;
+  currentStock?: number;
   stockMin?: number;
   active: boolean;
   description?: string;
@@ -46,7 +48,6 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
 
   async execute(input: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
-
     const company = loggedUser.company;
 
     const exisProduct =
@@ -64,9 +65,16 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       company.id,
     );
 
-    if(!category) {
-      throw new NotFoundError(`Categoria não encontrada`)
+    if (!category) {
+      throw new NotFoundError(`Categoria não encontrada`);
     }
+
+    const businessErrors = this.validateBusinessRules(input);
+    if (Object.keys(businessErrors).length > 0) {
+      throw new EntityValidationError(businessErrors);
+    }
+
+    const profitPrice = this.calculateProfitPrice(input);
 
     const newProduct = Product.create({
       name: input.name,
@@ -77,13 +85,13 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       expirationDateInDays: input.expirationDateInDays ?? null,
       ncm: input.ncm,
       ownProduction: input.ownProduction,
-      profitPrice: input.profitPrice,
+      profitPrice, // sempre o valor calculado pelo backend, nunca o do input
       resale: input.resale,
       rowMaterial: input.rowMaterial,
       rowMaterialResale: input.rowMaterialResale,
-      salePrice: input.salePrice,
+      salePrice: input.salePrice ?? null,
       scaleReference: input.scaleReference ?? null,
-      stockAtual: input.stockAtual ?? null,
+      stockAtual: input.currentStock ?? null,
       stockMin: input.stockMin ?? null,
       stockManagement: input.stockManagement,
       unitOfMeasurement: input.unitOfMeasurement,
@@ -95,10 +103,68 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
 
     const saveProduct = await this.productRepository.save(newProduct);
 
-    const output: Output = {
-      id: saveProduct.id,
-    };
+    return { id: saveProduct.id };
+  }
 
-    return output;
+  private validateBusinessRules(input: Input): FieldsError {
+    const errors: FieldsError = {};
+
+    // Regra 0: pelo menos um tipo de produto precisa estar marcado
+    const hasAnyProductType =
+      input.resale ||
+      input.ownProduction ||
+      input.rowMaterialResale ||
+      input.rowMaterial;
+
+    if (!hasAnyProductType) {
+      errors.resale = [
+        'É necessário marcar ao menos um tipo de produto: revenda, produção própria, matéria-prima de revenda ou matéria-prima',
+      ];
+      return errors;
+    }
+
+    // Regra 1: gerenciamento de estoque exige stockAtual e stockMin
+    if (input.stockManagement) {
+      if (!input.currentStock) {
+        errors.currentStock = [
+          'Quantidade atual em estoque é obrigatória quando o gerenciamento de estoque está ativado',
+        ];
+      }
+      if (!input.stockMin) {
+        errors.stockMin = [
+          'Quantidade mínima em estoque é obrigatória quando o gerenciamento de estoque está ativado',
+        ];
+      }
+    }
+
+    // Regra 2: resale, ownProduction ou rowMaterialResale exigem salePrice.
+    // profitPrice não é validado aqui — é calculado pelo backend a partir de costPrice e salePrice.
+    const requiresPricingCheck =
+      input.resale || input.ownProduction || input.rowMaterialResale;
+
+    if (requiresPricingCheck && !input.salePrice) {
+      errors.salePrice = [
+        'Preço de venda é obrigatório para produtos de revenda, produção própria ou matéria-prima de revenda',
+      ];
+    }
+
+    // rowMaterial (isolado): nenhuma verificação extra além de costPrice,
+    // que já é obrigatório estruturalmente no ProductRules (@IsNotEmpty)
+
+    return errors;
+  }
+
+  private calculateProfitPrice(input: Input): number | null {
+    const requiresPricingCheck =
+      input.resale || input.ownProduction || input.rowMaterialResale;
+
+    if (!requiresPricingCheck || input.salePrice == null) {
+      return null;
+    }
+
+    const profitPrice =
+      ((input.salePrice - input.costPrice) / input.costPrice) * 100;
+
+    return Number(profitPrice.toFixed(2));
   }
 }

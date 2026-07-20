@@ -117,6 +117,22 @@ export class CategoryRepositoryImpl implements CategoryRepository {
     return categoryEntity;
   }
 
+  async findChildrenByParentId(
+    parentId: string,
+    companyId: string,
+  ): Promise<Category[]> {
+    const childrenSchema = await this.categoryRepository.find({
+      where: { parent: { id: parentId }, company: { id: companyId } },
+      relations: this.getRelations(),
+    });
+
+    return childrenSchema.map((schema) => CategoryMapper.toEntity(schema));
+  }
+
+  async deleteMany(ids: string[]): Promise<void> {
+    await this.categoryRepository.softDelete(ids);
+  }
+
   async delete(id: string): Promise<void> {
     await this.categoryRepository.softDelete(id);
   }

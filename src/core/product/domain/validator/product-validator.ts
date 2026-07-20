@@ -47,13 +47,13 @@ export class ProductRules {
 
   @IsNumber()
   @Min(0)
-  @IsNotEmpty()
-  salePrice: number;
+  @IsOptional() 
+  salePrice: number | null
 
   @IsNumber()
   @Min(0)
-  @IsNotEmpty()
-  profitPrice: number;
+  @IsOptional()
+  profitPrice: number | null;
 
   @IsEnum(TypeUnitOfMeasurement)
   @IsNotEmpty()

@@ -22,10 +22,10 @@ export class FindAllProductPresenter {
   readonly costPrice: number;
 
   @ApiProperty({ description: 'Preço de venda' })
-  readonly salePrice: number;
+  readonly salePrice: number | null;
 
   @ApiProperty({ description: 'Preço de lucro' })
-  readonly profitPrice: number;
+  readonly profitPrice: number | null;
 
   @ApiProperty({ description: 'Unidade de medida' })
   readonly unitOfMeasurement: string;

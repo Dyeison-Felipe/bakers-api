@@ -6,7 +6,6 @@ import { PermissionMappper } from '@/core/permission/infra/database/typeorm/repo
 @Injectable()
 export class PlanMapper {
   static toEntity(schema: PlanSchema): Plan {
-    console.log('PlanMapper.toEntity schema:', JSON.stringify(schema));
     return new Plan({
       id: schema.id,
       name: schema.name,
