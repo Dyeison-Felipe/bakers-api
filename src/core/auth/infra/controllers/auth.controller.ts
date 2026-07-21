@@ -7,6 +7,7 @@ import {
   Query,
   Req,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { LoginDto } from '../dtos/login.dto';
@@ -15,6 +16,7 @@ import {
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -29,6 +31,7 @@ import { repl } from '@nestjs/core';
 import { UpdatePasswordUseCase } from '../../application/usecase/update-password.usecase';
 import { UpdatePasswordDto } from '../dtos/update-password.dto';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
+import { LogoutUseCase } from '../../application/usecase/logout.usecase';
 
 @ApiTags('Auth')
 @Controller('/v1/auth')
@@ -38,6 +41,7 @@ export class AuthController {
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly verifyCodeUseCase: VerifyCodeUseCase,
     private readonly updatePasswordUseCase: UpdatePasswordUseCase,
+    private readonly logoutUseCase: LogoutUseCase,
   ) {}
 
   @Post('/login')
@@ -90,5 +94,26 @@ export class AuthController {
     @Req() req: FastifyRequest,
   ): Promise<void> {
     await this.updatePasswordUseCase.execute({ password: dto.password, req });
+  }
+
+  @ApiOperation({ summary: 'Faz o logout de um usuário' })
+  @ApiResponse({
+    status: 204,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erro desconhecido',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Public()
+  @Post('/logout')
+  async logout(
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<void> {
+    return await this.logoutUseCase.execute({
+      clearCookie: reply.clearCookie.bind(reply),
+      // token: request.cookies[AuthConstants.tokenName],
+    });
   }
 }

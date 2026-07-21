@@ -15,8 +15,25 @@ export class ProductRepositoryImpl implements ProductRepository {
     private readonly productRepository: Repository<ProductSchema>,
   ) {}
 
-  async findAllProductsByCompanyIdAndFilterCategoryId(
+  async findProductByIdAndCompanyId(
+    productId: string,
     companyId: string,
+  ): Promise<Product | null> {
+    const productSchema = await this.productRepository.findOne({
+      where: { id: productId, company: { id: companyId } },
+      relations: ['category'],
+    });
+
+    if (!productSchema) return null;
+
+    const productEntity = ProductMapper.toEntity(productSchema);
+
+    return productEntity;
+  }
+
+  async findAllProductsByCompanyId(
+    companyId: string,
+    status?: boolean,
     categoryId?: string,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>> {
@@ -29,6 +46,9 @@ export class ProductRepositoryImpl implements ProductRepository {
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.company', 'company')
       .where('company.id = :companyId', { companyId });
+
+    const activeFilter = status ?? true;
+    query.andWhere('product.active = :active', { active: activeFilter });
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });

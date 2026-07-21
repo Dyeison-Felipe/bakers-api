@@ -10,10 +10,19 @@ export interface ProductRepository extends BaseRepository<Product> {
     name: string,
     companyId: string,
   ): Promise<Product | null>;
-  findAllProductsByCompanyIdAndFilterCategoryId(
+  findAllProductsByCompanyId(
     companyId: string,
+    status?: boolean,
     categoryId?: string,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>>;
-  existsByCategoryIds(categoryIds: string[], companyId: string): Promise<boolean>;
+  existsByCategoryIds(
+    categoryIds: string[],
+    companyId: string,
+  ): Promise<boolean>;
+
+  findProductByIdAndCompanyId(
+    productId: string,
+    companyId: string,
+  ): Promise<Product | null>;
 }

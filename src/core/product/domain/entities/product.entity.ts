@@ -80,6 +80,11 @@ type UpdateProductProps = {
   category: Category | null;
 };
 
+type UpdateStockProduct = {
+  currentStock: number;
+  updatedBy: string;
+}
+
 export interface Product extends ProductProps {}
 
 @Data()
@@ -142,6 +147,12 @@ export class Product extends BaseEntity<ProductProps> {
     this.description = props.description;
     this.updatedBy = props.updatedBy;
     this.category = props.category ?? null;
+    this.updateTimestamp();
+  }
+
+  updateStock(props: UpdateStockProduct): void {
+    this.currentStock = props.currentStock;
+    this.updatedBy = props.updatedBy;
     this.updateTimestamp();
   }
 }

@@ -6,9 +6,11 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { FindAllProductOutput } from '@/shared/application/output/product/find-all-product.output';
 import { Product } from '../../domain/entities/product.entity';
 import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
+import { ProductStatus } from '@/shared/infra/enums/product-status.enum';
 
 type Input = {
   categoryId?: string;
+  status?: ProductStatus;
 };
 
 type Output = PaginationOutput<FindAllProductOutput>;
@@ -21,14 +23,16 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ categoryId }: Input): Promise<Output> {
+  async execute({ categoryId, status }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
-    const products =
-      await this.productRepository.findAllProductsByCompanyIdAndFilterCategoryId(
-        loggedUser.company.id,
-        categoryId,
-      );
+    const statusProduct = status === ProductStatus.INATIVO ? false : true;
+
+    const products = await this.productRepository.findAllProductsByCompanyId(
+      loggedUser.company.id,
+      statusProduct,
+      categoryId,
+    );
 
     const results = products.items.map((product) => ({
       id: product.id,

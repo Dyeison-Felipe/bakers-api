@@ -17,6 +17,8 @@ import { MailService } from '@/shared/application/mail/mail.service';
 import { VerifyCodeUseCase } from '../application/usecase/verify-code.usecase';
 import { UpdatePasswordUseCase } from '../application/usecase/update-password.usecase';
 import { UserQuery } from '@/core/user/application/queries/user.query';
+import { LogoutUseCase } from '../application/usecase/logout.usecase';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 @Global()
 @Module({
@@ -94,6 +96,16 @@ import { UserQuery } from '@/core/user/application/queries/user.query';
         PROVIDERS.HASH_SERVICE,
         PROVIDERS.JWT_SERVICE,
       ],
+    },
+    {
+      provide: LogoutUseCase,
+      useFactory: (
+        envConfig: EnvConfig,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new LogoutUseCase(envConfig, loggedUserService);
+      },
+      inject: [PROVIDERS.ENV_CONFIG_SERVICE, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [PROVIDERS.CASL_ABILITY_SERVICE],
