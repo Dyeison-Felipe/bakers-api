@@ -2,7 +2,7 @@ import { CategorySchema } from '@/core/category/infra/database/typeorm/schema/ca
 import { CompanySchema } from '@/core/company/infra/database/typeorm/schema/company.schema';
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
 import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('product')
@@ -51,11 +51,11 @@ export class ProductSchema extends BaseSchema {
 
   @Column({
     name: 'unit_of_measurement',
-    nullable: false,
+    nullable: true,
     type: 'enum',
     enum: TypeUnitOfMeasurement,
   })
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
 
   @Column({ name: 'expiration_date_in_days', nullable: true, type: 'varchar' })
   expirationDateInDays: string | null;
@@ -121,6 +121,44 @@ export class ProductSchema extends BaseSchema {
   @Column({ name: 'description', nullable: true, type: 'varchar' })
   description: string | null;
 
+  @Column({
+    name: 'purchase_unit',
+    nullable: true,
+    type: 'enum',
+    enum: TypeUnitOfPurchase,
+  })
+  purchaseUnit: TypeUnitOfPurchase | null;
+
+  @Column({
+    name: 'quantity',
+    nullable: true,
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  quantity: number | null;
+
+  @Column({
+    name: 'weight',
+    nullable: true,
+    type: 'decimal',
+    precision: 10,
+    scale: 3,
+    transformer: new DecimalColumnTransformer(),
+  })
+  weight: number | null;
+
+  @Column({
+    name: 'volume',
+    nullable: true,
+    type: 'decimal',
+    precision: 10,
+    scale: 3,
+    transformer: new DecimalColumnTransformer(),
+  })
+  volume: number | null;
+
   @Column({ name: 'created_by', type: 'uuid', nullable: false })
   createdBy: string;
 
@@ -141,5 +179,4 @@ export class ProductSchema extends BaseSchema {
   @ManyToOne(() => CategorySchema, (category) => category.product)
   @JoinColumn({ name: 'category' })
   category: CategorySchema;
-
 }

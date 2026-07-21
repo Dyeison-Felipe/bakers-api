@@ -54,6 +54,10 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       stockMin: product.stockMin,
       active: product.active,
       description: product.description,
+      purchaseUnit: product.purchaseUnit,
+      quantity: product.quantity,
+      weight: product.weight,
+      volume: product.volume,
       category: {
         id: product.category!.id,
         name: product.category!.name,

@@ -1,4 +1,4 @@
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { CategoryOutput } from '../category/category.output';
 
 export type FindAllProductOutput = {
@@ -10,7 +10,7 @@ export type FindAllProductOutput = {
   costPrice: number;
   salePrice: number | null;
   profitPrice: number | null;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -21,5 +21,9 @@ export type FindAllProductOutput = {
   stockMin: number | null;
   active: boolean;
   description: string | null;
+  purchaseUnit: TypeUnitOfPurchase | null;
+  quantity: number | null;
+  weight: number | null;
+  volume: number | null;
   category: CategoryOutput;
 };

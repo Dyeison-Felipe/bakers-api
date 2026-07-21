@@ -9,7 +9,10 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 
 export class UpdateProductDto {
   @IsUUID()
@@ -97,6 +100,31 @@ export class UpdateProductDto {
   @IsString()
   @IsNotEmpty()
   description: string;
+
+  @ApiProperty({
+    description: 'Unidade de compra do produto',
+    enum: TypeUnitOfPurchase,
+  })
+  @IsEnum(TypeUnitOfPurchase)
+  purchaseUnit: TypeUnitOfPurchase;
+
+  @ApiPropertyOptional({ description: 'Quantidade por unidade de compra' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity?: number;
+
+  @ApiPropertyOptional({ description: 'Peso por unidade de compra' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weight?: number;
+
+  @ApiPropertyOptional({ description: 'Volume por unidade de compra' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  volume?: number;
 
   @ApiProperty({ description: 'ID da categoria do produto' })
   @IsUUID()

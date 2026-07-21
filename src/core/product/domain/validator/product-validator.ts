@@ -15,7 +15,10 @@ import { ClassValidatorFields } from '@/shared/domain/validators/class-validator
 import { CompanyRules } from '@/core/company/domain/validators/company-validator';
 import { CategoryRules } from '@/core/category/domain/validators/category-validator';
 import { ProductProps } from '../entities/product.entity';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { Category } from '@/core/category/domain/entities/category.entity';
 import { Company } from '@/core/company/domain/entities/company.entity';
 
@@ -28,7 +31,7 @@ export class ProductRules {
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  scaleReference: string | null
+  scaleReference: string | null;
 
   @IsString()
   @MaxLength(14)
@@ -47,8 +50,8 @@ export class ProductRules {
 
   @IsNumber()
   @Min(0)
-  @IsOptional() 
-  salePrice: number | null
+  @IsOptional()
+  salePrice: number | null;
 
   @IsNumber()
   @Min(0)
@@ -56,8 +59,8 @@ export class ProductRules {
   profitPrice: number | null;
 
   @IsEnum(TypeUnitOfMeasurement)
-  @IsNotEmpty()
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  @IsOptional()
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
 
   @IsString()
   @MaxLength(10)
@@ -102,6 +105,25 @@ export class ProductRules {
   @IsString()
   @MaxLength(255)
   description: string | null;
+
+  @IsEnum(TypeUnitOfPurchase)
+  @IsOptional()
+  purchaseUnit: TypeUnitOfPurchase | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weight: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  volume: number | null;
 
   @IsString()
   @IsNotEmpty()

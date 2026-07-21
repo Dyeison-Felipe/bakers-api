@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 
 export class CreateProductDto {
   @ApiProperty({
@@ -90,8 +90,8 @@ export class CreateProductDto {
     example: TypeUnitOfMeasurement.UN,
   })
   @IsEnum(TypeUnitOfMeasurement)
-  @IsNotEmpty()
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  @IsOptional()
+  unitOfMeasurement?: TypeUnitOfMeasurement;
 
   @ApiPropertyOptional({
     description: 'Prazo de validade do produto em dias',
@@ -174,6 +174,45 @@ export class CreateProductDto {
   @IsString()
   @MaxLength(255)
   description?: string;
+
+  @ApiProperty({
+    description: 'Unidade de compra do produto',
+    enum: TypeUnitOfPurchase,
+    example: TypeUnitOfPurchase.CX,
+  })
+  @IsEnum(TypeUnitOfPurchase)
+  @IsOptional()
+  purchaseUnit?: TypeUnitOfPurchase;
+
+  @ApiPropertyOptional({
+    description: 'Quantidade de itens por unidade de compra',
+    example: 12,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Peso por unidade de compra (kg)',
+    example: 1.5,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Volume por unidade de compra (L)',
+    example: 2,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  volume?: number;
 
   @ApiProperty({
     description: 'ID da categoria do produto',

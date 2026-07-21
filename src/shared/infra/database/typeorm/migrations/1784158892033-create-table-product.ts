@@ -1,4 +1,7 @@
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateTableProduct1784158892033 implements MigrationInterface {
@@ -64,7 +67,34 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             name: 'unit_of_measurement',
             type: 'enum',
             enum: Object.values(TypeUnitOfMeasurement),
-            isNullable: false,
+            isNullable: true,
+          },
+          {
+            name: 'purchase_unit',
+            type: 'enum',
+            enum: Object.values(TypeUnitOfPurchase),
+            isNullable: true,
+          },
+          {
+            name: 'quantity',
+            type: 'decimal',
+            precision: 10,
+            scale: 2,
+            isNullable: true,
+          },
+          {
+            name: 'weight',
+            type: 'decimal',
+            precision: 10,
+            scale: 3,
+            isNullable: true,
+          },
+          {
+            name: 'volume',
+            type: 'decimal',
+            precision: 10,
+            scale: 3,
+            isNullable: true,
           },
           {
             name: 'expiration_date_in_days',

@@ -2,7 +2,10 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { Product } from '../../domain/entities/product.entity';
@@ -19,8 +22,8 @@ type Input = {
   ncm: string;
   costPrice: number;
   salePrice?: number;
-  profitPrice?: number; // recebido do front, mas ignorado — o backend recalcula
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  profitPrice?: number;
+  unitOfMeasurement?: TypeUnitOfMeasurement;
   expirationDateInDays?: string;
   stockManagement: boolean;
   resale: boolean;
@@ -31,6 +34,10 @@ type Input = {
   stockMin?: number;
   active: boolean;
   description?: string;
+  purchaseUnit?: TypeUnitOfPurchase;
+  quantity?: number;
+  weight?: number;
+  volume?: number;
   category: string;
 };
 
@@ -85,7 +92,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       expirationDateInDays: input.expirationDateInDays ?? null,
       ncm: input.ncm,
       ownProduction: input.ownProduction,
-      profitPrice, // sempre o valor calculado pelo backend, nunca o do input
+      profitPrice,
       resale: input.resale,
       rowMaterial: input.rowMaterial,
       rowMaterialResale: input.rowMaterialResale,
@@ -94,7 +101,11 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       stockAtual: input.currentStock ?? null,
       stockMin: input.stockMin ?? null,
       stockManagement: input.stockManagement,
-      unitOfMeasurement: input.unitOfMeasurement,
+      unitOfMeasurement: input.unitOfMeasurement ?? null,
+      purchaseUnit: input.purchaseUnit ??null,
+      quantity: input.quantity ?? null,
+      weight: input.weight ?? null,
+      volume: input.volume ?? null,
       createdBy: loggedUser.id,
       category: category,
       company: company,
@@ -109,7 +120,6 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
   private validateBusinessRules(input: Input): FieldsError {
     const errors: FieldsError = {};
 
-    // Regra 0: pelo menos um tipo de produto precisa estar marcado
     const hasAnyProductType =
       input.resale ||
       input.ownProduction ||
@@ -123,33 +133,30 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       return errors;
     }
 
-    // Regra 1: gerenciamento de estoque exige stockAtual e stockMin
     if (input.stockManagement) {
-      if (!input.currentStock) {
+      if (input.currentStock === undefined || input.currentStock === null) {
         errors.currentStock = [
           'Quantidade atual em estoque é obrigatória quando o gerenciamento de estoque está ativado',
         ];
       }
-      if (!input.stockMin) {
+      if (input.stockMin === undefined || input.stockMin === null) {
         errors.stockMin = [
           'Quantidade mínima em estoque é obrigatória quando o gerenciamento de estoque está ativado',
         ];
       }
     }
 
-    // Regra 2: resale, ownProduction ou rowMaterialResale exigem salePrice.
-    // profitPrice não é validado aqui — é calculado pelo backend a partir de costPrice e salePrice.
     const requiresPricingCheck =
       input.resale || input.ownProduction || input.rowMaterialResale;
 
-    if (requiresPricingCheck && !input.salePrice) {
+    if (
+      requiresPricingCheck &&
+      (input.salePrice === undefined || input.salePrice === null)
+    ) {
       errors.salePrice = [
         'Preço de venda é obrigatório para produtos de revenda, produção própria ou matéria-prima de revenda',
       ];
     }
-
-    // rowMaterial (isolado): nenhuma verificação extra além de costPrice,
-    // que já é obrigatório estruturalmente no ProductRules (@IsNotEmpty)
 
     return errors;
   }

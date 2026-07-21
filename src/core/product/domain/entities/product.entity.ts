@@ -2,7 +2,10 @@ import { Category } from '@/core/category/domain/entities/category.entity';
 import { Company } from '@/core/company/domain/entities/company.entity';
 import { Data } from '@/shared/domain/decorators/data.decorator';
 import { BaseEntity } from '@/shared/domain/entity/base-entity';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { ProductValidatorFactory } from '../validator/product-validator';
 import { EntityValidationError } from '@/shared/application/errors/validation-error';
 
@@ -14,7 +17,7 @@ export type ProductProps = {
   costPrice: number;
   salePrice: number | null;
   profitPrice: number | null;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -25,6 +28,10 @@ export type ProductProps = {
   stockMin: number | null;
   active: boolean;
   description: string | null;
+  purchaseUnit: TypeUnitOfPurchase | null;
+  quantity: number | null;
+  weight: number | null;
+  volume: number | null;
   createdBy: string;
   updatedBy: string;
   deletedBy: string | null;
@@ -40,7 +47,7 @@ type CreateProductProps = {
   costPrice: number;
   salePrice: number | null;
   profitPrice: number | null;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -51,6 +58,10 @@ type CreateProductProps = {
   stockMin: number | null;
   active: boolean;
   description: string | null;
+  purchaseUnit: TypeUnitOfPurchase | null;
+  quantity: number | null;
+  weight: number | null;
+  volume: number | null;
   createdBy: string;
   updatedBy: string;
   company: Company | null;
@@ -65,7 +76,7 @@ type UpdateProductProps = {
   costPrice: number;
   salePrice: number | null;
   profitPrice: number | null;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -76,6 +87,10 @@ type UpdateProductProps = {
   stockMin: number | null;
   active: boolean;
   description: string | null;
+  purchaseUnit: TypeUnitOfPurchase | null;
+  quantity: number | null;
+  weight: number | null;
+  volume: number | null;
   updatedBy: string;
   category: Category | null;
 };
@@ -83,7 +98,7 @@ type UpdateProductProps = {
 type UpdateStockProduct = {
   currentStock: number;
   updatedBy: string;
-}
+};
 
 export interface Product extends ProductProps {}
 
@@ -119,6 +134,10 @@ export class Product extends BaseEntity<ProductProps> {
       stockMin: props.stockMin,
       active: props.active,
       description: props.description,
+      purchaseUnit: props.purchaseUnit,
+      quantity: props.quantity,
+      weight: props.weight,
+      volume: props.volume,
       createdBy: props.createdBy,
       updatedBy: props.updatedBy,
       deletedBy: null,
@@ -145,6 +164,10 @@ export class Product extends BaseEntity<ProductProps> {
     this.stockMin = props.stockMin;
     this.active = props.active;
     this.description = props.description;
+    this.purchaseUnit = props.purchaseUnit;
+    this.quantity = props.quantity;
+    this.weight = props.weight;
+    this.volume = props.volume;
     this.updatedBy = props.updatedBy;
     this.category = props.category ?? null;
     this.updateTimestamp();

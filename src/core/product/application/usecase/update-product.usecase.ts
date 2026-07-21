@@ -2,7 +2,7 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
@@ -25,6 +25,10 @@ type Input = {
   stockMin: number;
   active: boolean;
   description: string;
+  purchaseUnit: TypeUnitOfPurchase;
+  quantity?: number;
+  weight?: number;
+  volume?: number;
   categoryId: string;
 };
 
@@ -81,6 +85,10 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       stockMin: input.stockMin,
       active: input.active,
       description: input.description,
+      purchaseUnit: input.purchaseUnit,
+      quantity: input.quantity ?? null,
+      weight: input.weight ?? null,
+      volume: input.volume ?? null,
       updatedBy: loggedUser.id,
       category,
     });

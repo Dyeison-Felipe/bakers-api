@@ -1,8 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { CategoryPresenter } from "../category/category-presenter";
+import { ApiProperty } from '@nestjs/swagger';
+import { CategoryPresenter } from '../category/category-presenter';
+import {
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 
 export class FindAllProductPresenter {
-
   @ApiProperty({ description: 'Identificador do produto' })
   readonly id: string;
 
@@ -28,7 +31,19 @@ export class FindAllProductPresenter {
   readonly profitPrice: number | null;
 
   @ApiProperty({ description: 'Unidade de medida' })
-  readonly unitOfMeasurement: string;
+  readonly unitOfMeasurement: TypeUnitOfMeasurement | null;
+
+  @ApiProperty({ description: 'Unidade de compra', enum: TypeUnitOfPurchase })
+  readonly purchaseUnit: TypeUnitOfPurchase | null;
+
+  @ApiProperty({ description: 'Quantidade por unidade de compra' })
+  readonly quantity: number | null;
+
+  @ApiProperty({ description: 'Peso por unidade de compra' })
+  readonly weight: number | null;
+
+  @ApiProperty({ description: 'Volume por unidade de compra' })
+  readonly volume: number | null;
 
   @ApiProperty({ description: 'Validade em dias' })
   readonly expirationDateInDays: string | null;
@@ -60,6 +75,9 @@ export class FindAllProductPresenter {
   @ApiProperty({ description: 'Descrição do produto' })
   readonly description: string | null;
 
-  @ApiProperty({ description: 'Categoria do produto', type: () => CategoryPresenter })
+  @ApiProperty({
+    description: 'Categoria do produto',
+    type: () => CategoryPresenter,
+  })
   readonly category: CategoryPresenter;
 }

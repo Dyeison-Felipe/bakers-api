@@ -8,3 +8,11 @@ export enum TypeUnitOfMeasurement {
   L = 'l',
   ML = 'ml',
 }
+
+export enum TypeUnitOfPurchase {
+  UN = 'un',
+  CX = 'cx',
+  PCT = 'pct',
+  FD = 'fd',
+  SC = 'sc',
+}
