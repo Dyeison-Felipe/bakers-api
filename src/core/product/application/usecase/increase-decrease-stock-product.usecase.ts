@@ -4,9 +4,8 @@ import { Inject } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { Product } from '../../domain/entities/product.entity';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
-import { TypeOperationStock } from '@/shared/infra/enums/product-stock.enum';
+import { TypeOperationStock } from '@/shared/infra/enums/product';
 
 type Input = {
   productId: string;

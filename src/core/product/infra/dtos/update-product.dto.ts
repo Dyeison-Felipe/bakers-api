@@ -10,6 +10,7 @@ import {
   Min,
 } from 'class-validator';
 import {
+  TypeConsumptionUnit,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -62,9 +63,18 @@ export class UpdateProductDto {
   @IsEnum(TypeUnitOfMeasurement)
   unitOfMeasurement: TypeUnitOfMeasurement;
 
+  @ApiProperty({
+    description: 'Unidade de consumo do produto',
+    enum: TypeConsumptionUnit,
+    example: TypeConsumptionUnit.UN,
+  })
+  @IsEnum(TypeConsumptionUnit)
+  @IsOptional()
+  consumerUnit: TypeConsumptionUnit;
+
   @ApiProperty({ description: 'Validade em dias' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   expirationDateInDays: string;
 
   @ApiProperty({ description: 'Indica se o produto tem controle de estoque' })

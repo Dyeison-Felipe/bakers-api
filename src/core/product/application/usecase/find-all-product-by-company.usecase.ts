@@ -6,7 +6,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { FindAllProductOutput } from '@/shared/application/output/product/find-all-product.output';
 import { Product } from '../../domain/entities/product.entity';
 import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
-import { ProductStatus } from '@/shared/infra/enums/product-status.enum';
+import { ProductStatus } from '@/shared/infra/enums/product';
 
 type Input = {
   categoryId?: string;
@@ -34,41 +34,42 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       categoryId,
     );
 
-    const results = products.items.map((product) => ({
-      id: product.id,
-      name: product.name,
-      scaleReference: product.scaleReference,
-      barCode: product.barCode,
-      ncm: product.ncm,
-      costPrice: product.costPrice,
-      salePrice: product.salePrice,
-      profitPrice: product.profitPrice,
-      unitOfMeasurement: product.unitOfMeasurement,
-      expirationDateInDays: product.expirationDateInDays,
-      stockManagement: product.stockManagement,
-      resale: product.resale,
-      rowMaterial: product.rowMaterial,
-      ownProduction: product.ownProduction,
-      rowMaterialResale: product.rowMaterialResale,
-      currentStock: product.currentStock,
-      stockMin: product.stockMin,
-      active: product.active,
-      description: product.description,
-      purchaseUnit: product.purchaseUnit,
-      quantity: product.quantity,
-      weight: product.weight,
-      volume: product.volume,
-      category: {
-        id: product.category!.id,
-        name: product.category!.name,
-        parentId: product.category!.parent?.id ?? null,
-        children: [],
-      },
-    }));
-
-    return {
-      items: results,
+    const results: Output = {
+      items: products.items.map((product) => ({
+        id: product.id,
+        name: product.name,
+        scaleReference: product.scaleReference,
+        barCode: product.barCode,
+        ncm: product.ncm,
+        costPrice: product.costPrice,
+        salePrice: product.salePrice,
+        profitPrice: product.profitPrice,
+        unitOfMeasurement: product.unitOfMeasurement,
+        consumerUnit: product.consumerUnit,
+        expirationDateInDays: product.expirationDateInDays,
+        stockManagement: product.stockManagement,
+        resale: product.resale,
+        rowMaterial: product.rowMaterial,
+        ownProduction: product.ownProduction,
+        rowMaterialResale: product.rowMaterialResale,
+        currentStock: product.currentStock,
+        stockMin: product.stockMin,
+        active: product.active,
+        description: product.description,
+        purchaseUnit: product.purchaseUnit,
+        quantity: product.quantity,
+        weight: product.weight,
+        volume: product.volume,
+        category: {
+          id: product.category!.id,
+          name: product.category!.name,
+          parentId: product.category!.parent?.id ?? null,
+          children: [],
+        },
+      })),
       meta: products.meta,
     };
+
+    return results;
   }
 }

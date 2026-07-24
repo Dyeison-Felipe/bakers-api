@@ -2,7 +2,7 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
-import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
@@ -16,6 +16,7 @@ type Input = {
   salePrice: number;
   profitPrice: number;
   unitOfMeasurement: TypeUnitOfMeasurement;
+  consumerUnit: TypeConsumptionUnit;
   expirationDateInDays: string;
   stockManagement: boolean;
   resale: boolean;
@@ -75,6 +76,7 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       salePrice: input.salePrice,
       profitPrice: input.profitPrice,
       unitOfMeasurement: input.unitOfMeasurement,
+      consumerUnit: input.consumerUnit,
       expirationDateInDays: input.expirationDateInDays,
       stockManagement: input.stockManagement,
       resale: input.resale,

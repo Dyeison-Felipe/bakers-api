@@ -1,4 +1,4 @@
-import { TypeOperationStock } from '@/shared/infra/enums/product-stock.enum';
+import { TypeOperationStock } from '@/shared/infra/enums/product';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,

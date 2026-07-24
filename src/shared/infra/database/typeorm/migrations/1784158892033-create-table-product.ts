@@ -1,4 +1,5 @@
 import {
+  TypeConsumptionUnit,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -67,6 +68,12 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             name: 'unit_of_measurement',
             type: 'enum',
             enum: Object.values(TypeUnitOfMeasurement),
+            isNullable: true,
+          },
+          {
+            name: 'consumer_unit',
+            type: 'enum',
+            enum: Object.values(TypeConsumptionUnit),
             isNullable: true,
           },
           {

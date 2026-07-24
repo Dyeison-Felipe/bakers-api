@@ -17,14 +17,13 @@ import {
 import { FindAllProductByCompanyUseCase } from '../../application/usecase/find-all-product-by-company.usecase';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { FindAllProductPresenter } from '@/shared/infra/presenter/product/find-all-products';
-import { ConvertPresenter } from '@/shared/infra/presenter/converter/converter.presenter';
 import { UpdateProductUseCase } from '../../application/usecase/update-product.usecase';
 import { UpdateProductDto } from '../dtos/update-product.dto';
 import { UpdateProductPresenter } from '@/shared/infra/presenter/product/update-product.presenter';
-import { ProductStatus } from '@/shared/infra/enums/product-status.enum';
 import { UpdateStockDto } from '../dtos/update-stock.dto';
 import { UpdateStockProductUseCase } from '../../application/usecase/increase-decrease-stock-product.usecase';
 import { UpdateStockProductPresenter } from '@/shared/infra/presenter/product/update-stock-product.presenter';
+import { ProductStatus } from '@/shared/infra/enums/product';
 
 @Controller('v1/product')
 export class ProductController {

@@ -10,7 +10,11 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
+import {
+  TypeConsumptionUnit,
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 
 export class CreateProductDto {
   @ApiProperty({
@@ -92,6 +96,15 @@ export class CreateProductDto {
   @IsEnum(TypeUnitOfMeasurement)
   @IsOptional()
   unitOfMeasurement?: TypeUnitOfMeasurement;
+
+  @ApiProperty({
+    description: 'Unidade de consumo do produto',
+    enum: TypeConsumptionUnit,
+    example: TypeConsumptionUnit.UN,
+  })
+  @IsEnum(TypeConsumptionUnit)
+  @IsOptional()
+  consumerUnit: TypeConsumptionUnit;
 
   @ApiPropertyOptional({
     description: 'Prazo de validade do produto em dias',

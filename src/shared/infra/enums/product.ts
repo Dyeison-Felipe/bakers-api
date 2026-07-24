@@ -15,4 +15,24 @@ export enum TypeUnitOfPurchase {
   PCT = 'pct',
   FD = 'fd',
   SC = 'sc',
+  KG = 'kg',
+  ML = 'ml',
+}
+
+export enum TypeConsumptionUnit {
+  UN = 'un',
+  G = 'g',
+  KG = 'kg',
+  ML = 'ml',
+  L = 'l',
+}
+
+export enum TypeOperationStock {
+  INCREASE = 'INCREASE',
+  DECREASE = 'DECREASE',
+}
+
+export enum ProductStatus {
+  ATIVO = 'ATIVO',
+  INATIVO = 'INATIVO',
 }

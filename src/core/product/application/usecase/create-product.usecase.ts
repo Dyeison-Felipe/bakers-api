@@ -3,6 +3,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
 import {
+  TypeConsumptionUnit,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -24,6 +25,7 @@ type Input = {
   salePrice?: number;
   profitPrice?: number;
   unitOfMeasurement?: TypeUnitOfMeasurement;
+  consumerUnit?: TypeConsumptionUnit;
   expirationDateInDays?: string;
   stockManagement: boolean;
   resale: boolean;
@@ -102,7 +104,8 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       stockMin: input.stockMin ?? null,
       stockManagement: input.stockManagement,
       unitOfMeasurement: input.unitOfMeasurement ?? null,
-      purchaseUnit: input.purchaseUnit ??null,
+      consumerUnit: input.consumerUnit ?? null,
+      purchaseUnit: input.purchaseUnit ?? null,
       quantity: input.quantity ?? null,
       weight: input.weight ?? null,
       volume: input.volume ?? null,
@@ -125,6 +128,12 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       input.ownProduction ||
       input.rowMaterialResale ||
       input.rowMaterial;
+
+    if ((input.rowMaterial || input.rowMaterialResale) && !input.consumerUnit) {
+      errors.consumerUnit = [
+        'Unidade de consumo é obrigatória para matéria-prima',
+      ];
+    }
 
     if (!hasAnyProductType) {
       errors.resale = [

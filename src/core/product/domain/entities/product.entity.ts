@@ -3,6 +3,7 @@ import { Company } from '@/core/company/domain/entities/company.entity';
 import { Data } from '@/shared/domain/decorators/data.decorator';
 import { BaseEntity } from '@/shared/domain/entity/base-entity';
 import {
+  TypeConsumptionUnit,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -18,6 +19,7 @@ export type ProductProps = {
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -48,6 +50,7 @@ type CreateProductProps = {
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -77,6 +80,7 @@ type UpdateProductProps = {
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
   resale: boolean;
@@ -124,6 +128,7 @@ export class Product extends BaseEntity<ProductProps> {
       salePrice: props.salePrice,
       profitPrice: props.profitPrice,
       unitOfMeasurement: props.unitOfMeasurement,
+      consumerUnit: props.consumerUnit,
       expirationDateInDays: props.expirationDateInDays,
       stockManagement: props.stockManagement,
       resale: props.resale,
@@ -153,6 +158,7 @@ export class Product extends BaseEntity<ProductProps> {
     this.costPrice = props.costPrice;
     this.salePrice = props.salePrice;
     this.profitPrice = props.profitPrice;
+    this.consumerUnit = props.consumerUnit,
     this.unitOfMeasurement = props.unitOfMeasurement;
     this.expirationDateInDays = props.expirationDateInDays;
     this.stockManagement = props.stockManagement;

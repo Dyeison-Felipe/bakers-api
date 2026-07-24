@@ -16,6 +16,7 @@ import { CompanyRules } from '@/core/company/domain/validators/company-validator
 import { CategoryRules } from '@/core/category/domain/validators/category-validator';
 import { ProductProps } from '../entities/product.entity';
 import {
+  TypeConsumptionUnit,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -61,6 +62,10 @@ export class ProductRules {
   @IsEnum(TypeUnitOfMeasurement)
   @IsOptional()
   unitOfMeasurement: TypeUnitOfMeasurement | null;
+
+  @IsEnum(TypeConsumptionUnit)
+  @IsOptional()
+  consumerUnit: TypeConsumptionUnit | null
 
   @IsString()
   @MaxLength(10)
