@@ -1,6 +1,7 @@
 export interface EnvConfig {
-  getExpiresInSecondsForgotPassword(): number; 
-  getJwtSecretForgotPassword():string;
+  getStoragePath(): string;
+  getExpiresInSecondsForgotPassword(): number;
+  getJwtSecretForgotPassword(): string;
   getCookieSecret(): string;
   getCookieSameSite(): string;
   getCookieSecure(): boolean;
@@ -11,10 +12,10 @@ export interface EnvConfig {
   getDbHost(): string;
   getDbUser(): string;
   getDbPassword(): string;
-  getDbName(): string
+  getDbName(): string;
   getPort(): number;
   getNodeEnv(): string;
-  getAllowedOrigins(): string
+  getAllowedOrigins(): string;
   getSalts(): number;
   getSchema(): string;
 }

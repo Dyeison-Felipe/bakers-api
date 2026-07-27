@@ -14,6 +14,9 @@ import { ProductPersistenceModule } from './product-persistence.module';
 import { CategoryPersistenceModule } from '@/core/category/infra/category-persistence.module';
 import { UpdateProductUseCase } from '../application/usecase/update-product.usecase';
 import { UpdateStockProductUseCase } from '../application/usecase/increase-decrease-stock-product.usecase';
+import { FindProductByIdAndCompanyId } from '../application/usecase/find-product-by-id.usecase';
+import { StorageService } from '@/shared/application/storage/storage.service';
+import { GetProductImageUseCase } from '../application/usecase/get-image.usecase';
 
 @Module({
   imports: [ProductPersistenceModule, CategoryPersistenceModule],
@@ -25,17 +28,20 @@ import { UpdateStockProductUseCase } from '../application/usecase/increase-decre
         productRepository: ProductRepository,
         loggedUserService: LoggedUserService,
         categoryRepository: CategoryRepository,
+        storageService: StorageService,
       ) => {
         return new CreateProductUseCase(
           productRepository,
           loggedUserService,
           categoryRepository,
+          storageService,
         );
       },
       inject: [
         PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.CATEGORY_REPOSITORY,
+        PROVIDERS.STORAGE_SERVICE,
       ],
     },
     {
@@ -57,17 +63,20 @@ import { UpdateStockProductUseCase } from '../application/usecase/increase-decre
         productRepository: ProductRepository,
         categoryRepository: CategoryRepository,
         loggedUserService: LoggedUserService,
+        storageService: StorageService
       ) => {
         return new UpdateProductUseCase(
           productRepository,
           categoryRepository,
           loggedUserService,
+          storageService,
         );
       },
       inject: [
         PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.CATEGORY_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
+        PROVIDERS.STORAGE_SERVICE,
       ],
     },
     {
@@ -82,6 +91,39 @@ import { UpdateStockProductUseCase } from '../application/usecase/increase-decre
         );
       },
       inject: [PROVIDERS.PRODUCT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindProductByIdAndCompanyId,
+      useFactory: (
+        productRepository: ProductRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindProductByIdAndCompanyId(
+          productRepository,
+          loggedUserService,
+        );
+      },
+      inject: [PROVIDERS.PRODUCT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+
+    {
+      provide: GetProductImageUseCase,
+      useFactory: (
+        productRepository: ProductRepository,
+        storageService: StorageService,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new GetProductImageUseCase(
+          productRepository,
+          storageService,
+          loggedUserService,
+        );
+      },
+      inject: [
+        PROVIDERS.PRODUCT_REPOSITORY,
+        PROVIDERS.STORAGE_SERVICE,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
     },
   ],
   exports: [],

@@ -73,9 +73,9 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
 
     await this.updateUserPermission(permissions, user);
 
-    const userUpdated = await this.userRepository.update(user);
+    await this.userRepository.update(user);
 
-    const output = this.outputUser(userUpdated);
+    const output = this.outputUser(user);
 
     return output;
   }

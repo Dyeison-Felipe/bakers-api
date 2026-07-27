@@ -60,6 +60,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
         quantity: product.quantity,
         weight: product.weight,
         volume: product.volume,
+        imagePath: product.imagePath,
         category: {
           id: product.category!.id,
           name: product.category!.name,

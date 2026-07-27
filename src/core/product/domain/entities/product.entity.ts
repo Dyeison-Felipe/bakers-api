@@ -34,6 +34,7 @@ export type ProductProps = {
   quantity: number | null;
   weight: number | null;
   volume: number | null;
+  imagePath: string | null;
   createdBy: string;
   updatedBy: string;
   deletedBy: string | null;
@@ -65,6 +66,7 @@ type CreateProductProps = {
   quantity: number | null;
   weight: number | null;
   volume: number | null;
+  imagePath: string | null;
   createdBy: string;
   updatedBy: string;
   company: Company | null;
@@ -95,6 +97,7 @@ type UpdateProductProps = {
   quantity: number | null;
   weight: number | null;
   volume: number | null;
+  imagePath: string | null;
   updatedBy: string;
   category: Category | null;
 };
@@ -108,14 +111,14 @@ export interface Product extends ProductProps {}
 
 @Data()
 export class Product extends BaseEntity<ProductProps> {
-  protected validate(): void {
-    const validator = ProductValidatorFactory.create();
+  // protected validate(): void {
+  //   const validator = ProductValidatorFactory.create();
 
-    const isValid = validator.validate(this.props);
-    if (!isValid) {
-      throw new EntityValidationError(validator.errors);
-    }
-  }
+  //   const isValid = validator.validate(this.props);
+  //   if (!isValid) {
+  //     throw new EntityValidationError(validator.errors);
+  //   }
+  // }
 
   static create(props: CreateProductProps): Product {
     return new Product({
@@ -143,6 +146,7 @@ export class Product extends BaseEntity<ProductProps> {
       quantity: props.quantity,
       weight: props.weight,
       volume: props.volume,
+      imagePath: props.imagePath,
       createdBy: props.createdBy,
       updatedBy: props.updatedBy,
       deletedBy: null,
@@ -174,6 +178,7 @@ export class Product extends BaseEntity<ProductProps> {
     this.quantity = props.quantity;
     this.weight = props.weight;
     this.volume = props.volume;
+    this.imagePath = props.imagePath;
     this.updatedBy = props.updatedBy;
     this.category = props.category ?? null;
     this.updateTimestamp();

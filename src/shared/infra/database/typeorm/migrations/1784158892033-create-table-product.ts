@@ -166,6 +166,12 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             isNullable: true,
           },
           {
+            name: 'image_path',
+            type: 'varchar',
+            length: '255',
+            isNullable: true,
+          },
+          {
             name: 'company',
             type: 'uuid',
             isNullable: false,

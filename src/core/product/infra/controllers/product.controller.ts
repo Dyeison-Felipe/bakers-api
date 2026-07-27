@@ -1,6 +1,20 @@
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CreateProductUseCase } from '../../application/usecase/create-product.usecase';
-import { CreateProductDto } from '../dtos/create-product.dto';
+import {
+  CreateProductDto,
+  CreateProductRequestDto,
+} from '../dtos/create-product.dto';
 import { CreateProductPresenter } from '@/shared/infra/presenter/product/create-product.presenter';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionProduct } from '@/core/auth/domain/permissions-definition/product';
@@ -10,6 +24,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse,
@@ -18,12 +33,19 @@ import { FindAllProductByCompanyUseCase } from '../../application/usecase/find-a
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { FindAllProductPresenter } from '@/shared/infra/presenter/product/find-all-products';
 import { UpdateProductUseCase } from '../../application/usecase/update-product.usecase';
-import { UpdateProductDto } from '../dtos/update-product.dto';
+import { UpdateProductDto, UpdateProductRequestDto } from '../dtos/update-product.dto';
 import { UpdateProductPresenter } from '@/shared/infra/presenter/product/update-product.presenter';
 import { UpdateStockDto } from '../dtos/update-stock.dto';
 import { UpdateStockProductUseCase } from '../../application/usecase/increase-decrease-stock-product.usecase';
 import { UpdateStockProductPresenter } from '@/shared/infra/presenter/product/update-stock-product.presenter';
 import { ProductStatus } from '@/shared/infra/enums/product';
+import { FindProductByIdAndCompanyId } from '../../application/usecase/find-product-by-id.usecase';
+import { FindProductPresenter } from '@/shared/infra/presenter/product/product.presenter';
+import { MulterFile } from '@/shared/application/storage/multer-file.type';
+import { Multipart } from '@/shared/infra/decorators/multipart.decorator';
+import { FastifyReply } from 'fastify';
+import { GetProductImageUseCase } from '../../application/usecase/get-image.usecase';
+import { createReadStream } from 'fs';
 
 @Controller('v1/product')
 export class ProductController {
@@ -32,7 +54,37 @@ export class ProductController {
     private readonly findAllProductByCompanyUseCase: FindAllProductByCompanyUseCase,
     private readonly updateProductUseCase: UpdateProductUseCase,
     private readonly updateStockProductUseCase: UpdateStockProductUseCase,
+    private readonly findProductByIdAndCompanyId: FindProductByIdAndCompanyId,
+    private readonly getProductImageUseCase: GetProductImageUseCase,
   ) {}
+
+  @Get(':productId')
+  @Permission(PermissionProduct.PRODUCT_READER)
+  @ApiOperation({
+    summary: 'Listar produto',
+    description: 'Retorna produto pelo id enviado.',
+  })
+  @ApiParam({
+    name: 'productId',
+    required: true,
+    description: 'ID do produto',
+  })
+  @ApiOkResponse({
+    description: 'Produto retornado com sucesso',
+    type: FindAllProductPresenter,
+    isArray: true,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Usuário não autenticado ou sem permissão',
+  })
+  @ApiNotFoundResponse({
+    description: 'Produto não encontrado',
+  })
+  async findProduct(
+    @Param('productId') productId: string,
+  ): Promise<FindProductPresenter> {
+    return await this.findProductByIdAndCompanyId.execute({ productId });
+  }
 
   @Get()
   @Permission(PermissionProduct.PRODUCT_READER)
@@ -93,11 +145,12 @@ export class ProductController {
   @ApiUnauthorizedResponse({
     description: 'Usuário não autenticado ou sem permissão',
   })
-  async update(@Body() dto: UpdateProductDto): Promise<UpdateProductPresenter> {
-    return await this.updateProductUseCase.execute(dto);
+  async update(@Body() {productDto, image}: UpdateProductRequestDto ): Promise<UpdateProductPresenter> {
+    return await this.updateProductUseCase.execute({...productDto, image});
   }
 
   @Post()
+  @Multipart()
   @Permission(PermissionProduct.PRODUCT_CREATE)
   @ApiOperation({
     summary: 'Criar produto',
@@ -120,8 +173,10 @@ export class ProductController {
   @ApiUnauthorizedResponse({
     description: 'Usuário não autenticado ou sem permissão',
   })
-  async create(@Body() dto: CreateProductDto): Promise<CreateProductPresenter> {
-    return this.createProductUseCase.execute(dto);
+  async create(
+    @Body() { productDto, image }: CreateProductRequestDto,
+  ): Promise<CreateProductPresenter> {
+    return this.createProductUseCase.execute({ ...productDto, image });
   }
 
   @Put('stock')
@@ -130,5 +185,15 @@ export class ProductController {
     @Body() dto: UpdateStockDto,
   ): Promise<UpdateStockProductPresenter> {
     return await this.updateStockProductUseCase.execute(dto);
+  }
+
+  @Get(':id/image')
+  async getImage(@Param('id') id: string, @Res() reply: FastifyReply) {
+    const { absolutePath, mimetype } =
+      await this.getProductImageUseCase.execute({
+        productId: id,
+      });
+
+    return reply.type(mimetype).send(createReadStream(absolutePath));
   }
 }

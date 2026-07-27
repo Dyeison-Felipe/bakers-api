@@ -16,7 +16,9 @@ export class CompanyRepositoryMapper {
       active: schema.active,
       email: schema.email,
       stateRegistration: schema.stateRegistration,
-      address: schema.address ? AddressRepositoryMapper.toEntity(schema.address) : null,
+      address: schema.address
+        ? AddressRepositoryMapper.toEntity(schema.address)
+        : null,
       plan: schema.plan ? PlanMapper.toEntity(schema.plan) : null,
       auditable: {
         createdAt: schema.createdAt,
@@ -52,5 +54,9 @@ export class CompanyRepositoryMapper {
     });
 
     return schema;
+  }
+
+  static toReference(id: string): CompanySchema {
+    return { id } as CompanySchema;
   }
 }

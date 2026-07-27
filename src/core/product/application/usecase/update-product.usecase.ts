@@ -2,35 +2,43 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
-import { TypeConsumptionUnit, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
+import {
+  TypeConsumptionUnit,
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import { MulterFile } from '@/shared/application/storage/multer-file.type';
+import { StorageService } from '@/shared/application/storage/storage.service';
 
 type Input = {
   id: string;
   name: string;
   scaleReference?: string;
-  barCode: string;
+  barCode?: string;
   ncm: string;
   costPrice: number;
-  salePrice: number;
-  profitPrice: number;
-  unitOfMeasurement: TypeUnitOfMeasurement;
-  consumerUnit: TypeConsumptionUnit;
-  expirationDateInDays: string;
+  salePrice?: number;
+  profitPrice?: number;
+  unitOfMeasurement?: TypeUnitOfMeasurement;
+  consumerUnit?: TypeConsumptionUnit;
+  expirationDateInDays?: string;
   stockManagement: boolean;
   resale: boolean;
   rowMaterial: boolean;
   ownProduction: boolean;
   rowMaterialResale: boolean;
-  stockMin: number;
+  currentStock?: number;
+  stockMin?: number;
   active: boolean;
-  description: string;
-  purchaseUnit: TypeUnitOfPurchase;
+  description?: string;
+  purchaseUnit?: TypeUnitOfPurchase;
   quantity?: number;
   weight?: number;
   volume?: number;
-  categoryId: string;
+  category: string;
+  image?: MulterFile;
 };
 
 type Output = {
@@ -45,6 +53,8 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     private readonly categoryRepository: CategoryRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
+    @Inject(PROVIDERS.STORAGE_SERVICE)
+    private readonly storageService: StorageService,
   ) {}
 
   async execute(input: Input): Promise<Output> {
@@ -59,7 +69,7 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     }
 
     const category = await this.categoryRepository.findCategoryByIdAndCompanyId(
-      input.categoryId,
+      input.category,
       loggedUser.company.id,
     );
 
@@ -67,27 +77,46 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       throw new NotFoundException('Categoria não encontrada');
     }
 
+    // Só troca a imagem se uma nova foi enviada. Sem imagem nova,
+    // mantém a referência atual (product.imagePath) intacta.
+    let imagePath = product.imagePath;
+
+    if (input.image?.buffer) {
+      if (product.imagePath) {
+        this.storageService.deleteProductImage(
+          loggedUser.company.id,
+          product.imagePath,
+        );
+      }
+      imagePath = this.storageService.saveProductImage(
+        loggedUser.company.id,
+        input.image,
+      );
+    }
+
     product.update({
       name: input.name,
       scaleReference: input.scaleReference ?? null,
-      barCode: input.barCode,
+      barCode: input.barCode ?? product.barCode,
       ncm: input.ncm,
       costPrice: input.costPrice,
-      salePrice: input.salePrice,
-      profitPrice: input.profitPrice,
-      unitOfMeasurement: input.unitOfMeasurement,
-      consumerUnit: input.consumerUnit,
-      expirationDateInDays: input.expirationDateInDays,
+      salePrice: input.salePrice ?? product.salePrice,
+      profitPrice: input.profitPrice ?? product.profitPrice,
+      unitOfMeasurement: input.unitOfMeasurement ?? product.unitOfMeasurement,
+      consumerUnit: input.consumerUnit ?? product.consumerUnit,
+      expirationDateInDays:
+        input.expirationDateInDays ?? product.expirationDateInDays,
       stockManagement: input.stockManagement,
       resale: input.resale,
       rowMaterial: input.rowMaterial,
       ownProduction: input.ownProduction,
       rowMaterialResale: input.rowMaterialResale,
-      stockAtual: product.currentStock,
-      stockMin: input.stockMin,
+      imagePath,
+      stockAtual: input.currentStock ?? product.currentStock,
+      stockMin: input.stockMin ?? product.stockMin,
       active: input.active,
-      description: input.description,
-      purchaseUnit: input.purchaseUnit,
+      description: input.description ?? product.description,
+      purchaseUnit: input.purchaseUnit ?? product.purchaseUnit,
       quantity: input.quantity ?? null,
       weight: input.weight ?? null,
       volume: input.volume ?? null,
@@ -97,10 +126,6 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
 
     await this.productRepository.update(product);
 
-    const output: Output = {
-      id: product.id,
-    };
-
-    return output;
+    return { id: product.id };
   }
 }

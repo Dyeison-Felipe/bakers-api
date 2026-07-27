@@ -6,6 +6,10 @@ import { Injectable } from '@nestjs/common';
 export class EnvConfigService implements EnvConfig {
   constructor(private readonly envConfigService: ConfigService) {}
 
+  getStoragePath(): string {
+    return this.envConfigService.get<string>('STORAGE_PATH') as string;
+  }
+
   getExpiresInSecondsForgotPassword(): number {
     return +(this.envConfigService.get<string>('JWT_EXPIRES_IN_FORGOT_PASSWORD') as string);
   }

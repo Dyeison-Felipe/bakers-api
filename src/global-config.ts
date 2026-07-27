@@ -10,8 +10,7 @@ import { GlobalStringLengthPipe } from '@/shared/infra/pipes/globalmax-lenght.pi
 import { ValidationPipe } from '@nestjs/common';
 import fastifyCookie from '@fastify/cookie';
 import { EntityValidationErrorFilter } from './shared/infra/exeption-filters/validation-error.filter';
-import { join } from 'node:path';
-import fastifyStatic from '@fastify/static';
+import fastifyMultipart from '@fastify/multipart';
 
 export async function globalConfig(
   app: NestFastifyApplication,
@@ -41,6 +40,10 @@ export async function globalConfig(
 
   //  CORS
   const origins = envConfig.getAllowedOrigins();
+  console.log(
+    'Origins configuradas:',
+    JSON.stringify(envConfig.getAllowedOrigins()),
+  );
   app.enableCors({
     origin: envConfig.getAllowedOrigins().split(','),
     methods: 'GET,PUT,POST,DELETE',
@@ -71,4 +74,9 @@ export async function globalConfig(
     new UnauthorizedErrorFilter(),
     new EntityValidationErrorFilter(),
   );
+
+  await app.register(fastifyMultipart, {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  });
+
 }

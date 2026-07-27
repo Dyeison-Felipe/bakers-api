@@ -15,6 +15,9 @@ import { CreateProductOutput } from '@/shared/application/output/product/create-
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { FieldsError } from '@/shared/application/validators/validator-field.interface';
 import { EntityValidationError } from '@/shared/application/errors/validation-error';
+import { MulterFile } from '@/shared/application/storage/multer-file.type';
+import { StorageService } from '@/shared/application/storage/storage.service';
+import { getSaleBasisCost } from '@/shared/application/utils/pricing.util';
 
 type Input = {
   name: string;
@@ -41,6 +44,7 @@ type Input = {
   weight?: number;
   volume?: number;
   category: string;
+  image?: MulterFile;
 };
 
 type Output = CreateProductOutput;
@@ -53,6 +57,8 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
     @Inject(PROVIDERS.CATEGORY_REPOSITORY)
     private readonly categoryRepository: CategoryRepository,
+    @Inject(PROVIDERS.STORAGE_SERVICE)
+    private readonly storageService: StorageService,
   ) {}
 
   async execute(input: Input): Promise<Output> {
@@ -85,6 +91,10 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
 
     const profitPrice = this.calculateProfitPrice(input);
 
+    const imagePath = input.image?.buffer
+      ? this.storageService.saveProductImage(company.id, input.image)
+      : null;
+
     const newProduct = Product.create({
       name: input.name,
       active: input.active,
@@ -109,6 +119,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       quantity: input.quantity ?? null,
       weight: input.weight ?? null,
       volume: input.volume ?? null,
+      imagePath,
       createdBy: loggedUser.id,
       category: category,
       company: company,
@@ -178,8 +189,16 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       return null;
     }
 
-    const profitPrice =
-      ((input.salePrice - input.costPrice) / input.costPrice) * 100;
+    const basis = getSaleBasisCost({
+      purchaseUnit: input.purchaseUnit ?? null,
+      unitOfMeasurement: input.unitOfMeasurement ?? null,
+      costPrice: input.costPrice,
+      quantity: input.quantity ?? null,
+      weight: input.weight ?? null,
+      volume: input.volume ?? null,
+    });
+
+    const profitPrice = ((input.salePrice - basis) / basis) * 100;
 
     return Number(profitPrice.toFixed(2));
   }

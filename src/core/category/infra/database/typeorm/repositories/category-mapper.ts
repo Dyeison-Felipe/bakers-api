@@ -9,10 +9,12 @@ export class CategoryMapper {
     return new Category({
       id: schema.id,
       name: schema.name,
-      company: schema.company ? CompanyRepositoryMapper.toEntity(schema.company) : null,
+      company: schema.company
+        ? CompanyRepositoryMapper.toEntity(schema.company)
+        : null,
       parent: schema.parent
-      ? { id: schema.parent.id, name: schema.parent.name } // referência leve
-      : null,
+        ? { id: schema.parent.id, name: schema.parent.name } // referência leve
+        : null,
       createdBy: schema.createdBy,
       updatedBy: schema.updatedBy,
       deletedBy: schema.deletedBy,
@@ -29,9 +31,9 @@ export class CategoryMapper {
       id: entity.id,
       name: entity.name,
       company: CompanyRepositoryMapper.toSchema(entity.company!),
-     parent: entity.parent
-      ? ({ id: entity.parent.id } as CategorySchema) // só a referência, TypeORM resolve o FK
-      : null,
+      parent: entity.parent
+        ? ({ id: entity.parent.id } as CategorySchema)
+        : null,
       createdBy: entity.createdBy,
       updatedBy: entity.updatedBy,
       deletedBy: entity.deletedBy,
@@ -39,5 +41,9 @@ export class CategoryMapper {
       updatedAt: entity.auditable?.updatedAt,
       deletedAt: entity.auditable?.deletedAt,
     });
+  }
+
+  static toReference(id: string): CategorySchema {
+    return { id } as CategorySchema;
   }
 }

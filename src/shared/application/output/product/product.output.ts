@@ -1,7 +1,7 @@
 import { TypeConsumptionUnit, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { CategoryOutput } from '../category/category.output';
 
-export type FindAllProductOutput = {
+export type FindProductOutput = {
   id: string;
   name: string;
   scaleReference: string | null;

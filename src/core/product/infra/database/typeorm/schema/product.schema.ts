@@ -2,7 +2,11 @@ import { CategorySchema } from '@/core/category/infra/database/typeorm/schema/ca
 import { CompanySchema } from '@/core/company/infra/database/typeorm/schema/company.schema';
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
 import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
-import { TypeConsumptionUnit, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
+import {
+  TypeConsumptionUnit,
+  TypeUnitOfMeasurement,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('product')
@@ -61,9 +65,9 @@ export class ProductSchema extends BaseSchema {
     name: 'consumer_unit',
     nullable: true,
     type: 'enum',
-    enum: TypeConsumptionUnit
+    enum: TypeConsumptionUnit,
   })
-  consumerUnit: TypeConsumptionUnit | null
+  consumerUnit: TypeConsumptionUnit | null;
 
   @Column({ name: 'expiration_date_in_days', nullable: true, type: 'varchar' })
   expirationDateInDays: string | null;
@@ -166,6 +170,9 @@ export class ProductSchema extends BaseSchema {
     transformer: new DecimalColumnTransformer(),
   })
   volume: number | null;
+
+  @Column({ name: 'image_path', nullable: true, type: 'varchar' })
+  imagePath: string | null;
 
   @Column({ name: 'created_by', type: 'uuid', nullable: false })
   createdBy: string;

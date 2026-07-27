@@ -67,12 +67,12 @@ export class UpdateCategoryByCompanyUseCase implements UseCase<Input, Output> {
       parent: parent,
     });
 
-    const saveCategory = await this.categoryRepository.update(existCategory);
+    await this.categoryRepository.update(existCategory);
 
     const output: Output = {
-      id: saveCategory.id,
-      name: saveCategory.name,
-      parentId: saveCategory.parent ? saveCategory.parent.id : null,
+      id: existCategory.id,
+      name: existCategory.name,
+      parentId: existCategory.parent ? existCategory.parent.id : null,
       children: [],
     };
 

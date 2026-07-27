@@ -21,7 +21,7 @@ export class ProductRepositoryImpl implements ProductRepository {
   ): Promise<Product | null> {
     const productSchema = await this.productRepository.findOne({
       where: { id: productId, company: { id: companyId } },
-      relations: ['category'],
+      relations: ['category', 'company'],
     });
 
     if (!productSchema) return null;
@@ -115,14 +115,10 @@ export class ProductRepositoryImpl implements ProductRepository {
     return productEntity;
   }
 
-  async update(entity: Product): Promise<Product> {
-    const schema = ProductMapper.toSchema(entity);
+  async update(entity: Product): Promise<void> {
+    const schema = ProductMapper.toUpdateSchema(entity);
 
-    const saveSchema = await this.productRepository.save(schema);
-
-    const productEntity = ProductMapper.toEntity(saveSchema);
-
-    return productEntity;
+    await this.productRepository.save(schema); 
   }
 
   async existsByCategoryIds(

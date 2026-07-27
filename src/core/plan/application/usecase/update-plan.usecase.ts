@@ -37,15 +37,15 @@ export class UpdatePlanUseCase implements UseCase<Input, Output> {
       duration: duration
     })
 
-    const updatedPlan = await this.planRepository.update(plan);
+    await this.planRepository.update(plan);
 
     const output: Output = {
-      id: updatedPlan.id,
-      name: updatedPlan.name,
-      price: updatedPlan.price,
-      active: updatedPlan.active,
-      description: updatedPlan.description,
-      duration: updatedPlan.duration,
+      id: plan.id,
+      name: plan.name,
+      price: plan.price,
+      active: plan.active,
+      description: plan.description,
+      duration: plan.duration,
     }
 
     return output;

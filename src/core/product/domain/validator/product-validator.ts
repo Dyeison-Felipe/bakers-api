@@ -65,7 +65,7 @@ export class ProductRules {
 
   @IsEnum(TypeConsumptionUnit)
   @IsOptional()
-  consumerUnit: TypeConsumptionUnit | null
+  consumerUnit: TypeConsumptionUnit | null;
 
   @IsString()
   @MaxLength(10)
@@ -124,6 +124,11 @@ export class ProductRules {
   @IsNumber()
   @Min(0)
   weight: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  imagePath: string | null;
 
   @IsOptional()
   @IsNumber()

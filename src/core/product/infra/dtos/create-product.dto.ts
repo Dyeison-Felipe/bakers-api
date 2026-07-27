@@ -8,6 +8,7 @@ import {
   IsUUID,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -15,6 +16,8 @@ import {
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
+import { MulterFileDto } from '@/shared/infra/dto/multer-file';
+import { Type } from 'class-transformer';
 
 export class CreateProductDto {
   @ApiProperty({
@@ -235,4 +238,18 @@ export class CreateProductDto {
   @IsUUID()
   @IsNotEmpty()
   category: string;
+}
+
+
+export class CreateProductRequestDto {
+  @ApiProperty({ description: 'Dados do produto' })
+  @ValidateNested()
+  @Type(() => CreateProductDto)
+  readonly productDto: CreateProductDto;
+
+  @ApiProperty({ description: 'Imagem do produto', required: false })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MulterFileDto)
+  readonly image?: MulterFileDto;
 }

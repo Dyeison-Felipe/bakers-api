@@ -6,6 +6,9 @@ import {
 } from '@/shared/domain/pagination/pagination';
 
 export interface ProductRepository extends BaseRepository<Product> {
+
+  update(entity: Product): Promise<void>
+
   findProductByNameAndCompanyId(
     name: string,
     companyId: string,
