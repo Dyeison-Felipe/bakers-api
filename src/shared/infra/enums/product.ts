@@ -1,12 +1,7 @@
 export enum TypeUnitOfMeasurement {
   UN = 'un',
-  CX = 'cx',
-  PT = 'pt',
   KG = 'kg',
   CT = 'ct',
-  DZ = 'dz',
-  L = 'l',
-  ML = 'ml',
 }
 
 export enum TypeUnitOfPurchase {
@@ -15,16 +10,19 @@ export enum TypeUnitOfPurchase {
   PCT = 'pct',
   FD = 'fd',
   SC = 'sc',
-  KG = 'kg',
-  ML = 'ml',
 }
 
 export enum TypeConsumptionUnit {
   UN = 'un',
-  G = 'g',
   KG = 'kg',
   ML = 'ml',
-  L = 'l',
+}
+
+export enum TypeProduct {
+  OWN_PRODUCTION = 'OWN_PRODUCTION',
+  RAW_MATERIAL = 'RAW_MATERIAL',
+  RAW_MATERIAL_AND_RESALE = 'RAW_MATERIAL_AND_RESALE',
+  RESALE = 'RESALE',
 }
 
 export enum TypeOperationStock {

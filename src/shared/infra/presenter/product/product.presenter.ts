@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CategoryPresenter } from '../category/category-presenter';
 import {
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -51,17 +52,14 @@ export class FindProductPresenter {
   @ApiProperty({ description: 'Gerencia estoque' })
   readonly stockManagement: boolean;
 
-  @ApiProperty({ description: 'Produto de revenda' })
-  readonly resale: boolean;
+  @ApiProperty({ description: 'Peço por quilo do produto'})
+  readonly pricePerKilogram: number | null;
 
-  @ApiProperty({ description: 'Matéria-prima' })
-  readonly rowMaterial: boolean;
+  @ApiProperty({ description: 'Peço unitário do produto'})
+  readonly unitCostPrice: number;
 
-  @ApiProperty({ description: 'Produção própria' })
-  readonly ownProduction: boolean;
-
-  @ApiProperty({ description: 'Matéria-prima de revenda' })
-  readonly rowMaterialResale: boolean;
+  @ApiProperty({ description: 'tipo do do produto'})
+  readonly typeProduct: TypeProduct;
 
   @ApiProperty({ description: 'Estoque atual' })
   readonly currentStock: number | null;

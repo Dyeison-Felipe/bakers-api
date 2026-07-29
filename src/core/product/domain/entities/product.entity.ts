@@ -4,6 +4,7 @@ import { Data } from '@/shared/domain/decorators/data.decorator';
 import { BaseEntity } from '@/shared/domain/entity/base-entity';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -16,16 +17,15 @@ export type ProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
   consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
   currentStock: number | null;
   stockMin: number | null;
   active: boolean;
@@ -48,16 +48,15 @@ type CreateProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
   consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
   stockAtual: number | null;
   stockMin: number | null;
   active: boolean;
@@ -79,16 +78,15 @@ type UpdateProductProps = {
   barCode: string | null;
   ncm: string;
   costPrice: number;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
   salePrice: number | null;
   profitPrice: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
   consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
   stockAtual: number | null;
   stockMin: number | null;
   active: boolean;
@@ -111,14 +109,14 @@ export interface Product extends ProductProps {}
 
 @Data()
 export class Product extends BaseEntity<ProductProps> {
-  // protected validate(): void {
-  //   const validator = ProductValidatorFactory.create();
+  protected validate(): void {
+    const validator = ProductValidatorFactory.create();
 
-  //   const isValid = validator.validate(this.props);
-  //   if (!isValid) {
-  //     throw new EntityValidationError(validator.errors);
-  //   }
-  // }
+    const isValid = validator.validate(this.props);
+    if (!isValid) {
+      throw new EntityValidationError(validator.errors);
+    }
+  }
 
   static create(props: CreateProductProps): Product {
     return new Product({
@@ -127,6 +125,8 @@ export class Product extends BaseEntity<ProductProps> {
       name: props.name,
       barCode: props.barCode,
       ncm: props.ncm,
+      pricePerKilogram: props.pricePerKilogram,
+      unitCostPrice: props.unitCostPrice,
       costPrice: props.costPrice,
       salePrice: props.salePrice,
       profitPrice: props.profitPrice,
@@ -134,10 +134,7 @@ export class Product extends BaseEntity<ProductProps> {
       consumerUnit: props.consumerUnit,
       expirationDateInDays: props.expirationDateInDays,
       stockManagement: props.stockManagement,
-      resale: props.resale,
-      rowMaterial: props.rowMaterial,
-      ownProduction: props.ownProduction,
-      rowMaterialResale: props.rowMaterialResale,
+      typeProduct: props.typeProduct,
       currentStock: props.stockAtual,
       stockMin: props.stockMin,
       active: props.active,
@@ -160,16 +157,15 @@ export class Product extends BaseEntity<ProductProps> {
     this.barCode = props.barCode;
     this.ncm = props.ncm;
     this.costPrice = props.costPrice;
+    this.unitCostPrice = props.unitCostPrice;
+    this.pricePerKilogram = props.pricePerKilogram;
     this.salePrice = props.salePrice;
     this.profitPrice = props.profitPrice;
     this.consumerUnit = props.consumerUnit,
     this.unitOfMeasurement = props.unitOfMeasurement;
     this.expirationDateInDays = props.expirationDateInDays;
     this.stockManagement = props.stockManagement;
-    this.resale = props.resale;
-    this.rowMaterial = props.rowMaterial;
-    this.ownProduction = props.ownProduction;
-    this.rowMaterialResale = props.rowMaterialResale;
+    this.typeProduct = props.typeProduct;
     this.currentStock = props.stockAtual;
     this.stockMin = props.stockMin;
     this.active = props.active;

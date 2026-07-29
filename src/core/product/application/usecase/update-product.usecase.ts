@@ -4,6 +4,7 @@ import { Inject, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -19,16 +20,15 @@ type Input = {
   barCode?: string;
   ncm: string;
   costPrice: number;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
+  typeProduct: TypeProduct;
   salePrice?: number;
   profitPrice?: number;
   unitOfMeasurement?: TypeUnitOfMeasurement;
   consumerUnit?: TypeConsumptionUnit;
   expirationDateInDays?: string;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
   currentStock?: number;
   stockMin?: number;
   active: boolean;
@@ -107,10 +107,9 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       expirationDateInDays:
         input.expirationDateInDays ?? product.expirationDateInDays,
       stockManagement: input.stockManagement,
-      resale: input.resale,
-      rowMaterial: input.rowMaterial,
-      ownProduction: input.ownProduction,
-      rowMaterialResale: input.rowMaterialResale,
+      typeProduct: input.typeProduct,
+      pricePerKilogram: input.pricePerKilogram,
+      unitCostPrice: input.unitCostPrice,
       imagePath,
       stockAtual: input.currentStock ?? product.currentStock,
       stockMin: input.stockMin ?? product.stockMin,

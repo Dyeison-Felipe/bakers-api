@@ -17,6 +17,7 @@ import { CategoryRules } from '@/core/category/domain/validators/category-valida
 import { ProductProps } from '../entities/product.entity';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -51,6 +52,16 @@ export class ProductRules {
 
   @IsNumber()
   @Min(0)
+  @IsNotEmpty()
+  unitCostPrice: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  pricePerKilogram: number | null;
+
+  @IsNumber()
+  @Min(0)
   @IsOptional()
   salePrice: number | null;
 
@@ -76,21 +87,9 @@ export class ProductRules {
   @IsNotEmpty()
   stockManagement: boolean;
 
-  @IsBoolean()
+  @IsEnum(TypeProduct)
   @IsNotEmpty()
-  resale: boolean;
-
-  @IsBoolean()
-  @IsNotEmpty()
-  rowMaterial: boolean;
-
-  @IsBoolean()
-  @IsNotEmpty()
-  ownProduction: boolean;
-
-  @IsBoolean()
-  @IsNotEmpty()
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
 
   @IsOptional()
   @IsNumber()

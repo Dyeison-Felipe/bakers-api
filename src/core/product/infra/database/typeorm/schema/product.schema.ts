@@ -4,6 +4,7 @@ import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/ba
 import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -32,6 +33,26 @@ export class ProductSchema extends BaseSchema {
     transformer: new DecimalColumnTransformer(),
   })
   costPrice: number;
+
+  @Column({
+    name: 'unit_cost_price',
+    nullable: false,
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  unitCostPrice: number;
+
+  @Column({
+    name: 'price_per_kilogram',
+    nullable: true,
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  pricePerKilogram: number | null;
 
   @Column({
     name: 'sale_price',
@@ -80,32 +101,13 @@ export class ProductSchema extends BaseSchema {
   })
   stockManagement: boolean;
 
-  @Column({ name: 'resale', nullable: false, type: 'boolean', default: false })
-  resale: boolean;
-
   @Column({
-    name: 'row_material',
+    name: 'type_product',
+    type: 'enum',
+    enum: TypeProduct,
     nullable: false,
-    type: 'boolean',
-    default: false,
   })
-  rowMaterial: boolean;
-
-  @Column({
-    name: 'own_production',
-    nullable: false,
-    type: 'boolean',
-    default: false,
-  })
-  ownProduction: boolean;
-
-  @Column({
-    name: 'row_material_resale',
-    nullable: false,
-    type: 'boolean',
-    default: false,
-  })
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
 
   @Column({
     name: 'current_stock',

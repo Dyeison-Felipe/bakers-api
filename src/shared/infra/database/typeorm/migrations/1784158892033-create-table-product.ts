@@ -1,5 +1,6 @@
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -51,6 +52,20 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: 'unit_cost_price',
+            type: 'decimal',
+            precision: 10,
+            scale: 2,
+            isNullable: false,
+          },
+          {
+            name: 'price_per_kilogram',
+            type: 'decimal',
+            precision: 10,
+            scale: 2,
+            isNullable: false,
+          },
+          {
             name: 'sale_price',
             type: 'decimal',
             precision: 10,
@@ -75,6 +90,12 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             type: 'enum',
             enum: Object.values(TypeConsumptionUnit),
             isNullable: true,
+          },
+          {
+            name: 'type_product',
+            type: 'enum',
+            enum: Object.values(TypeProduct),
+            isNullable: false,
           },
           {
             name: 'purchase_unit',
@@ -111,30 +132,6 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
           },
           {
             name: 'stock_management',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'resale',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'row_material',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'own_production',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'row_material_resale',
             type: 'boolean',
             default: false,
             isNullable: false,

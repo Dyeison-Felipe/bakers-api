@@ -13,6 +13,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -127,32 +128,31 @@ export class CreateProductDto {
   stockManagement: boolean;
 
   @ApiProperty({
-    description: 'Indica se o produto é de revenda',
+    description: 'Indica o tipo do produto',
     example: false,
   })
-  @IsBoolean()
-  resale: boolean;
+  @IsEnum(TypeProduct)
+  @IsNotEmpty()
+  typeProduct: TypeProduct;
 
   @ApiProperty({
-    description: 'Indica se o produto é matéria-prima',
-    example: false,
+    description: 'Preço de custo unitário do produto',
+    example: 0.35,
+    minimum: 0,
   })
-  @IsBoolean()
-  rowMaterial: boolean;
+  @IsNumber()
+  @Min(0)
+  unitCostPrice: number;
 
   @ApiProperty({
-    description: 'Indica se o produto é de produção própria',
-    example: true,
+    description: 'Preço de custo por quilograma do produto',
+    example: 0.35,
+    minimum: 0,
   })
-  @IsBoolean()
-  ownProduction: boolean;
-
-  @ApiProperty({
-    description: 'Indica se o produto é matéria-prima de revenda',
-    example: false,
-  })
-  @IsBoolean()
-  rowMaterialResale: boolean;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  pricePerKilogram?: number;
 
   @ApiPropertyOptional({
     description: 'Quantidade atual em estoque',
@@ -239,7 +239,6 @@ export class CreateProductDto {
   @IsNotEmpty()
   category: string;
 }
-
 
 export class CreateProductRequestDto {
   @ApiProperty({ description: 'Dados do produto' })

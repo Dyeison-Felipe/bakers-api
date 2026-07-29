@@ -1,9 +1,11 @@
-import { TypeConsumptionUnit, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeProduct, TypeUnitOfMeasurement, TypeUnitOfPurchase } from '@/shared/infra/enums/product';
 import { CategoryOutput } from '../category/category.output';
 
 export type FindAllProductOutput = {
   id: string;
   name: string;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
   scaleReference: string | null;
   barCode: string | null;
   ncm: string;
@@ -14,10 +16,7 @@ export type FindAllProductOutput = {
   consumerUnit: TypeConsumptionUnit | null;
   expirationDateInDays: string | null;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct
   currentStock: number | null;
   stockMin: number | null;
   active: boolean;

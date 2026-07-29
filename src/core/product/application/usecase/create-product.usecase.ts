@@ -4,6 +4,7 @@ import { Inject } from '@nestjs/common';
 import { ProductRepository } from '../../domain/repositories/product.repository';
 import {
   TypeConsumptionUnit,
+  TypeProduct,
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
@@ -13,28 +14,23 @@ import { Product } from '../../domain/entities/product.entity';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { CreateProductOutput } from '@/shared/application/output/product/create-product.output';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { FieldsError } from '@/shared/application/validators/validator-field.interface';
-import { EntityValidationError } from '@/shared/application/errors/validation-error';
 import { MulterFile } from '@/shared/application/storage/multer-file.type';
 import { StorageService } from '@/shared/application/storage/storage.service';
-import { getSaleBasisCost } from '@/shared/application/utils/pricing.util';
-
 type Input = {
   name: string;
   scaleReference?: string;
   barCode?: string;
   ncm: string;
   costPrice: number;
+  unitCostPrice: number;
+  pricePerKilogram?: number;
   salePrice?: number;
   profitPrice?: number;
   unitOfMeasurement?: TypeUnitOfMeasurement;
   consumerUnit?: TypeConsumptionUnit;
   expirationDateInDays?: string;
   stockManagement: boolean;
-  resale: boolean;
-  rowMaterial: boolean;
-  ownProduction: boolean;
-  rowMaterialResale: boolean;
+  typeProduct: TypeProduct;
   currentStock?: number;
   stockMin?: number;
   active: boolean;
@@ -84,12 +80,12 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       throw new NotFoundError(`Categoria não encontrada`);
     }
 
-    const businessErrors = this.validateBusinessRules(input);
-    if (Object.keys(businessErrors).length > 0) {
-      throw new EntityValidationError(businessErrors);
-    }
+    // const businessErrors = this.validateBusinessRules(input);
+    // if (Object.keys(businessErrors).length > 0) {
+    //   throw new EntityValidationError(businessErrors);
+    // }
 
-    const profitPrice = this.calculateProfitPrice(input);
+    // const profitPrice = this.calculateProfitPrice(input);
 
     const imagePath = input.image?.buffer
       ? this.storageService.saveProductImage(company.id, input.image)
@@ -100,14 +96,13 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       active: input.active,
       barCode: input.barCode ?? null,
       costPrice: input.costPrice,
+      unitCostPrice: input.unitCostPrice,
+      pricePerKilogram: input.pricePerKilogram ?? null,
       description: input.description ?? null,
       expirationDateInDays: input.expirationDateInDays ?? null,
       ncm: input.ncm,
-      ownProduction: input.ownProduction,
-      profitPrice,
-      resale: input.resale,
-      rowMaterial: input.rowMaterial,
-      rowMaterialResale: input.rowMaterialResale,
+      typeProduct: input.typeProduct,
+      profitPrice: input.profitPrice ?? 1,
       salePrice: input.salePrice ?? null,
       scaleReference: input.scaleReference ?? null,
       stockAtual: input.currentStock ?? null,
@@ -131,112 +126,98 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     return { id: saveProduct.id };
   }
 
-  private validateBusinessRules(input: Input): FieldsError {
-    const errors: FieldsError = {};
+  // private validateBusinessRules(input: Input): FieldsError {
+  //   const errors: FieldsError = {};
 
-    const hasAnyProductType =
-      input.resale ||
-      input.ownProduction ||
-      input.rowMaterialResale ||
-      input.rowMaterial;
+  //   if (!input.typeProduct) {
+  //     errors.typeProduct = ['O tipo de produto é obrigatório'];
+  //   }
 
-    if ((input.rowMaterial || input.rowMaterialResale) && !input.consumerUnit) {
-      errors.consumerUnit = [
-        'Unidade de consumo é obrigatória para matéria-prima',
-      ];
-    }
+  //   if (!input.costPrice) {
+  //     errors.costPrice = [
+  //       'Preço de custo é obrigatória para produto do tipo matéria-prima',
+  //     ];
+  //   }
 
-    if (!hasAnyProductType) {
-      errors.resale = [
-        'É necessário marcar ao menos um tipo de produto: revenda, produção própria, matéria-prima de revenda ou matéria-prima',
-      ];
-      return errors;
-    }
+  //   if (!input.unitCostPrice) {
+  //     errors.unitCostPrice = [
+  //       'Preço de custo unitário é obrigatória para produto do tipo matéria-prima',
+  //     ];
+  //   }
 
-    if (input.stockManagement) {
-      if (input.currentStock === undefined || input.currentStock === null) {
-        errors.currentStock = [
-          'Quantidade atual em estoque é obrigatória quando o gerenciamento de estoque está ativado',
-        ];
-      }
-      if (input.stockMin === undefined || input.stockMin === null) {
-        errors.stockMin = [
-          'Quantidade mínima em estoque é obrigatória quando o gerenciamento de estoque está ativado',
-        ];
-      }
-    }
+  //   // TIPO DE PRODUTO
+  //   const isRowMaterial = input.typeProduct === TypeProduct.RAW_MATERIAL;
+  //   const isOwnProduction = input.typeProduct === TypeProduct.OWN_PRODUCTION;
 
-    const requiresSalePricingCheck =
-      input.resale || input.ownProduction || input.rowMaterialResale;
+  //   // UNIDADE DE CONSUMO
+  //   const unitConsumerVolume = input.consumerUnit === TypeConsumptionUnit.ML;
+  //   const unitConsumerWeight = input.consumerUnit === TypeConsumptionUnit.KG;
+  //   const unitConsumerUnit = input.consumerUnit === TypeConsumptionUnit.UN;
 
-    if (
-      requiresSalePricingCheck &&
-      (!input.salePrice === undefined || input.salePrice === null)
-    ) {
-      errors.salePrice = [
-        'Preço de venda é obrigatório para produtos de revenda, produção própria ou matéria-prima de revenda',
-      ];
-    }
+  //   // UNIDADE DE VENDA
+  //   const saleUnit = (input.unitOfMeasurement = TypeUnitOfMeasurement.UN);
 
-    const requirePrchasePricingCheck =
-      input.rowMaterial || input.resale || input.rowMaterialResale;
+  //   if (isRowMaterial) {
+  //     if (!input.consumerUnit) {
+  //       errors.consumerUnit = [
+  //         'Unidade de consumo é obrigatória para produto do tipo matéria-prima',
+  //       ];
+  //     }
 
-    if (
-      requirePrchasePricingCheck &&
-      (input.costPrice === undefined || input.costPrice === null)
-    ) {
-      errors.costPrice = [
-        'Preço de compra é obrigatório para produtos de revenda, matéria-prima ou matéria-prima de revenda',
-      ];
-    }
+  //     if (!input.purchaseUnit) {
+  //       errors.purchaseUnit = [
+  //         'Unidade de compra é obrigatória para produto do tipo matéria-prima',
+  //       ];
+  //     }
 
-    const requiredConsumerUnitCheck =
-      input.rowMaterial || input.rowMaterialResale;
+  //     if (unitConsumerVolume && !input.volume) {
+  //       errors.volume = [
+  //         'O volume é obrigatório para unidade de consumo em ml',
+  //       ];
+  //     }
 
-    if (
-      requiredConsumerUnitCheck &&
-      (input.consumerUnit === undefined || input.consumerUnit === null)
-    ) {
-      errors.consumerUnit = [
-        'Unidade de consumo é obrigatória para produtos matéria-prima ou matéria-prima de revenda',
-      ];
-    }
+  //     if (unitConsumerWeight && !input.weight) {
+  //       errors.weight = ['O peso é obrigatório para unidade de consumo em kg'];
+  //     }
+  //   }
 
-    const requiresVolumeCheck =
-      input.rowMaterial || input.resale || input.rowMaterialResale;
+  //   if (input.stockManagement) {
+  //     if (input.currentStock === undefined || input.currentStock === null) {
+  //       errors.currentStock = [
+  //         'Quantidade atual em estoque é obrigatória quando o gerenciamento de estoque está ativado',
+  //       ];
+  //     }
+  //     if (input.stockMin === undefined || input.stockMin === null) {
+  //       errors.stockMin = [
+  //         'Quantidade mínima em estoque é obrigatória quando o gerenciamento de estoque está ativado',
+  //       ];
+  //     }
+  //   }
 
-    if (
-      requiresVolumeCheck &&
-      input.purchaseUnit === TypeUnitOfPurchase.ML &&
-      !input.volume
-    ) {
-      errors.consumerUnit = [
-        'O volume do produto é obrigatório para unidade de compra em Mililitro',
-      ];
-    }
+  //   return errors;
+  // }
 
-    return errors;
-  }
+  // private calculateProfitPrice(input: Input): number | null {
+  //   const requiresPricingCheck =
+  //     input.typeProduct === TypeProduct.RESALE ||
+  //     input.typeProduct === TypeProduct.OWN_PRODUCTION ||
+  //     input.typeProduct === TypeProduct.RAW_MATERIAL_AND_RESALE;
 
-  private calculateProfitPrice(input: Input): number | null {
-    const requiresPricingCheck =
-      input.resale || input.ownProduction || input.rowMaterialResale;
+  //   if (!requiresPricingCheck || input.salePrice == null) {
+  //     return null;
+  //   }
 
-    if (!requiresPricingCheck || input.salePrice == null) {
-      return null;
-    }
+  //   const basis = getSaleBasisCost({
+  //     purchaseUnit: input.purchaseUnit ?? null,
+  //     unitOfMeasurement: input.unitOfMeasurement ?? null,
+  //     costPrice: input.costPrice,
+  //     quantity: input.quantity ?? null,
+  //     weight: input.weight ?? null,
+  //     volume: input.volume ?? null,
+  //   });
 
-    const basis = getSaleBasisCost({
-      purchaseUnit: input.purchaseUnit ?? null,
-      unitOfMeasurement: input.unitOfMeasurement ?? null,
-      costPrice: input.costPrice,
-      quantity: input.quantity ?? null,
-      weight: input.weight ?? null,
-      volume: input.volume ?? null,
-    });
+  //   const profitPrice = ((input.salePrice - basis) / basis) * 100;
 
-    const profitPrice = ((input.salePrice - basis) / basis) * 100;
-
-    return Number(profitPrice.toFixed(2));
-  }
+  //   return Number(profitPrice.toFixed(2));
+  // }
 }
