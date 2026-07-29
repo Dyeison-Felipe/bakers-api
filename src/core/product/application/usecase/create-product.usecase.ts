@@ -166,15 +166,52 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       }
     }
 
-    const requiresPricingCheck =
+    const requiresSalePricingCheck =
       input.resale || input.ownProduction || input.rowMaterialResale;
 
     if (
-      requiresPricingCheck &&
-      (input.salePrice === undefined || input.salePrice === null)
+      requiresSalePricingCheck &&
+      (!input.salePrice === undefined || input.salePrice === null)
     ) {
       errors.salePrice = [
         'Preço de venda é obrigatório para produtos de revenda, produção própria ou matéria-prima de revenda',
+      ];
+    }
+
+    const requirePrchasePricingCheck =
+      input.rowMaterial || input.resale || input.rowMaterialResale;
+
+    if (
+      requirePrchasePricingCheck &&
+      (input.costPrice === undefined || input.costPrice === null)
+    ) {
+      errors.costPrice = [
+        'Preço de compra é obrigatório para produtos de revenda, matéria-prima ou matéria-prima de revenda',
+      ];
+    }
+
+    const requiredConsumerUnitCheck =
+      input.rowMaterial || input.rowMaterialResale;
+
+    if (
+      requiredConsumerUnitCheck &&
+      (input.consumerUnit === undefined || input.consumerUnit === null)
+    ) {
+      errors.consumerUnit = [
+        'Unidade de consumo é obrigatória para produtos matéria-prima ou matéria-prima de revenda',
+      ];
+    }
+
+    const requiresVolumeCheck =
+      input.rowMaterial || input.resale || input.rowMaterialResale;
+
+    if (
+      requiresVolumeCheck &&
+      input.purchaseUnit === TypeUnitOfPurchase.ML &&
+      !input.volume
+    ) {
+      errors.consumerUnit = [
+        'O volume do produto é obrigatório para unidade de compra em Mililitro',
       ];
     }
 

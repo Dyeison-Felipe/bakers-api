@@ -9,15 +9,17 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 
 @Injectable()
 export class StorageServiceImpl implements StorageService {
-  constructor(@Inject(PROVIDERS.ENV_CONFIG_SERVICE) private readonly envConfig: EnvConfigService) {}
+  private readonly pathStorage: string;
+
+  constructor(
+    @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
+    private readonly envConfig: EnvConfigService,
+  ) {
+    this.pathStorage = envConfig.getStoragePath();
+  }
 
   private getCompanyProductDir(companyId: string): string {
-    const dir = path.join(
-      this.envConfig.getStoragePath(),
-      'company',
-      companyId,
-      'product',
-    );
+    const dir = path.join(this.pathStorage, 'company', companyId, 'product');
     fs.mkdirSync(dir, { recursive: true });
     return dir;
   }
