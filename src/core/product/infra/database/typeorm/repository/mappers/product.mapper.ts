@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ProductSchema } from '../schema/product.schema';
+import { ProductSchema } from '../../schema/product.schema';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { CompanyRepositoryMapper } from '@/core/company/infra/database/typeorm/repository/company-repository.mapper';
 import { CategoryMapper } from '@/core/category/infra/database/typeorm/repositories/category-mapper';
@@ -35,8 +35,12 @@ export class ProductMapper {
       createdBy: schema.createdBy,
       updatedBy: schema.updatedBy,
       deletedBy: schema.deletedBy,
-      company: schema.company ? CompanyRepositoryMapper.toEntity(schema.company) : null,
-      category: schema.category ? CategoryMapper.toEntity(schema.category) : null,
+      company: schema.company
+        ? CompanyRepositoryMapper.toEntity(schema.company)
+        : null,
+      category: schema.category
+        ? CategoryMapper.toEntity(schema.category)
+        : null,
       auditable: {
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
@@ -53,6 +57,8 @@ export class ProductMapper {
       barCode: entity.barCode,
       ncm: entity.ncm,
       costPrice: entity.costPrice,
+      unitCostPrice: entity.unitCostPrice,
+      pricePerKilogram: entity.pricePerKilogram,
       salePrice: entity.salePrice,
       profitPrice: entity.profitPrice,
       unitOfMeasurement: entity.unitOfMeasurement,
@@ -90,7 +96,8 @@ export class ProductMapper {
       costPrice: entity.costPrice,
       unitCostPrice: entity.unitCostPrice,
       pricePerKilogram: entity.pricePerKilogram,
-      imagePath: entity.imagePath,      salePrice: entity.salePrice,
+      imagePath: entity.imagePath,
+      salePrice: entity.salePrice,
       profitPrice: entity.profitPrice,
       unitOfMeasurement: entity.unitOfMeasurement,
       consumerUnit: entity.consumerUnit,

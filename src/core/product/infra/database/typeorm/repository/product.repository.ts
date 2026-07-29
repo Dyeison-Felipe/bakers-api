@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ProductSchema } from '../schema/product.schema';
 import { FindOptionsWhere, In, Repository } from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
-import { ProductMapper } from './product.mapper';
+import { ProductMapper } from './mappers/product.mapper';
 import {
   Pagination,
   PaginationInput,

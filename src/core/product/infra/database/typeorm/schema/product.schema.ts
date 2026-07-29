@@ -8,7 +8,8 @@ import {
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { ProductRecipeItemSchema } from './product-recipe-item';
 
 @Entity('product')
 export class ProductSchema extends BaseSchema {
@@ -26,7 +27,7 @@ export class ProductSchema extends BaseSchema {
 
   @Column({
     name: 'cost_price',
-    nullable: true,
+    nullable: false,
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -38,8 +39,8 @@ export class ProductSchema extends BaseSchema {
     name: 'unit_cost_price',
     nullable: false,
     type: 'decimal',
-    precision: 10,
-    scale: 2,
+    precision: 12,
+    scale: 6,
     transformer: new DecimalColumnTransformer(),
   })
   unitCostPrice: number;
@@ -66,7 +67,7 @@ export class ProductSchema extends BaseSchema {
 
   @Column({
     name: 'profit_price',
-    nullable: false,
+    nullable: true,
     type: 'decimal',
     precision: 10,
     scale: 2,
@@ -196,4 +197,10 @@ export class ProductSchema extends BaseSchema {
   @ManyToOne(() => CategorySchema, (category) => category.product)
   @JoinColumn({ name: 'category' })
   category: CategorySchema;
+
+  @OneToMany(
+    () => ProductRecipeItemSchema,
+    (productRecipe) => productRecipe.product,
+  )
+  recipeItems: ProductRecipeItemSchema[];
 }

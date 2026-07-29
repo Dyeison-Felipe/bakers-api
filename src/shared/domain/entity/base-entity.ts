@@ -24,7 +24,7 @@ export abstract class BaseEntity<Props extends BaseProps> {
         deletedAt: props.auditable?.deletedAt ?? null,
       },
     };
-    // this.validate()
+    this.validate()
   }
 
   get id() {
@@ -47,7 +47,7 @@ export abstract class BaseEntity<Props extends BaseProps> {
 		}
 	}
 
-  // protected abstract validate(): void
+  protected abstract validate(): void
 
   toJSON(): Props & EntityProps {
     return {
