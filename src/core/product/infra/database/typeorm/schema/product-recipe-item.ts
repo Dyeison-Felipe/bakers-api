@@ -12,6 +12,15 @@ export class ProductRecipeItemSchema extends BaseSchema {
   @JoinColumn({ name: 'material_id' })
   material: ProductSchema;
 
-  @Column({ name: 'quantity', type: 'decimal', precision: 10, scale: 3 })
+  @Column({
+    name: 'quantity',
+    type: 'decimal',
+    precision: 10,
+    scale: 3,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => parseFloat(value),
+    },
+  })
   quantity: number;
 }

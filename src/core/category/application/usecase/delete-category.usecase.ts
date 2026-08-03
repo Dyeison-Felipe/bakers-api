@@ -6,7 +6,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { UserEntity } from '@/core/user/domain/entities/user.entity';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
-import { ProductQueryRepository } from '@/core/product/domain/repositories/product.query';
+import { ProductQueryRepository } from '@/core/product/application/queries/product.query';
 
 type Input = {
   id: string;

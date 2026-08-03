@@ -37,4 +37,8 @@ export class ProductRecipeItem extends BaseEntity<ProductRecipeItemProps> {
       quantity: props.quantity,
     });
   }
+
+  updateQuantity(quantity: number): void {
+    this.quantity = quantity;
+  }
 }

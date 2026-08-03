@@ -2,7 +2,7 @@
 import {
   CategoryIdsWithLinkedProducts,
   ProductQueryRepository,
-} from '@/core/product/domain/repositories/product.query';
+} from '@/core/product/application/queries/product.query';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

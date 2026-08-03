@@ -12,7 +12,7 @@ import { CategoryController } from './controllers/category.controller';
 import { DeleteCategoryByCompanyUseCase } from '../application/usecase/delete-category.usecase';
 import { CategoryPersistenceModule } from './category-persistence.module';
 import { ProductPersistenceModule } from '@/core/product/infra/product-persistence.module';
-import { ProductQueryRepository } from '@/core/product/domain/repositories/product.query';
+import { ProductQueryRepository } from '@/core/product/application/queries/product.query';
 
 @Module({
   imports: [CategoryPersistenceModule, ProductPersistenceModule],

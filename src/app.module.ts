@@ -24,9 +24,11 @@ import { NcmModule } from './core/ncm/infra/ncm.module';
 import { SiscomexModule } from './shared/infra/siscomex/siscomex.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StorageModule } from './shared/infra/storage/storage.module';
+import { AdditionalCostModule } from './core/additional-cost/infra/additional-cost.module';
 
 @Module({
   imports: [
+    AdditionalCostModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

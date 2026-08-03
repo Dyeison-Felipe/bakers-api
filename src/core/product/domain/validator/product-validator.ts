@@ -53,7 +53,8 @@ export class ProductRules {
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
-  unitCostPrice: number;
+  @IsOptional()
+  unitCostPrice: number | null;
 
   @IsNumber()
   @Min(0)

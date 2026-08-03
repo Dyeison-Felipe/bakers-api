@@ -1,19 +1,37 @@
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductSchema } from '../schema/product.schema';
-import { FindOptionsWhere, In, Repository } from 'typeorm';
+import {
+  FindOptionsRelations,
+  FindOptionsWhere,
+  In,
+  Repository,
+} from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { ProductMapper } from './mappers/product.mapper';
 import {
   Pagination,
   PaginationInput,
 } from '@/shared/domain/pagination/pagination';
+import { TypeProduct } from '@/shared/infra/enums/product';
 
 export class ProductRepositoryImpl implements ProductRepository {
   constructor(
     @InjectRepository(ProductSchema)
     private readonly productRepository: Repository<ProductSchema>,
   ) {}
+
+  async findAllByIdsAndCompanyId(
+    ids: string[],
+    companyId: string,
+  ): Promise<Product[]> {
+    const productsSchema = await this.productRepository.find({
+      where: { id: In(ids), company: { id: companyId } },
+      relations: this.getRelations(),
+    });
+
+    return productsSchema.map((schema) => ProductMapper.toEntity(schema));
+  }
 
   async findProductByIdAndCompanyId(
     productId: string,
@@ -35,6 +53,7 @@ export class ProductRepositoryImpl implements ProductRepository {
     companyId: string,
     status?: boolean,
     categoryId?: string,
+    typeProduct?: TypeProduct,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>> {
     const page = pagination?.page ?? 1;
@@ -52,6 +71,10 @@ export class ProductRepositoryImpl implements ProductRepository {
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });
+    }
+
+    if (typeProduct) {
+      query.andWhere('product.typeProduct = :typeProduct', { typeProduct });
     }
 
     query
@@ -118,7 +141,7 @@ export class ProductRepositoryImpl implements ProductRepository {
   async update(entity: Product): Promise<void> {
     const schema = ProductMapper.toUpdateSchema(entity);
 
-    await this.productRepository.save(schema); 
+    await this.productRepository.save(schema);
   }
 
   async existsByCategoryIds(
@@ -137,5 +160,36 @@ export class ProductRepositoryImpl implements ProductRepository {
 
   async delete(id: string): Promise<void> {
     await this.productRepository.softDelete(id);
+  }
+
+  private getRelations(): FindOptionsRelations<ProductSchema> {
+    return {
+      company: {
+        address: {
+          city: {
+            state: true,
+          },
+        },
+        plan: {
+          planPermission: {
+            permission: true,
+          },
+        },
+      },
+      category: {
+        company: {
+          address: {
+            city: {
+              state: true,
+            },
+          },
+          plan: {
+            planPermission: {
+              permission: true,
+            },
+          },
+        },
+      },
+    };
   }
 }

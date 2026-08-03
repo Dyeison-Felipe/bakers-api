@@ -63,7 +63,7 @@ export class CreateTableProduct1784158892033 implements MigrationInterface {
             type: 'decimal',
             precision: 10,
             scale: 2,
-            isNullable: false,
+            isNullable: true,
           },
           {
             name: 'sale_price',

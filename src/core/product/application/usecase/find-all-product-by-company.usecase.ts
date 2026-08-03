@@ -6,11 +6,12 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { FindAllProductOutput } from '@/shared/application/output/product/find-all-product.output';
 import { Product } from '../../domain/entities/product.entity';
 import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
-import { ProductStatus } from '@/shared/infra/enums/product';
+import { ProductStatus, TypeProduct } from '@/shared/infra/enums/product';
 
 type Input = {
   categoryId?: string;
   status?: ProductStatus;
+  typeProduct?: TypeProduct
 };
 
 type Output = PaginationOutput<FindAllProductOutput>;
@@ -23,7 +24,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ categoryId, status }: Input): Promise<Output> {
+  async execute({ categoryId, status, typeProduct }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
     const statusProduct = status === ProductStatus.INATIVO ? false : true;
@@ -32,6 +33,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       loggedUser.company.id,
       statusProduct,
       categoryId,
+      typeProduct
     );
 
     const results: Output = {

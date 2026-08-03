@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Inject, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductSchema } from './database/typeorm/schema/product.schema';
 import { PROVIDERS } from '@/shared/application/constants/providers';
@@ -17,9 +17,22 @@ import { UpdateStockProductUseCase } from '../application/usecase/increase-decre
 import { FindProductByIdAndCompanyId } from '../application/usecase/find-product-by-id.usecase';
 import { StorageService } from '@/shared/application/storage/storage.service';
 import { GetProductImageUseCase } from '../application/usecase/get-image.usecase';
+import { ProductRecipeItemRepository } from '../domain/repositories/product-recipe-item.repository';
+import { ProductAdditionalCostRepository } from '../domain/repositories/product-additional-cost.repository';
+import { CalculateUnitCostUseCase } from '../application/usecase/calculate-unit-cost.usecase';
+import { CalculateRecipeCostUseCase } from '../application/usecase/calculate-recipe-cost.usecase';
+import {
+  FindProductRecipeUseCase,
+} from '../application/usecase/find-product-recipe-items.usecase';
+import { AdditionalCostModule } from '@/core/additional-cost/infra/additional-cost.module';
+import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 
 @Module({
-  imports: [ProductPersistenceModule, CategoryPersistenceModule],
+  imports: [
+    ProductPersistenceModule,
+    CategoryPersistenceModule,
+    AdditionalCostModule,
+  ],
   controllers: [ProductController],
   providers: [
     {
@@ -29,12 +42,18 @@ import { GetProductImageUseCase } from '../application/usecase/get-image.usecase
         loggedUserService: LoggedUserService,
         categoryRepository: CategoryRepository,
         storageService: StorageService,
+        productRecipeItemRepository: ProductRecipeItemRepository,
+        productAdditionalCostRepository: ProductAdditionalCostRepository,
+        additionalCostRepository: AdditionalCostRepository,
       ) => {
         return new CreateProductUseCase(
           productRepository,
           loggedUserService,
           categoryRepository,
           storageService,
+          productRecipeItemRepository,
+          productAdditionalCostRepository,
+          additionalCostRepository,
         );
       },
       inject: [
@@ -42,6 +61,9 @@ import { GetProductImageUseCase } from '../application/usecase/get-image.usecase
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.CATEGORY_REPOSITORY,
         PROVIDERS.STORAGE_SERVICE,
+        PROVIDERS.PRODUCT_RECIPE_ITEM,
+        PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.ADDITIONAL_COST_REPOSITORY,
       ],
     },
     {
@@ -63,13 +85,19 @@ import { GetProductImageUseCase } from '../application/usecase/get-image.usecase
         productRepository: ProductRepository,
         categoryRepository: CategoryRepository,
         loggedUserService: LoggedUserService,
-        storageService: StorageService
+        storageService: StorageService,
+        productRecipeItemRepository: ProductRecipeItemRepository,
+        productAdditionalCostRepository: ProductAdditionalCostRepository,
+        additionalCostRepository: AdditionalCostRepository,
       ) => {
         return new UpdateProductUseCase(
           productRepository,
           categoryRepository,
           loggedUserService,
           storageService,
+          productRecipeItemRepository,
+          productAdditionalCostRepository,
+          additionalCostRepository,
         );
       },
       inject: [
@@ -77,6 +105,9 @@ import { GetProductImageUseCase } from '../application/usecase/get-image.usecase
         PROVIDERS.CATEGORY_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.STORAGE_SERVICE,
+        PROVIDERS.PRODUCT_RECIPE_ITEM,
+        PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.ADDITIONAL_COST_REPOSITORY,
       ],
     },
     {
@@ -123,6 +154,48 @@ import { GetProductImageUseCase } from '../application/usecase/get-image.usecase
         PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.STORAGE_SERVICE,
         PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: CalculateRecipeCostUseCase,
+      useFactory: (
+        productRepository: ProductRepository,
+        loggedUserService: LoggedUserService,
+        additionalCostRepository: AdditionalCostRepository,
+      ) => {
+        return new CalculateRecipeCostUseCase(
+          productRepository,
+          loggedUserService,
+          additionalCostRepository,
+        );
+      },
+      inject: [
+        PROVIDERS.PRODUCT_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+        PROVIDERS.ADDITIONAL_COST_REPOSITORY,
+      ],
+    },
+    {
+      provide: CalculateUnitCostUseCase,
+      useFactory: () => {
+        return new CalculateUnitCostUseCase();
+      },
+      inject: [],
+    },
+    {
+      provide: FindProductRecipeUseCase,
+      useFactory: (
+        productRecipeItemRepository: ProductRecipeItemRepository,
+        productAdditionalCostRepository: ProductAdditionalCostRepository,
+      ) => {
+        return new FindProductRecipeUseCase(
+          productRecipeItemRepository,
+          productAdditionalCostRepository,
+        );
+      },
+      inject: [
+        PROVIDERS.PRODUCT_RECIPE_ITEM,
+        PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
       ],
     },
   ],

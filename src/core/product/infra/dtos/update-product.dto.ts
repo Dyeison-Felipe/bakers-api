@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -19,6 +20,8 @@ import {
 } from '@/shared/infra/enums/product';
 import { Type } from 'class-transformer';
 import { MulterFileDto } from '@/shared/infra/dto/multer-file';
+import { ProductMaterialDto } from './calculate-recipe-cost.dto';
+import { AdditionalCostInputDto } from './additional-cost.dto';
 
 export class UpdateProductDto {
   @IsUUID()
@@ -92,8 +95,9 @@ export class UpdateProductDto {
     minimum: 0,
   })
   @IsNumber()
+  @IsOptional()
   @Min(0)
-  pricePerKilogram: number | null;
+  pricePerKilogram: number;
 
   @ApiPropertyOptional({
     description: 'Preço de venda do produto',
@@ -242,6 +246,26 @@ export class UpdateProductDto {
   @IsUUID()
   @IsNotEmpty()
   category: string;
+
+  @ApiPropertyOptional({
+    description: 'Matérias-primas utilizadas na receita (produção própria)',
+    type: [ProductMaterialDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductMaterialDto)
+  productMaterial?: ProductMaterialDto[];
+
+  @ApiPropertyOptional({
+    description: 'Custos adicionais vinculados ao produto (produção própria)',
+    type: [AdditionalCostInputDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AdditionalCostInputDto)
+  additionalcost?: AdditionalCostInputDto[];
 }
 
 export class UpdateProductRequestDto {

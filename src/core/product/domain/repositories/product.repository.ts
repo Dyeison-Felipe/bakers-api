@@ -4,6 +4,7 @@ import {
   Pagination,
   PaginationInput,
 } from '@/shared/domain/pagination/pagination';
+import { TypeProduct } from '@/shared/infra/enums/product';
 
 export interface ProductRepository extends BaseRepository<Product> {
 
@@ -17,6 +18,7 @@ export interface ProductRepository extends BaseRepository<Product> {
     companyId: string,
     status?: boolean,
     categoryId?: string,
+    typeProduct?: TypeProduct,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>>;
   existsByCategoryIds(
@@ -28,4 +30,6 @@ export interface ProductRepository extends BaseRepository<Product> {
     productId: string,
     companyId: string,
   ): Promise<Product | null>;
+
+  findAllByIdsAndCompanyId(ids: string[], companyId: string): Promise<Product[]>;
 }
