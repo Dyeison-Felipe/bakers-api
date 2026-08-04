@@ -14,6 +14,7 @@ import { Product } from '../../domain/entities/product.entity';
 import { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import { CreateProductOutput } from '@/shared/application/output/product/create-product.output';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { MulterFile } from '@/shared/application/storage/multer-file.type';
 import { StorageService } from '@/shared/application/storage/storage.service';
 import { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
@@ -100,6 +101,18 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     const company = loggedUser.company;
 
     const isOwnProduction = input.typeProduct === TypeProduct.OWN_PRODUCTION;
+
+    if (isOwnProduction && !input.expirationDateInDays) {
+      throw new BadRequestError(
+        'Informe a validade em dias para produtos de produção própria',
+      );
+    }
+
+    if (isOwnProduction && !input.stockManagement) {
+      throw new BadRequestError(
+        'Produtos de produção própria precisam ter o controle de estoque habilitado',
+      );
+    }
 
     const exisProduct =
       await this.productRepository.findProductByNameAndCompanyId(

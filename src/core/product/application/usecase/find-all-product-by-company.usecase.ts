@@ -27,7 +27,12 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
   async execute({ categoryId, status, typeProduct }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
-    const statusProduct = status === ProductStatus.INATIVO ? false : true;
+    const statusProduct =
+      status === ProductStatus.INATIVO
+        ? false
+        : status === ProductStatus.TODOS
+          ? undefined
+          : true;
 
     const products = await this.productRepository.findAllProductsByCompanyId(
       loggedUser.company.id,

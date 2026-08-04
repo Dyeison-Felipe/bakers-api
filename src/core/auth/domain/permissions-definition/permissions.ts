@@ -2,6 +2,8 @@ import { PermissionCategory } from "./category";
 import { PermissionPlan } from "./plan";
 import { PermissionProduct } from "./product";
 import { PermissionUser } from "./user";
+import { PermissionBatch } from "./batch";
+import { PermissionDailyProduction } from "./daily-production";
 
 export type PermissionRef = (typeof Permissions)[keyof typeof Permissions];
 
@@ -16,4 +18,6 @@ export const Permissions = {
   ...PermissionCategory,
   ...PermissionProduct,
   ...PermissionUser,
+  ...PermissionBatch,
+  ...PermissionDailyProduction,
 }

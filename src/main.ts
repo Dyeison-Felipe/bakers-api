@@ -18,6 +18,8 @@ async function bootstrap() {
 
   globalConfig(app, envConfig);
 
+  console.log(`Server is running in port ${envConfig.getPort()}`)
+
   await app.listen(envConfig.getPort() ?? '0.0.0.0');
 }
 bootstrap();

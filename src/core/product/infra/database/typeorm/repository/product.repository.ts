@@ -66,8 +66,9 @@ export class ProductRepositoryImpl implements ProductRepository {
       .leftJoinAndSelect('product.company', 'company')
       .where('company.id = :companyId', { companyId });
 
-    const activeFilter = status ?? true;
-    query.andWhere('product.active = :active', { active: activeFilter });
+    if (status !== undefined) {
+      query.andWhere('product.active = :active', { active: status });
+    }
 
     if (categoryId) {
       query.andWhere('category.id = :categoryId', { categoryId });

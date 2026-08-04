@@ -33,4 +33,5 @@ export enum TypeOperationStock {
 export enum ProductStatus {
   ATIVO = 'ATIVO',
   INATIVO = 'INATIVO',
+  TODOS = 'TODOS',
 }

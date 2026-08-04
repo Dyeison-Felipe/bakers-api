@@ -46,7 +46,7 @@ export async function globalConfig(
   );
   app.enableCors({
     origin: envConfig.getAllowedOrigins().split(','),
-    methods: 'GET,PUT,POST,DELETE',
+    methods: 'GET,PUT,POST,PATCH,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });

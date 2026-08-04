@@ -25,10 +25,14 @@ import { SiscomexModule } from './shared/infra/siscomex/siscomex.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StorageModule } from './shared/infra/storage/storage.module';
 import { AdditionalCostModule } from './core/additional-cost/infra/additional-cost.module';
+import { BatchModule } from './core/batch/infra/batch.module';
+import { DailyProductionModule } from './core/daily-production/infra/daily-production.module';
 
 @Module({
   imports: [
     AdditionalCostModule,
+    BatchModule,
+    DailyProductionModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

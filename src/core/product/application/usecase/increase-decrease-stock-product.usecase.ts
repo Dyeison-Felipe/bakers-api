@@ -46,14 +46,12 @@ export class UpdateStockProductUseCase implements UseCase<
       );
     }
 
-    if (!product.currentStock) {
-      throw new BadRequestError(`O produto ${product.name} não possui estoque`);
-    }
+    const currentStock = product.currentStock ?? 0;
 
     const newCurrentStock =
       input.type === TypeOperationStock.INCREASE
-        ? this.increase(product.currentStock, input.value)
-        : this.decrease(product.currentStock, input.value, product.name);
+        ? this.increase(currentStock, input.value)
+        : this.decrease(currentStock, input.value, product.name);
 
     product.updateStock({
       currentStock: newCurrentStock,

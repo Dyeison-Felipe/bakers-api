@@ -20,6 +20,7 @@ import { AdditionalCostRepository } from '@/core/additional-cost/domain/reposito
 import { AdditionalCost } from '@/core/additional-cost/domain/entities/additional-cost.entity';
 import { Transactional } from 'typeorm-transactional';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import {
   MaterialUsage,
   ProductRecipeCostCalculator,
@@ -100,6 +101,18 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const company = loggedUser.company;
     const isOwnProduction = input.typeProduct === TypeProduct.OWN_PRODUCTION;
+
+    if (isOwnProduction && !input.expirationDateInDays) {
+      throw new BadRequestError(
+        'Informe a validade em dias para produtos de produção própria',
+      );
+    }
+
+    if (isOwnProduction && !input.stockManagement) {
+      throw new BadRequestError(
+        'Produtos de produção própria precisam ter o controle de estoque habilitado',
+      );
+    }
 
     const product = await this.productRepository.findProductByIdAndCompanyId(
       input.id,
