@@ -27,12 +27,16 @@ import { StorageModule } from './shared/infra/storage/storage.module';
 import { AdditionalCostModule } from './core/additional-cost/infra/additional-cost.module';
 import { BatchModule } from './core/batch/infra/batch.module';
 import { DailyProductionModule } from './core/daily-production/infra/daily-production.module';
+import { SaleModule } from './core/sale/infra/sale.module';
+import { CashRegisterModule } from './core/cash-register/infra/cash-register.module';
 
 @Module({
   imports: [
     AdditionalCostModule,
     BatchModule,
     DailyProductionModule,
+    SaleModule,
+    CashRegisterModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

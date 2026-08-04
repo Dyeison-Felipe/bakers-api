@@ -10,4 +10,5 @@ export enum TypeBatchMovementReason {
   MANUAL_ADJUSTMENT = 'MANUAL_ADJUSTMENT',
   CORRECTION = 'CORRECTION',
   DELETION = 'DELETION',
+  SALE = 'SALE',
 }

@@ -134,6 +134,6 @@ import { FindBatchByIdUseCase } from '../application/usecase/find-batch-by-id.us
       inject: [PROVIDERS.BATCH_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
-  exports: [CreateBatchUseCase],
+  exports: [CreateBatchUseCase, WriteOffBatchUseCase],
 })
 export class BatchModule {}

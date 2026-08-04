@@ -55,6 +55,7 @@ export class ProductRepositoryImpl implements ProductRepository {
     categoryId?: string,
     typeProduct?: TypeProduct,
     pagination?: PaginationInput,
+    name?: string,
   ): Promise<Pagination<Product>> {
     const page = pagination?.page ?? 1;
     const limit = pagination?.limit ?? 100;
@@ -78,8 +79,64 @@ export class ProductRepositoryImpl implements ProductRepository {
       query.andWhere('product.typeProduct = :typeProduct', { typeProduct });
     }
 
+    if (name) {
+      query.andWhere('product.name ILIKE :name', { name: `%${name}%` });
+    }
+
     query
       .orderBy('product.createdAt', direction)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [productsSchema, totalItems] = await query.getManyAndCount();
+
+    const items = productsSchema.map((product) =>
+      ProductMapper.toEntity(product),
+    );
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
+  }
+
+  async findEligibleForSale(
+    companyId: string,
+    search?: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<Product>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 20;
+
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.company', 'company')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('product.active = :active', { active: true })
+      .andWhere('product.typeProduct IN (:...typeProducts)', {
+        typeProducts: [
+          TypeProduct.OWN_PRODUCTION,
+          TypeProduct.RESALE,
+          TypeProduct.RAW_MATERIAL_AND_RESALE,
+        ],
+      });
+
+    if (search) {
+      query.andWhere(
+        '(product.name ILIKE :search OR product.barCode ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    query
+      .orderBy('product.name', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

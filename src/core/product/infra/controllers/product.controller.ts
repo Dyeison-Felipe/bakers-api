@@ -144,6 +144,11 @@ export class ProductController {
     description:
       'Filtra produtos por tipo. Se não informado, retorna todos os tipos de produtos.',
   })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    description: 'Busca produtos cujo nome contenha o texto informado.',
+  })
   @ApiOkResponse({
     description: 'Lista de produtos retornada com sucesso',
     type: FindAllProductPresenter,
@@ -156,11 +161,13 @@ export class ProductController {
     @Query('categoryId') categoryId?: string,
     @Query('typeProduct') typeProduct?: TypeProduct,
     @Query('status') status?: ProductStatus,
+    @Query('name') name?: string,
   ): Promise<Pagination<FindAllProductPresenter>> {
     return await this.findAllProductByCompanyUseCase.execute({
       categoryId,
       status,
       typeProduct,
+      name,
     });
   }
 

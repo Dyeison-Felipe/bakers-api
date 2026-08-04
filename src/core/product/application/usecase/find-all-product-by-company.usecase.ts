@@ -11,7 +11,8 @@ import { ProductStatus, TypeProduct } from '@/shared/infra/enums/product';
 type Input = {
   categoryId?: string;
   status?: ProductStatus;
-  typeProduct?: TypeProduct
+  typeProduct?: TypeProduct;
+  name?: string;
 };
 
 type Output = PaginationOutput<FindAllProductOutput>;
@@ -24,7 +25,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ categoryId, status, typeProduct }: Input): Promise<Output> {
+  async execute({ categoryId, status, typeProduct, name }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
     const statusProduct =
@@ -38,7 +39,9 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       loggedUser.company.id,
       statusProduct,
       categoryId,
-      typeProduct
+      typeProduct,
+      undefined,
+      name,
     );
 
     const results: Output = {

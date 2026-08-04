@@ -20,6 +20,7 @@ export interface ProductRepository extends BaseRepository<Product> {
     categoryId?: string,
     typeProduct?: TypeProduct,
     pagination?: PaginationInput,
+    name?: string,
   ): Promise<Pagination<Product>>;
   existsByCategoryIds(
     categoryIds: string[],
@@ -32,4 +33,10 @@ export interface ProductRepository extends BaseRepository<Product> {
   ): Promise<Product | null>;
 
   findAllByIdsAndCompanyId(ids: string[], companyId: string): Promise<Product[]>;
+
+  findEligibleForSale(
+    companyId: string,
+    search?: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<Product>>;
 }

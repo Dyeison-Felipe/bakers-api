@@ -24,6 +24,12 @@ export class StorageServiceImpl implements StorageService {
     return dir;
   }
 
+  private getCompanySaleDir(companyId: string): string {
+    const dir = path.join(this.pathStorage, 'company', companyId, 'sale');
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+  }
+
   saveProductImage(companyId: string, file: MulterFile): string {
     const dir = this.getCompanyProductDir(companyId);
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
@@ -41,5 +47,18 @@ export class StorageServiceImpl implements StorageService {
   deleteProductImage(companyId: string, filename: string): void {
     const fullPath = this.getProductImagePath(companyId, filename);
     if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+  }
+
+  saveSaleReceipt(companyId: string, saleId: string, buffer: Buffer): string {
+    const dir = this.getCompanySaleDir(companyId);
+    const filename = `${saleId}.pdf`;
+
+    fs.writeFileSync(path.join(dir, filename), buffer);
+
+    return filename;
+  }
+
+  getSaleReceiptPath(companyId: string, filename: string): string {
+    return path.join(this.getCompanySaleDir(companyId), filename);
   }
 }
