@@ -82,6 +82,7 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
           quantity: allocation.quantityToTake,
           reason: input.reason,
           reasonDescription: input.reasonDescription ?? null,
+          unitCostSnapshot: null,
           createdBy: loggedUser.id,
         }),
       );

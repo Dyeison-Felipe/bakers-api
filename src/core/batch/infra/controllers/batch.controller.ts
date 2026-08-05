@@ -21,13 +21,18 @@ import { Pagination } from '@/shared/infra/presenter/pagination/pagination.prese
 import { BatchPresenter } from '@/shared/infra/presenter/batch/batch.presenter';
 import { UpdateBatchPresenter } from '@/shared/infra/presenter/batch/update-batch.presenter';
 import { WriteOffBatchPresenter } from '@/shared/infra/presenter/batch/write-off-batch.presenter';
+import { FindTodayLeftoverBatchesPresenter } from '@/shared/infra/presenter/batch/find-today-leftover-batches.presenter';
+import { DiscardBatchLeftoverPresenter } from '@/shared/infra/presenter/batch/discard-batch-leftover.presenter';
 import { UpdateBatchDto } from '../dtos/update-batch.dto';
 import { WriteOffBatchDto } from '../dtos/write-off-batch.dto';
+import { DiscardBatchDto } from '../dtos/discard-batch.dto';
 import { FindAllBatchesUseCase } from '../../application/usecase/find-all-batches.usecase';
 import { FindBatchByIdUseCase } from '../../application/usecase/find-batch-by-id.usecase';
 import { UpdateBatchUseCase } from '../../application/usecase/update-batch.usecase';
 import { DeleteBatchUseCase } from '../../application/usecase/delete-batch.usecase';
 import { WriteOffBatchUseCase } from '../../application/usecase/write-off-batch.usecase';
+import { FindTodayLeftoverBatchesUseCase } from '../../application/usecase/find-today-leftover-batches.usecase';
+import { DiscardBatchLeftoverUseCase } from '../../application/usecase/discard-batch-leftover.usecase';
 import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
 
 @ApiTags('Batch')
@@ -39,7 +44,23 @@ export class BatchController {
     private readonly updateBatchUseCase: UpdateBatchUseCase,
     private readonly deleteBatchUseCase: DeleteBatchUseCase,
     private readonly writeOffBatchUseCase: WriteOffBatchUseCase,
+    private readonly findTodayLeftoverBatchesUseCase: FindTodayLeftoverBatchesUseCase,
+    private readonly discardBatchLeftoverUseCase: DiscardBatchLeftoverUseCase,
   ) {}
+
+  // Rota estática — precisa vir antes de ':id' pra não ser interpretada
+  // como um id de lote.
+  @Get('today-leftovers')
+  @Permission(PermissionBatch.BATCH_READER)
+  @ApiOperation({
+    summary: 'Lista os lotes produzidos hoje que ainda têm sobra',
+    description:
+      'Usado no fechamento do dia para decidir o que fica em estoque e o que é descartado como desperdício.',
+  })
+  @ApiOkResponse({ type: FindTodayLeftoverBatchesPresenter })
+  async todayLeftovers(): Promise<FindTodayLeftoverBatchesPresenter> {
+    return await this.findTodayLeftoverBatchesUseCase.execute();
+  }
 
   @Get()
   @Permission(PermissionBatch.BATCH_READER)
@@ -117,6 +138,26 @@ export class BatchController {
       productId: dto.productId,
       quantity: dto.quantity,
       reason: dto.reason,
+      reasonDescription: dto.reasonDescription,
+    });
+  }
+
+  @Post(':id/discard')
+  @Permission(PermissionBatch.BATCH_WRITE_OFF)
+  @ApiOperation({
+    summary: 'Descarta a sobra de um lote como desperdício',
+    description:
+      'Dá baixa na quantidade restante de um lote específico (ou parte dela) e registra como perda, pro cálculo de prejuízo com desperdício.',
+  })
+  @ApiParam({ name: 'id', description: 'Id do lote' })
+  @ApiOkResponse({ type: DiscardBatchLeftoverPresenter })
+  async discard(
+    @Param('id') id: string,
+    @Body() dto: DiscardBatchDto,
+  ): Promise<DiscardBatchLeftoverPresenter> {
+    return await this.discardBatchLeftoverUseCase.execute({
+      batchId: id,
+      quantity: dto.quantity,
       reasonDescription: dto.reasonDescription,
     });
   }

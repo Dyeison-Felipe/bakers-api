@@ -14,6 +14,7 @@ export type SaleItemProps = {
   quantity: number | null;
   weightInKg: number | null;
   unitPriceSnapshot: number;
+  unitCostSnapshot: number;
   subtotal: number;
   createdBy: string;
   updatedBy: string;
@@ -28,6 +29,7 @@ type CreateSaleItemProps = {
   quantity: number | null;
   weightInKg: number | null;
   unitPriceSnapshot: number;
+  unitCostSnapshot: number;
   subtotal: number;
   createdBy: string;
 };
@@ -55,6 +57,7 @@ export class SaleItem extends BaseEntity<SaleItemProps> {
       quantity: props.quantity,
       weightInKg: props.weightInKg,
       unitPriceSnapshot: props.unitPriceSnapshot,
+      unitCostSnapshot: props.unitCostSnapshot,
       subtotal: props.subtotal,
       createdBy: props.createdBy,
       updatedBy: props.createdBy,

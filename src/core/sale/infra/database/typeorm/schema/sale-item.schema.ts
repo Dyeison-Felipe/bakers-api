@@ -55,6 +55,15 @@ export class SaleItemSchema extends BaseSchema {
   unitPriceSnapshot: number;
 
   @Column({
+    name: 'unit_cost_snapshot',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    transformer: new DecimalColumnTransformer(),
+  })
+  unitCostSnapshot: number;
+
+  @Column({
     name: 'subtotal',
     type: 'decimal',
     precision: 10,

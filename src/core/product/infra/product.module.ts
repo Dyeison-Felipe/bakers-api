@@ -26,6 +26,7 @@ import {
 } from '../application/usecase/find-product-recipe-items.usecase';
 import { AdditionalCostModule } from '@/core/additional-cost/infra/additional-cost.module';
 import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
+import { FindLowStockProductsUseCase } from '../application/usecase/find-low-stock-products.usecase';
 
 @Module({
   imports: [
@@ -197,6 +198,19 @@ import { AdditionalCostRepository } from '@/core/additional-cost/domain/reposito
         PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
       ],
+    },
+    {
+      provide: FindLowStockProductsUseCase,
+      useFactory: (
+        productRepository: ProductRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindLowStockProductsUseCase(
+          productRepository,
+          loggedUserService,
+        );
+      },
+      inject: [PROVIDERS.PRODUCT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [],

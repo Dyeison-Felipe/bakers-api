@@ -9,6 +9,7 @@ import {
   Pagination,
   PaginationInput,
 } from '@/shared/domain/pagination/pagination';
+import { formatDateOnly } from '@/shared/infra/utils/format-date-only';
 import { BatchSchema } from '../schema/batch.schema';
 import { BatchMapper } from './mappers/batch.mapper';
 
@@ -72,6 +73,12 @@ export class BatchRepositoryImpl implements BatchRepository {
 
     if (filters?.onlyAvailable) {
       query.andWhere('batch.remainingQuantity > 0');
+    }
+
+    if (filters?.producedOn) {
+      query.andWhere('batch.productionDate = :producedOn', {
+        producedOn: formatDateOnly(filters.producedOn),
+      });
     }
 
     query

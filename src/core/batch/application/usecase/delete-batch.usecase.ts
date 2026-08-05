@@ -53,6 +53,7 @@ export class DeleteBatchUseCase implements UseCase<Input, Output> {
           quantity: batch.remainingQuantity,
           reason: TypeBatchMovementReason.DELETION,
           reasonDescription: null,
+          unitCostSnapshot: null,
           createdBy: loggedUser.id,
         }),
       );

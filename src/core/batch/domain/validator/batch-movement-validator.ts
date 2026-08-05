@@ -34,6 +34,11 @@ export class BatchMovementRules {
   @MaxLength(500)
   reasonDescription: string | null;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitCostSnapshot: number | null;
+
   @IsString()
   @IsNotEmpty()
   createdBy: string;

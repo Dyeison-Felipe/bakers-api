@@ -5,11 +5,11 @@ import { ProductSchema } from "./product.schema";
 @Entity('product_recipe_item')
 export class ProductRecipeItemSchema extends BaseSchema {
   @ManyToOne(() => ProductSchema, (product) => product.recipeItems, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'product_id' })
+  @JoinColumn({ name: 'product' })
   product: ProductSchema;
 
   @ManyToOne(() => ProductSchema, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'material_id' })
+  @JoinColumn({ name: 'material' })
   material: ProductSchema;
 
   @Column({

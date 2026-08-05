@@ -11,4 +11,5 @@ export enum TypeBatchMovementReason {
   CORRECTION = 'CORRECTION',
   DELETION = 'DELETION',
   SALE = 'SALE',
+  WASTE = 'WASTE',
 }

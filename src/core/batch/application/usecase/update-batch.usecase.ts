@@ -81,6 +81,7 @@ export class UpdateBatchUseCase implements UseCase<Input, Output> {
           quantity: Math.abs(delta),
           reason: TypeBatchMovementReason.CORRECTION,
           reasonDescription: null,
+          unitCostSnapshot: null,
           createdBy: loggedUser.id,
         }),
       );

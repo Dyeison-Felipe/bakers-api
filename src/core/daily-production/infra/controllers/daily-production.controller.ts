@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -28,12 +29,19 @@ import { MarkItemAsProducedPresenter } from '@/shared/infra/presenter/daily-prod
 import { CreateDailyProductionDto } from '../dtos/create-daily-production.dto';
 import { AddDailyProductionItemDto } from '../dtos/add-daily-production-item.dto';
 import { MarkItemProducedDto } from '../dtos/mark-item-produced.dto';
+import { UpdateDailyProductionItemDto } from '../dtos/update-daily-production-item.dto';
 import { CreateDailyProductionUseCase } from '../../application/usecase/create-daily-production.usecase';
 import { AddDailyProductionItemUseCase } from '../../application/usecase/add-daily-production-item.usecase';
 import { RemoveDailyProductionItemUseCase } from '../../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../../application/usecase/mark-item-as-produced.usecase';
+import { UpdateDailyProductionItemUseCase } from '../../application/usecase/update-daily-production-item.usecase';
+import { CancelDailyProductionItemUseCase } from '../../application/usecase/cancel-daily-production-item.usecase';
+import { FindDailyProductionItemRequirementsUseCase } from '../../application/usecase/find-daily-production-item-requirements.usecase';
 import { FindDailyProductionByIdUseCase } from '../../application/usecase/find-daily-production-by-id.usecase';
 import { FindAllDailyProductionsUseCase } from '../../application/usecase/find-all-daily-productions.usecase';
+import { UpdateDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/update-daily-production-item.presenter';
+import { CancelDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/cancel-daily-production-item.presenter';
+import { DailyProductionItemRequirementsPresenter } from '@/shared/infra/presenter/daily-production/daily-production-item-requirements.presenter';
 import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
 
 @ApiTags('Daily Production')
@@ -46,6 +54,9 @@ export class DailyProductionController {
     private readonly markDailyProductionItemAsProducedUseCase: MarkDailyProductionItemAsProducedUseCase,
     private readonly findDailyProductionByIdUseCase: FindDailyProductionByIdUseCase,
     private readonly findAllDailyProductionsUseCase: FindAllDailyProductionsUseCase,
+    private readonly updateDailyProductionItemUseCase: UpdateDailyProductionItemUseCase,
+    private readonly cancelDailyProductionItemUseCase: CancelDailyProductionItemUseCase,
+    private readonly findDailyProductionItemRequirementsUseCase: FindDailyProductionItemRequirementsUseCase,
   ) {}
 
   @Post()
@@ -122,6 +133,50 @@ export class DailyProductionController {
     @Param('itemId') itemId: string,
   ): Promise<RemoveDailyProductionItemPresenter> {
     return await this.removeDailyProductionItemUseCase.execute({ id: itemId });
+  }
+
+  @Put('items/:itemId')
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_UPDATE)
+  @ApiOperation({
+    summary: 'Edita a quantidade planejada de um item aguardando produção',
+  })
+  @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
+  @ApiOkResponse({ type: UpdateDailyProductionItemPresenter })
+  async updateItem(
+    @Param('itemId') itemId: string,
+    @Body() dto: UpdateDailyProductionItemDto,
+  ): Promise<UpdateDailyProductionItemPresenter> {
+    return await this.updateDailyProductionItemUseCase.execute({
+      id: itemId,
+      plannedQuantity: dto.plannedQuantity,
+      recipeMultiplier: dto.recipeMultiplier,
+    });
+  }
+
+  @Patch('items/:itemId/cancel')
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_UPDATE)
+  @ApiOperation({ summary: 'Cancela um item aguardando produção' })
+  @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
+  @ApiOkResponse({ type: CancelDailyProductionItemPresenter })
+  async cancelItem(
+    @Param('itemId') itemId: string,
+  ): Promise<CancelDailyProductionItemPresenter> {
+    return await this.cancelDailyProductionItemUseCase.execute({ id: itemId });
+  }
+
+  @Get('items/:itemId/requirements')
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_READER)
+  @ApiOperation({
+    summary: 'Lista as matérias-primas necessárias para produzir o item',
+  })
+  @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
+  @ApiOkResponse({ type: DailyProductionItemRequirementsPresenter })
+  async itemRequirements(
+    @Param('itemId') itemId: string,
+  ): Promise<DailyProductionItemRequirementsPresenter> {
+    return await this.findDailyProductionItemRequirementsUseCase.execute({
+      itemId,
+    });
   }
 
   @Patch('items/:itemId/produce')

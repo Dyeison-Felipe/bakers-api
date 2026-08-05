@@ -3,6 +3,7 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { ProductPersistenceModule } from '@/core/product/infra/product-persistence.module';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
+import { ProductRecipeItemRepository } from '@/core/product/domain/repositories/product-recipe-item.repository';
 import { BatchModule } from '@/core/batch/infra/batch.module';
 import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
 import { DailyProductionPersistenceModule } from './daily-production-persistence.module';
@@ -13,6 +14,9 @@ import { CreateDailyProductionUseCase } from '../application/usecase/create-dail
 import { AddDailyProductionItemUseCase } from '../application/usecase/add-daily-production-item.usecase';
 import { RemoveDailyProductionItemUseCase } from '../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../application/usecase/mark-item-as-produced.usecase';
+import { UpdateDailyProductionItemUseCase } from '../application/usecase/update-daily-production-item.usecase';
+import { CancelDailyProductionItemUseCase } from '../application/usecase/cancel-daily-production-item.usecase';
+import { FindDailyProductionItemRequirementsUseCase } from '../application/usecase/find-daily-production-item-requirements.usecase';
 import { FindDailyProductionByIdUseCase } from '../application/usecase/find-daily-production-by-id.usecase';
 import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-daily-productions.usecase';
 
@@ -128,6 +132,57 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
       inject: [
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: UpdateDailyProductionItemUseCase,
+      useFactory: (
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new UpdateDailyProductionItemUseCase(
+          dailyProductionItemRepository,
+          loggedUserService,
+        ),
+      inject: [
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: CancelDailyProductionItemUseCase,
+      useFactory: (
+        dailyProductionRepository: DailyProductionRepository,
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new CancelDailyProductionItemUseCase(
+          dailyProductionRepository,
+          dailyProductionItemRepository,
+          loggedUserService,
+        ),
+      inject: [
+        PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: FindDailyProductionItemRequirementsUseCase,
+      useFactory: (
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        productRecipeItemRepository: ProductRecipeItemRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindDailyProductionItemRequirementsUseCase(
+          dailyProductionItemRepository,
+          productRecipeItemRepository,
+          loggedUserService,
+        ),
+      inject: [
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },

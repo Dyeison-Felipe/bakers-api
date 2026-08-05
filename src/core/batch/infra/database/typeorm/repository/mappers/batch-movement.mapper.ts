@@ -11,6 +11,7 @@ export class BatchMovementMapper {
       quantity: schema.quantity,
       reason: schema.reason,
       reasonDescription: schema.reasonDescription,
+      unitCostSnapshot: schema.unitCostSnapshot,
       createdBy: schema.createdBy,
       auditable: {
         createdAt: schema.createdAt,
@@ -28,6 +29,7 @@ export class BatchMovementMapper {
       quantity: entity.quantity,
       reason: entity.reason,
       reasonDescription: entity.reasonDescription,
+      unitCostSnapshot: entity.unitCostSnapshot,
       createdBy: entity.createdBy,
       createdAt: entity.auditable?.createdAt,
     });

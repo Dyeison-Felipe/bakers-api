@@ -45,6 +45,10 @@ export class SaleItemRules {
 
   @IsNumber()
   @Min(0)
+  unitCostSnapshot: number;
+
+  @IsNumber()
+  @Min(0)
   subtotal: number;
 
   @IsString()

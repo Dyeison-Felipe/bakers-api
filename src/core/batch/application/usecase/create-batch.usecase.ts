@@ -79,6 +79,7 @@ export class CreateBatchUseCase implements UseCase<Input, Output> {
         quantity: input.quantity,
         reason: TypeBatchMovementReason.PRODUCTION,
         reasonDescription: null,
+        unitCostSnapshot: null,
         createdBy: loggedUser.id,
       }),
     );

@@ -6,4 +6,5 @@ export enum TypeDailyProductionStatus {
 export enum TypeDailyProductionItemStatus {
   PLANNED = 'PLANNED',
   PRODUCED = 'PRODUCED',
+  CANCELLED = 'CANCELLED',
 }

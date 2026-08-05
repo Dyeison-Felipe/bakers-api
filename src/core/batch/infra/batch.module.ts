@@ -14,6 +14,8 @@ import { DeleteBatchUseCase } from '../application/usecase/delete-batch.usecase'
 import { WriteOffBatchUseCase } from '../application/usecase/write-off-batch.usecase';
 import { FindAllBatchesUseCase } from '../application/usecase/find-all-batches.usecase';
 import { FindBatchByIdUseCase } from '../application/usecase/find-batch-by-id.usecase';
+import { FindTodayLeftoverBatchesUseCase } from '../application/usecase/find-today-leftover-batches.usecase';
+import { DiscardBatchLeftoverUseCase } from '../application/usecase/discard-batch-leftover.usecase';
 
 @Module({
   imports: [BatchPersistenceModule, ProductPersistenceModule],
@@ -132,6 +134,36 @@ import { FindBatchByIdUseCase } from '../application/usecase/find-batch-by-id.us
         loggedUserService: LoggedUserService,
       ) => new FindBatchByIdUseCase(batchRepository, loggedUserService),
       inject: [PROVIDERS.BATCH_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindTodayLeftoverBatchesUseCase,
+      useFactory: (
+        batchRepository: BatchRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindTodayLeftoverBatchesUseCase(batchRepository, loggedUserService),
+      inject: [PROVIDERS.BATCH_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: DiscardBatchLeftoverUseCase,
+      useFactory: (
+        batchRepository: BatchRepository,
+        batchMovementRepository: BatchMovementRepository,
+        loggedUserService: LoggedUserService,
+        updateStockProductUseCase: UpdateStockProductUseCase,
+      ) =>
+        new DiscardBatchLeftoverUseCase(
+          batchRepository,
+          batchMovementRepository,
+          loggedUserService,
+          updateStockProductUseCase,
+        ),
+      inject: [
+        PROVIDERS.BATCH_REPOSITORY,
+        PROVIDERS.BATCH_MOVEMENT_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+        UpdateStockProductUseCase,
+      ],
     },
   ],
   exports: [CreateBatchUseCase, WriteOffBatchUseCase],

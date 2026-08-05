@@ -29,6 +29,8 @@ import { BatchModule } from './core/batch/infra/batch.module';
 import { DailyProductionModule } from './core/daily-production/infra/daily-production.module';
 import { SaleModule } from './core/sale/infra/sale.module';
 import { CashRegisterModule } from './core/cash-register/infra/cash-register.module';
+import { ExpenseModule } from './core/expense/infra/expense.module';
+import { DashboardModule } from './core/dashboard/infra/dashboard.module';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { CashRegisterModule } from './core/cash-register/infra/cash-register.mod
     DailyProductionModule,
     SaleModule,
     CashRegisterModule,
+    ExpenseModule,
+    DashboardModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

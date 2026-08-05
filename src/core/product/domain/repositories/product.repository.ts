@@ -39,4 +39,6 @@ export interface ProductRepository extends BaseRepository<Product> {
     search?: string,
     pagination?: PaginationInput,
   ): Promise<Pagination<Product>>;
+
+  findLowStockByCompanyId(companyId: string): Promise<Product[]>;
 }

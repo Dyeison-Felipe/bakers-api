@@ -57,6 +57,8 @@ import { CalculateUnitCostPresenter } from '@/shared/infra/presenter/product/cal
 import { CalculateUnitCostDto } from '../dtos/calculate-unit-cost.dto';
 import { FindProductRecipePresenter } from '@/shared/infra/presenter/product/find-product-recipe-items.presenter';
 import { FindProductRecipeUseCase } from '../../application/usecase/find-product-recipe-items.usecase';
+import { LowStockProductPresenter } from '@/shared/infra/presenter/product/low-stock-product.presenter';
+import { FindLowStockProductsUseCase } from '../../application/usecase/find-low-stock-products.usecase';
 
 @Controller('v1/product')
 export class ProductController {
@@ -70,7 +72,20 @@ export class ProductController {
     private readonly calculateRecipeCostUseCase: CalculateRecipeCostUseCase,
     private readonly calculateUnitCostUseCase: CalculateUnitCostUseCase,
     private readonly findProductRecipeUseCase: FindProductRecipeUseCase,
+    private readonly findLowStockProductsUseCase: FindLowStockProductsUseCase,
   ) {}
+
+  // Rota estática — precisa vir antes de ':id' e ':productId' pra não ser
+  // interpretada como um id de produto.
+  @Get('low-stock')
+  @Permission(PermissionProduct.PRODUCT_READER)
+  @ApiOperation({
+    summary: 'Lista produtos com estoque no mínimo ou abaixo dele',
+  })
+  @ApiOkResponse({ type: LowStockProductPresenter, isArray: true })
+  async findLowStock(): Promise<LowStockProductPresenter[]> {
+    return await this.findLowStockProductsUseCase.execute();
+  }
 
   // no ProductController, adicionar:
   @Get(':id/recipe')

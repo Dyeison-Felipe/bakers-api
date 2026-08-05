@@ -43,6 +43,7 @@ type PreparedItem = {
   weightInKg: number | null;
   quantityForStock: number;
   unitPrice: number;
+  unitCost: number;
   subtotal: number;
 };
 
@@ -119,6 +120,9 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
       }
 
       const subtotal = round2(product.salePrice * quantityForStock);
+      const unitCost = isWeightBased
+        ? (product.pricePerKilogram ?? 0)
+        : product.unitCostPrice;
 
       preparedItems.push({
         product,
@@ -128,6 +132,7 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
         weightInKg: isWeightBased ? quantityForStock : null,
         quantityForStock,
         unitPrice: product.salePrice,
+        unitCost,
         subtotal,
       });
     }
@@ -191,6 +196,7 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
         quantity: item.quantity,
         weightInKg: item.weightInKg,
         unitPriceSnapshot: item.unitPrice,
+        unitCostSnapshot: item.unitCost,
         subtotal: item.subtotal,
         createdBy: loggedUser.id,
       }),
@@ -198,45 +204,43 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
 
     await this.saleItemRepository.saveMany(saleItems);
 
-    let receiptPdfUrl: string | undefined;
+    // Cupom (sem valor fiscal) é sempre gerado, com ou sem CPF do cliente —
+    // fica disponível no histórico de vendas do caixa pra reimpressão.
+    const buffer = await SaleReceiptPdfService.generate({
+      company: {
+        fantasyName: company.fantasyName,
+        cnpj: company.cnpj,
+        address: company.address
+          ? `${company.address.street}, ${company.address.number} - ${company.address.neighborhood}`
+          : null,
+      },
+      sale: {
+        id: savedSale.id,
+        createdAt: savedSale.auditable?.createdAt ?? new Date(),
+        paymentMethod: savedSale.paymentMethod,
+        totalAmount: savedSale.totalAmount,
+        amountReceived: savedSale.amountReceived,
+        changeAmount: savedSale.changeAmount,
+        customerCpf: savedSale.customerCpf,
+      },
+      items: saleItems.map((item) => ({
+        name: item.productNameSnapshot,
+        quantity: item.quantity,
+        weightInKg: item.weightInKg,
+        unitPrice: item.unitPriceSnapshot,
+        subtotal: item.subtotal,
+      })),
+    });
 
-    if (customerCpf) {
-      const buffer = await SaleReceiptPdfService.generate({
-        company: {
-          fantasyName: company.fantasyName,
-          cnpj: company.cnpj,
-          address: company.address
-            ? `${company.address.street}, ${company.address.number} - ${company.address.neighborhood}`
-            : null,
-        },
-        sale: {
-          id: savedSale.id,
-          createdAt: savedSale.auditable?.createdAt ?? new Date(),
-          paymentMethod: savedSale.paymentMethod,
-          totalAmount: savedSale.totalAmount,
-          amountReceived: savedSale.amountReceived,
-          changeAmount: savedSale.changeAmount,
-          customerCpf: savedSale.customerCpf,
-        },
-        items: saleItems.map((item) => ({
-          name: item.productNameSnapshot,
-          quantity: item.quantity,
-          weightInKg: item.weightInKg,
-          unitPrice: item.unitPriceSnapshot,
-          subtotal: item.subtotal,
-        })),
-      });
+    const filename = this.storageService.saveSaleReceipt(
+      company.id,
+      savedSale.id,
+      buffer,
+    );
 
-      const filename = this.storageService.saveSaleReceipt(
-        company.id,
-        savedSale.id,
-        buffer,
-      );
-
-      savedSale.attachReceipt(filename, loggedUser.id);
-      await this.saleRepository.update(savedSale);
-      receiptPdfUrl = `/v1/sale/${savedSale.id}/receipt`;
-    }
+    savedSale.attachReceipt(filename, loggedUser.id);
+    await this.saleRepository.update(savedSale);
+    const receiptPdfUrl = `/v1/sale/${savedSale.id}/receipt`;
 
     return {
       id: savedSale.id,

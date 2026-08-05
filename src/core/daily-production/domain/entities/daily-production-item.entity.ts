@@ -46,6 +46,14 @@ type MarkAsProducedProps = {
   producedBy: string;
 };
 
+type UpdatePlannedProps = {
+  plannedQuantity: number | null;
+  recipeMultiplier: number | null;
+  plannedWeight: number | null;
+  plannedCost: number;
+  updatedBy: string;
+};
+
 export interface DailyProductionItem extends DailyProductionItemProps {}
 
 @Data()
@@ -89,6 +97,21 @@ export class DailyProductionItem extends BaseEntity<DailyProductionItemProps> {
     this.producedAt = new Date();
     this.producedBy = props.producedBy;
     this.updatedBy = props.producedBy;
+    this.updateTimestamp();
+  }
+
+  updatePlanned(props: UpdatePlannedProps): void {
+    this.plannedQuantity = props.plannedQuantity;
+    this.recipeMultiplier = props.recipeMultiplier;
+    this.plannedWeight = props.plannedWeight;
+    this.plannedCost = props.plannedCost;
+    this.updatedBy = props.updatedBy;
+    this.updateTimestamp();
+  }
+
+  cancel(updatedBy: string): void {
+    this.status = TypeDailyProductionItemStatus.CANCELLED;
+    this.updatedBy = updatedBy;
     this.updateTimestamp();
   }
 }

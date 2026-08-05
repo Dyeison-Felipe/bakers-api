@@ -1,21 +1,27 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiConflictResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionCashRegister } from '@/core/auth/domain/permissions-definition/cash-register';
+import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { OpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/open-cash-register.presenter';
 import { FindOpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/find-open-cash-register.presenter';
 import { CloseCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/close-cash-register.presenter';
+import { FindAllCashRegisterSessionsItemPresenter } from '@/shared/infra/presenter/cash-register/find-all-cash-register-sessions-item.presenter';
+import { CashRegisterSessionDetailPresenter } from '@/shared/infra/presenter/cash-register/cash-register-session-detail.presenter';
 import { OpenCashRegisterDto } from '../dtos/open-cash-register.dto';
 import { OpenCashRegisterSessionUseCase } from '../../application/usecase/open-cash-register-session.usecase';
 import { FindOpenCashRegisterSessionUseCase } from '../../application/usecase/find-open-cash-register-session.usecase';
 import { CloseCashRegisterSessionUseCase } from '../../application/usecase/close-cash-register-session.usecase';
+import { FindAllCashRegisterSessionsUseCase } from '../../application/usecase/find-all-cash-register-sessions.usecase';
+import { FindCashRegisterSessionDetailUseCase } from '../../application/usecase/find-cash-register-session-detail.usecase';
 
 @ApiTags('Cash Register')
 @Controller('v1/cash-register')
@@ -24,6 +30,8 @@ export class CashRegisterController {
     private readonly openCashRegisterSessionUseCase: OpenCashRegisterSessionUseCase,
     private readonly findOpenCashRegisterSessionUseCase: FindOpenCashRegisterSessionUseCase,
     private readonly closeCashRegisterSessionUseCase: CloseCashRegisterSessionUseCase,
+    private readonly findAllCashRegisterSessionsUseCase: FindAllCashRegisterSessionsUseCase,
+    private readonly findCashRegisterSessionDetailUseCase: FindCashRegisterSessionDetailUseCase,
   ) {}
 
   @Post('open')
@@ -65,5 +73,36 @@ export class CashRegisterController {
     @Param('id') id: string,
   ): Promise<CloseCashRegisterPresenter> {
     return await this.closeCashRegisterSessionUseCase.execute({ id });
+  }
+
+  @Get()
+  @Permission(PermissionCashRegister.CASH_REGISTER_READER)
+  @ApiOperation({ summary: 'Lista o histórico de sessões de caixa' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiOkResponse({ type: FindAllCashRegisterSessionsItemPresenter, isArray: true })
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<Pagination<FindAllCashRegisterSessionsItemPresenter>> {
+    return await this.findAllCashRegisterSessionsUseCase.execute({
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
+  }
+
+  @Get(':id')
+  @Permission(PermissionCashRegister.CASH_REGISTER_READER)
+  @ApiOperation({
+    summary: 'Detalha uma sessão de caixa',
+    description:
+      'Traz abertura/fechamento, total vendido, custo de produção do dia, despesas do dia e o lucro apurado.',
+  })
+  @ApiParam({ name: 'id', description: 'Id do caixa' })
+  @ApiOkResponse({ type: CashRegisterSessionDetailPresenter })
+  async findDetail(
+    @Param('id') id: string,
+  ): Promise<CashRegisterSessionDetailPresenter> {
+    return await this.findCashRegisterSessionDetailUseCase.execute({ id });
   }
 }

@@ -3,15 +3,28 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { SalePersistenceModule } from '@/core/sale/infra/sale-persistence.module';
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
+import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
+import { DailyProductionPersistenceModule } from '@/core/daily-production/infra/daily-production-persistence.module';
+import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
+import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
+import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persistence.module';
+import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { CashRegisterPersistenceModule } from './cash-register-persistence.module';
 import { CashRegisterSessionRepository } from '../domain/repositories/cash-register-session.repository';
 import { CashRegisterController } from './controllers/cash-register.controller';
 import { OpenCashRegisterSessionUseCase } from '../application/usecase/open-cash-register-session.usecase';
 import { FindOpenCashRegisterSessionUseCase } from '../application/usecase/find-open-cash-register-session.usecase';
 import { CloseCashRegisterSessionUseCase } from '../application/usecase/close-cash-register-session.usecase';
+import { FindAllCashRegisterSessionsUseCase } from '../application/usecase/find-all-cash-register-sessions.usecase';
+import { FindCashRegisterSessionDetailUseCase } from '../application/usecase/find-cash-register-session-detail.usecase';
 
 @Module({
-  imports: [CashRegisterPersistenceModule, SalePersistenceModule],
+  imports: [
+    CashRegisterPersistenceModule,
+    SalePersistenceModule,
+    DailyProductionPersistenceModule,
+    ExpensePersistenceModule,
+  ],
   controllers: [CashRegisterController],
   providers: [
     {
@@ -59,6 +72,48 @@ import { CloseCashRegisterSessionUseCase } from '../application/usecase/close-ca
       inject: [
         PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
         PROVIDERS.SALE_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: FindAllCashRegisterSessionsUseCase,
+      useFactory: (
+        cashRegisterSessionRepository: CashRegisterSessionRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindAllCashRegisterSessionsUseCase(
+          cashRegisterSessionRepository,
+          loggedUserService,
+        ),
+      inject: [
+        PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: FindCashRegisterSessionDetailUseCase,
+      useFactory: (
+        cashRegisterSessionRepository: CashRegisterSessionRepository,
+        saleItemRepository: SaleItemRepository,
+        dailyProductionRepository: DailyProductionRepository,
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        expenseRepository: ExpenseRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindCashRegisterSessionDetailUseCase(
+          cashRegisterSessionRepository,
+          saleItemRepository,
+          dailyProductionRepository,
+          dailyProductionItemRepository,
+          expenseRepository,
+          loggedUserService,
+        ),
+      inject: [
+        PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
+        PROVIDERS.SALE_ITEM_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.EXPENSE_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },

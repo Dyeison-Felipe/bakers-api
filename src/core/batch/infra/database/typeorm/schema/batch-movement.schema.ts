@@ -38,6 +38,16 @@ export class BatchMovementSchema extends BaseSchema {
   })
   reasonDescription: string | null;
 
+  @Column({
+    name: 'unit_cost_snapshot',
+    type: 'decimal',
+    precision: 12,
+    scale: 6,
+    nullable: true,
+    transformer: new DecimalColumnTransformer(),
+  })
+  unitCostSnapshot: number | null;
+
   @Column({ name: 'created_by', type: 'uuid' })
   createdBy: string;
 }

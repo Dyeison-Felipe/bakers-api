@@ -1,6 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
+import { In, Repository } from 'typeorm';
+import {
+  SaleItemRepository,
+  SalesCostSummary,
+} from '@/core/sale/domain/repositories/sale-item.repository';
 import { SaleItem } from '@/core/sale/domain/entities/sale-item.entity';
 import { SaleItemSchema } from '../schema/sale-item.schema';
 import { SaleItemMapper } from './mappers/sale-item.mapper';
@@ -20,7 +23,13 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
   async saveMany(entities: SaleItem[]): Promise<SaleItem[]> {
     const schemas = entities.map((entity) => SaleItemMapper.toSchema(entity));
     const saved = await this.saleItemRepository.save(schemas);
-    return saved.map((schema) => SaleItemMapper.toEntity(schema));
+
+    const fullSchemas = await this.saleItemRepository.find({
+      where: { id: In(saved.map((schema) => schema.id)) },
+      relations: ['product'],
+    });
+
+    return fullSchemas.map((schema) => SaleItemMapper.toEntity(schema));
   }
 
   async findById(id: string): Promise<SaleItem | null> {
@@ -41,6 +50,56 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
     });
 
     return schemas.map((schema) => SaleItemMapper.toEntity(schema));
+  }
+
+  async sumRevenueAndCostByCompanyAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<SalesCostSummary> {
+    const result = await this.saleItemRepository
+      .createQueryBuilder('saleItem')
+      .leftJoin('saleItem.sale', 'sale')
+      .leftJoin('sale.company', 'company')
+      .select('COALESCE(SUM(saleItem.subtotal), 0)', 'totalRevenue')
+      .addSelect(
+        'COALESCE(SUM(saleItem.unitCostSnapshot * COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'totalCost',
+      )
+      .where('company.id = :companyId', { companyId })
+      .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .getRawOne<{ totalRevenue: string; totalCost: string }>();
+
+    return {
+      totalRevenue: Number(result?.totalRevenue ?? 0),
+      totalCost: Number(result?.totalCost ?? 0),
+    };
+  }
+
+  async sumRevenueAndCostByCashRegisterSessionId(
+    cashRegisterSessionId: string,
+  ): Promise<SalesCostSummary> {
+    const result = await this.saleItemRepository
+      .createQueryBuilder('saleItem')
+      .leftJoin('saleItem.sale', 'sale')
+      .leftJoin('sale.cashRegisterSession', 'cashRegisterSession')
+      .select('COALESCE(SUM(saleItem.subtotal), 0)', 'totalRevenue')
+      .addSelect(
+        'COALESCE(SUM(saleItem.unitCostSnapshot * COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'totalCost',
+      )
+      .where('cashRegisterSession.id = :cashRegisterSessionId', {
+        cashRegisterSessionId,
+      })
+      .getRawOne<{ totalRevenue: string; totalCost: string }>();
+
+    return {
+      totalRevenue: Number(result?.totalRevenue ?? 0),
+      totalCost: Number(result?.totalCost ?? 0),
+    };
   }
 
   async update(entity: SaleItem): Promise<void> {

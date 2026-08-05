@@ -9,6 +9,7 @@ import {
   Pagination,
   PaginationInput,
 } from '@/shared/domain/pagination/pagination';
+import { formatDateOnly } from '@/shared/infra/utils/format-date-only';
 import { DailyProductionSchema } from '../schema/daily-production.schema';
 import { DailyProductionMapper } from './mappers/daily-production.mapper';
 
@@ -71,7 +72,7 @@ export class DailyProductionRepositoryImpl implements DailyProductionRepository 
 
     if (filters?.productionDate) {
       query.andWhere('dailyProduction.productionDate = :productionDate', {
-        productionDate: filters.productionDate,
+        productionDate: formatDateOnly(filters.productionDate),
       });
     }
 

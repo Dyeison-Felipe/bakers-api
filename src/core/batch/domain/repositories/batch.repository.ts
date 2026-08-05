@@ -8,6 +8,7 @@ import { Batch } from '../entities/batch.entity';
 export type FindAllBatchesFilters = {
   productId?: string;
   onlyAvailable?: boolean;
+  producedOn?: Date;
 };
 
 export interface BatchRepository extends BaseRepository<Batch> {

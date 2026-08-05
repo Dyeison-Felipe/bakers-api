@@ -13,6 +13,7 @@ export type BatchMovementProps = {
   quantity: number;
   reason: TypeBatchMovementReason;
   reasonDescription: string | null;
+  unitCostSnapshot: number | null;
   createdBy: string;
 };
 
@@ -37,6 +38,7 @@ export class BatchMovement extends BaseEntity<BatchMovementProps> {
       quantity: props.quantity,
       reason: props.reason,
       reasonDescription: props.reasonDescription,
+      unitCostSnapshot: props.unitCostSnapshot,
       createdBy: props.createdBy,
     });
   }

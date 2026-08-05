@@ -1,4 +1,8 @@
 import { BaseRepository } from '@/shared/domain/repository/base-repository';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 import { CashRegisterSession } from '../entities/cash-register-session.entity';
 
 export interface CashRegisterSessionRepository
@@ -13,4 +17,9 @@ export interface CashRegisterSessionRepository
     id: string,
     companyId: string,
   ): Promise<CashRegisterSession | null>;
+
+  findAllByCompanyId(
+    companyId: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<CashRegisterSession>>;
 }

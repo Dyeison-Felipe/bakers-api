@@ -2,6 +2,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
 import { CashRegisterSession } from '@/core/cash-register/domain/entities/cash-register-session.entity';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
 import { CashRegisterSessionSchema } from '../schema/cash-register-session.schema';
 import { CashRegisterSessionMapper } from './mappers/cash-register-session.mapper';
@@ -59,6 +63,40 @@ export class CashRegisterSessionRepositoryImpl
     if (!schema) return null;
 
     return CashRegisterSessionMapper.toEntity(schema);
+  }
+
+  async findAllByCompanyId(
+    companyId: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<CashRegisterSession>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 20;
+    const direction = pagination?.direction ?? 'DESC';
+
+    const query = this.cashRegisterSessionRepository
+      .createQueryBuilder('cashRegisterSession')
+      .leftJoinAndSelect('cashRegisterSession.company', 'company')
+      .where('company.id = :companyId', { companyId })
+      .orderBy('cashRegisterSession.openedAt', direction)
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [schemas, totalItems] = await query.getManyAndCount();
+
+    const items = schemas.map((schema) =>
+      CashRegisterSessionMapper.toEntity(schema),
+    );
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async update(entity: CashRegisterSession): Promise<void> {

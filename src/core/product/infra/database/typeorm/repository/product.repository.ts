@@ -158,6 +158,25 @@ export class ProductRepositoryImpl implements ProductRepository {
     };
   }
 
+  async findLowStockByCompanyId(companyId: string): Promise<Product[]> {
+    const productsSchema = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.company', 'company')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('product.active = :active', { active: true })
+      .andWhere('product.stockManagement = :stockManagement', {
+        stockManagement: true,
+      })
+      .andWhere('product.currentStock IS NOT NULL')
+      .andWhere('product.stockMin IS NOT NULL')
+      .andWhere('product.currentStock <= product.stockMin')
+      .orderBy('product.name', 'ASC')
+      .getMany();
+
+    return productsSchema.map((product) => ProductMapper.toEntity(product));
+  }
+
   async findProductByNameAndCompanyId(
     name: string,
     companyId: string,
