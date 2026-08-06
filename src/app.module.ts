@@ -31,6 +31,7 @@ import { SaleModule } from './core/sale/infra/sale.module';
 import { CashRegisterModule } from './core/cash-register/infra/cash-register.module';
 import { ExpenseModule } from './core/expense/infra/expense.module';
 import { DashboardModule } from './core/dashboard/infra/dashboard.module';
+import { RecipeModule } from './core/recipe/infra/recipe.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { DashboardModule } from './core/dashboard/infra/dashboard.module';
     CashRegisterModule,
     ExpenseModule,
     DashboardModule,
+    RecipeModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

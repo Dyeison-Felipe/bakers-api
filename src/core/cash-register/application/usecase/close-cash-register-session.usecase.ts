@@ -7,8 +7,10 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { CloseCashRegisterOutput } from '@/shared/application/output/cash-register/close-cash-register.output';
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
+import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
+import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
 
 type Input = {
   id: string;
@@ -24,6 +26,8 @@ export class CloseCashRegisterSessionUseCase
     private readonly cashRegisterSessionRepository: CashRegisterSessionRepository,
     @Inject(PROVIDERS.SALE_REPOSITORY)
     private readonly saleRepository: SaleRepository,
+    @Inject(PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY)
+    private readonly cashRegisterMovementRepository: CashRegisterMovementRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
@@ -44,7 +48,13 @@ export class CloseCashRegisterSessionUseCase
       throw new BadRequestError('Este caixa já está fechado');
     }
 
-    const [totalCash, totalPix, totalCard] = await Promise.all([
+    const [
+      totalCashSales,
+      totalPix,
+      totalCard,
+      totalSupplies,
+      totalWithdrawals,
+    ] = await Promise.all([
       this.saleRepository.sumTotalByCashRegisterSessionAndPaymentMethod(
         session.id,
         TypePaymentMethod.CASH,
@@ -57,7 +67,17 @@ export class CloseCashRegisterSessionUseCase
         session.id,
         TypePaymentMethod.CARD,
       ),
+      this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
+        session.id,
+        TypeCashRegisterMovement.SUPPLY,
+      ),
+      this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
+        session.id,
+        TypeCashRegisterMovement.WITHDRAWAL,
+      ),
     ]);
+
+    const totalCash = totalCashSales + totalSupplies - totalWithdrawals;
 
     session.close({
       totalCash,

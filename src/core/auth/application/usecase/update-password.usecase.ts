@@ -26,6 +26,8 @@ export class UpdatePasswordUseCase implements UseCase<Input, Output> {
     private readonly userRepository: UserRepository,
     @Inject(PROVIDERS.HASH_SERVICE) private readonly hashService: HashService,
     @Inject(PROVIDERS.JWT_SERVICE) private readonly jwtService: JwtService,
+    @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
+    private readonly envConfigService: EnvConfig,
   ) {}
 
   @Transactional()
@@ -36,7 +38,13 @@ export class UpdatePasswordUseCase implements UseCase<Input, Output> {
       if (!token)
         throw new BadRequestError(`Ocorreu um erro ao trocar a senha.`);
 
-      const payload = this.jwtService.decodeJwt(token);
+      const payload = await this.jwtService.verifyJwt(token, {
+        secret: this.envConfigService.getJwtSecretForgotPassword(),
+      });
+
+      if (!payload) {
+        throw new BadRequestError(`Ocorreu um erro ao trocar a senha.`);
+      }
 
       const user = await this.userRepository.findById(payload.sub);
 

@@ -8,7 +8,11 @@ import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.re
 import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
+import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
+import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
+import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
 
 type Input = {
   id: string;
@@ -20,6 +24,17 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 
 const toDateOnly = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const toEndOfDay = (date: Date): Date =>
+  new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
 
 export class FindCashRegisterSessionDetailUseCase
   implements UseCase<Input, Output>
@@ -35,6 +50,10 @@ export class FindCashRegisterSessionDetailUseCase
     private readonly dailyProductionItemRepository: DailyProductionItemRepository,
     @Inject(PROVIDERS.EXPENSE_REPOSITORY)
     private readonly expenseRepository: ExpenseRepository,
+    @Inject(PROVIDERS.BATCH_MOVEMENT_REPOSITORY)
+    private readonly batchMovementRepository: BatchMovementRepository,
+    @Inject(PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY)
+    private readonly cashRegisterMovementRepository: CashRegisterMovementRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
@@ -53,8 +72,17 @@ export class FindCashRegisterSessionDetailUseCase
     }
 
     const day = toDateOnly(session.openedAt);
+    const endOfDay = toEndOfDay(session.openedAt);
 
-    const [salesSummary, dailyProductions, expenses] = await Promise.all([
+    const [
+      salesSummary,
+      dailyProductions,
+      expenses,
+      totalWaste,
+      totalRecoveredAtCost,
+      totalSupplies,
+      totalWithdrawals,
+    ] = await Promise.all([
       this.saleItemRepository.sumRevenueAndCostByCashRegisterSessionId(
         session.id,
       ),
@@ -62,6 +90,26 @@ export class FindCashRegisterSessionDetailUseCase
         productionDate: day,
       }),
       this.expenseRepository.findAllByCompanyAndDate(companyId, day),
+      this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
+        companyId,
+        day,
+        endOfDay,
+        TypeBatchMovementReason.WASTE,
+      ),
+      this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
+        companyId,
+        day,
+        endOfDay,
+        TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST,
+      ),
+      this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
+        session.id,
+        TypeCashRegisterMovement.SUPPLY,
+      ),
+      this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
+        session.id,
+        TypeCashRegisterMovement.WITHDRAWAL,
+      ),
     ]);
 
     const productionItemsByProduction = await Promise.all(
@@ -105,6 +153,10 @@ export class FindCashRegisterSessionDetailUseCase
         description: expense.description,
       })),
       totalExpenses,
+      totalWaste: round2(totalWaste),
+      totalRecoveredAtCost: round2(totalRecoveredAtCost),
+      totalSupplies: round2(totalSupplies),
+      totalWithdrawals: round2(totalWithdrawals),
       profit,
     };
   }

@@ -23,8 +23,12 @@ export type Payload = {
   exp: number;
 };
 
+export type VerifyOptions = {
+  secret?: string;
+};
+
 export interface JwtService {
   generateJwt(user: UserGenerateToken, options?: Options): Promise<GenerateJwtToken>;
   decodeJwt(jwt: string): Payload;
-  verifyJwt(jwt: string): Promise<Payload | null>;
+  verifyJwt(jwt: string, options?: VerifyOptions): Promise<Payload | null>;
 }

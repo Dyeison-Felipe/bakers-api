@@ -76,6 +76,7 @@ export class VerifyCodeUseCase implements UseCase<Input, Output> {
 
       setCookie(AuthConstants.tokenForgotPassword, token, options);
     } catch (e) {
+      console.error('[VerifyCodeUseCase] falha ao gerar token/cookie:', e);
       throw new BadRequestError(`Ocorreu um erro ao verificar o código`);
     }
   }

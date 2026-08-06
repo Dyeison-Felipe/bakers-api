@@ -17,6 +17,7 @@ type Input = {
   batchId: string;
   quantity?: number;
   reasonDescription?: string;
+  soldAtCost?: boolean;
 };
 
 type Output = DiscardBatchLeftoverOutput;
@@ -65,6 +66,8 @@ export class DiscardBatchLeftoverUseCase implements UseCase<Input, Output> {
       ? (batch.product!.pricePerKilogram ?? 0)
       : batch.product!.unitCostPrice;
 
+    const soldAtCost = input.soldAtCost ?? false;
+
     batch.consume(quantity, loggedUser.id);
     await this.batchRepository.update(batch);
 
@@ -73,7 +76,9 @@ export class DiscardBatchLeftoverUseCase implements UseCase<Input, Output> {
         batchId: batch.id,
         type: TypeBatchMovement.EXIT,
         quantity,
-        reason: TypeBatchMovementReason.WASTE,
+        reason: soldAtCost
+          ? TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST
+          : TypeBatchMovementReason.WASTE,
         reasonDescription: input.reasonDescription ?? null,
         unitCostSnapshot: costBasis,
         createdBy: loggedUser.id,
@@ -86,10 +91,14 @@ export class DiscardBatchLeftoverUseCase implements UseCase<Input, Output> {
       value: quantity,
     });
 
+    const value = round2(quantity * costBasis);
+
     return {
       id: batch.id,
       discardedQuantity: quantity,
-      lossValue: round2(quantity * costBasis),
+      soldAtCost,
+      lossValue: soldAtCost ? null : value,
+      recoveredValue: soldAtCost ? value : null,
     };
   }
 }

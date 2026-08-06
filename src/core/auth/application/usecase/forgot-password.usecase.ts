@@ -40,6 +40,13 @@ export class ForgotPasswordUseCase implements UseCase<Input, Output> {
       user.updateResetPasswordCode(code);
       user.update({...user, updatedBy: ID_USER_DEFAULT})
       await this.userRepository.update(user);
+
+      const expiresAt = user.expiredAtCode!.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Sao_Paulo',
+      });
+
       await this.mailService.sendMail({
         to: user.email,
         template: 'forgot-password',
@@ -47,6 +54,7 @@ export class ForgotPasswordUseCase implements UseCase<Input, Output> {
         context: {
           name: user.username,
           code: code,
+          expiresAt,
           year: new Date().getFullYear(),
         },
       });

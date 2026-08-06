@@ -12,10 +12,12 @@ import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { UserRepository } from '@/core/user/domain/repositories/user.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { ForbiddenError } from '@/shared/application/errors/forbidden-error';
 import { CaslAbilityService } from '../service/casl-ability.service';
 import {
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
+  SUPER_ADMIN_ONLY_KEY,
 } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionRef } from '../../domain/permissions-definition/permissions';
 
@@ -51,7 +53,7 @@ export class PermissionGuard implements CanActivate {
     try {
       const payload = await this.jwtService.verifyJwt(token);
 
-      if (!payload) return false;
+      if (!payload) throw new UnauthorizedError();
 
       // 3. Busca usuário com permissions
       const user = await this.userRepository.findByIdWithPermissions(
@@ -68,6 +70,19 @@ export class PermissionGuard implements CanActivate {
 
       if (user.role.name === 'Super Admin') {
         return true;
+      }
+
+      // 3.5. Recursos de plataforma (ex: gestão de planos) — restritos à role
+      // Super Admin, independente de qualquer permissão/plano de empresa.
+      const requiresSuperAdmin = this.reflector.getAllAndOverride<boolean>(
+        SUPER_ADMIN_ONLY_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
+      if (requiresSuperAdmin) {
+        throw new ForbiddenError(
+          'Apenas o Super Admin pode acessar esse recurso',
+        );
       }
 
       // 4. Verifica permissões com CASL
@@ -87,18 +102,33 @@ export class PermissionGuard implements CanActivate {
         ),
       );
 
-      if(!allInPlan) throw new UnauthorizedError('Permissão não inclusa no plano');
-      
+      if (!allInPlan) {
+        throw new ForbiddenError(
+          'Esta ação não está disponível no plano contratado pela empresa',
+        );
+      }
+
       //6. Verifica role admin da empresa (diferente de Super Admin)
       if (user.role.name === 'Admin') return true;
 
       // 7. Usuário comum → verifica permissões individuais com CASL
       const ability = this.caslAbilityService.createForUser(user);
 
-      return policies.every(({ action, resource }) =>
+      const hasPermission = policies.every(({ action, resource }) =>
         ability.can(action, resource),
       );
+
+      if (!hasPermission) {
+        throw new ForbiddenError(
+          'Você não tem permissão para executar esta ação',
+        );
+      }
+
+      return true;
     } catch (error) {
+      if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
+        throw error;
+      }
       throw new UnauthorizedError(`Not authorized: ${error}`);
     }
   }

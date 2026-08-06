@@ -14,19 +14,14 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: config.get('MAIL_HOST'),
-          port: config.get<number>('MAIL_PORT'),
-          secure: false,
-          tls: {
-            rejectUnauthorized: false
-          },
+          service: 'gmail',
           auth: {
-            user: config.get('MAIL_USER'),
-            pass: config.get('MAIL_PASSWORD'),
+            user: config.get('EMAIL'),
+            pass: config.get('EMAIL_SEND_PASSWORD'),
           },
         },
         defaults: {
-          from: `"No Reply" <${config.get('MAIL_FROM')}>`,
+          from: `"Baker's Bill" <${config.get('EMAIL')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),

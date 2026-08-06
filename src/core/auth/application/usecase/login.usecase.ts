@@ -79,7 +79,23 @@ export class LoginUseCase implements UseCase<Input, Output> {
           description: permission.description,
         })),
       },
-      company: user.company,
+      company: {
+        id: user.company.id,
+        cnpj: user.company.cnpj,
+        stateRegistration: user.company.stateRegistration,
+        fantasyName: user.company.fantasyName,
+        socialReazon: user.company.socialReazon,
+        plan: {
+          id: user.company.plan?.id ?? '',
+          name: user.company.plan?.name ?? '',
+          permissions: (user.company.plan?.permissions ?? []).map(
+            (permission) => ({
+              action: permission.action,
+              subject: permission.subject,
+            }),
+          ),
+        },
+      },
       token: token,
     };
 

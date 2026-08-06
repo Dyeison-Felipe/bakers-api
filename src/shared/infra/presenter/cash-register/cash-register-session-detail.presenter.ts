@@ -59,6 +59,23 @@ export class CashRegisterSessionDetailPresenter {
   readonly totalExpenses: number;
 
   @ApiProperty({
+    description: 'Prejuízo com sobras descartadas (perda real) no dia da sessão',
+  })
+  readonly totalWaste: number;
+
+  @ApiProperty({
+    description:
+      'Valor recuperado com sobras vendidas pelo preço de custo no dia da sessão (não é perda nem lucro)',
+  })
+  readonly totalRecoveredAtCost: number;
+
+  @ApiProperty({ description: 'Total de incrementos (entradas) no caixa desta sessão' })
+  readonly totalSupplies: number;
+
+  @ApiProperty({ description: 'Total de sangrias (retiradas) no caixa desta sessão' })
+  readonly totalWithdrawals: number;
+
+  @ApiProperty({
     description:
       'Lucro do dia: vendas − custo dos itens efetivamente vendidos − despesas',
   })

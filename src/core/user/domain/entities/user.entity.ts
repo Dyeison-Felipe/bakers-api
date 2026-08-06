@@ -92,7 +92,7 @@ export class UserEntity extends BaseEntity<UserProps> {
   updateResetPasswordCode(code?: string): void {
     if (code) {
       this.passwordResetCode = code;
-      this.expiredAtCode = new Date(Date.now() + 10 * 60 * 1000);
+      this.expiredAtCode = new Date(Date.now() + 60 * 60 * 1000);
       return;
     }
     this.expiredAtCode = null;

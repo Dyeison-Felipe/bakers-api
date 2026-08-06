@@ -9,6 +9,8 @@ import {
   MaterialUsage,
   ProductRecipeCostCalculator,
 } from '../services/product-recipe-cost-calculator.service';
+import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 
 type ProductMaterialInput = {
   id: string;
@@ -20,9 +22,14 @@ type AdditionalCostInput = {
   value: number;
 };
 
+type RecipeLinkInput = {
+  id: string;
+};
+
 type Input = {
-  productMaterial: ProductMaterialInput[];
+  productMaterial?: ProductMaterialInput[];
   additionalCosts?: AdditionalCostInput[];
+  recipeLinks?: RecipeLinkInput[];
 };
 
 type Output = {
@@ -37,6 +44,10 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
     @Inject(PROVIDERS.ADDITIONAL_COST_REPOSITORY)
     private readonly additionalCostRepository: AdditionalCostRepository,
+    @Inject(PROVIDERS.RECIPE_REPOSITORY)
+    private readonly recipeRepository: RecipeRepository,
+    @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
+    private readonly recipeItemRepository: RecipeItemRepository,
   ) {}
 
   async execute(input: Input): Promise<Output> {
@@ -44,7 +55,7 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
     const company = loggedUser.company;
 
     const materialsUsage = await this.resolveMaterialsUsage(
-      input.productMaterial,
+      input.productMaterial ?? [],
       company.id,
     );
 
@@ -56,9 +67,40 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
       company.id,
     );
 
-    const costPrice = materialsCost + additionalCostsTotal;
+    const recipesCost = await this.resolveRecipeLinksCost(
+      input.recipeLinks ?? [],
+      company.id,
+    );
+
+    const costPrice = materialsCost + additionalCostsTotal + recipesCost;
 
     return { costPrice };
+  }
+
+  private async resolveRecipeLinksCost(
+    recipeLinks: RecipeLinkInput[],
+    companyId: string,
+  ): Promise<number> {
+    if (!recipeLinks.length) return 0;
+
+    const recipeIds = recipeLinks.map((r) => r.id);
+
+    const recipes = await this.recipeRepository.findAllByIdsAndCompanyId(
+      recipeIds,
+      companyId,
+    );
+    const foundIds = new Set(recipes.map((r) => r.id));
+
+    const missing = recipeIds.filter((id) => !foundIds.has(id));
+    if (missing.length) {
+      throw new NotFoundError(`Receita(s) não encontrada(s): ${missing.join(', ')}`);
+    }
+
+    const items = await this.recipeItemRepository.findAllByRecipeIds(recipeIds);
+
+    return ProductRecipeCostCalculator.calculateTotalCost(
+      items.map((item) => ({ material: item.material, quantity: item.quantity })),
+    );
   }
 
   private async resolveMaterialsUsage(

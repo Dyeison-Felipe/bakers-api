@@ -14,6 +14,7 @@ export class UserRepositoryImpl implements UserRepository {
   async findByCode(code: string, email: string): Promise<UserEntity | null> {
     const user = await this.userRepository.findOne({
       where: { passwordResetCode: code, email },
+      relations: this.getRelations(),
     });
 
     if (!user) return null;

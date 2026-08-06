@@ -14,12 +14,19 @@ export class ProductAdditionalCostRepositoryImpl implements ProductAdditionalCos
 
   async save(entity: ProductAdditionalCost): Promise<ProductAdditionalCost> {
     const schema = ProductAdditionalCostMapper.toSchema(entity);
-    const save = await this.repository.save(schema);
+    const saved = await this.repository.save(schema);
 
-    const entityProductAdditionalCost =
-      ProductAdditionalCostMapper.toEntity(save);
-
-    return entityProductAdditionalCost;
+    return new ProductAdditionalCost({
+      id: saved.id,
+      product: entity.product,
+      additionalCost: entity.additionalCost,
+      value: entity.value,
+      auditable: {
+        createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
+        deletedAt: saved.deletedAt,
+      },
+    });
   }
 
   async update(entity: ProductAdditionalCost): Promise<void> {

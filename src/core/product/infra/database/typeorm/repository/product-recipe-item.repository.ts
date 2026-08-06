@@ -15,10 +15,19 @@ export class ProductRecipeItemRepositoryImpl implements ProductRecipeItemReposit
   async save(entity: ProductRecipeItem): Promise<ProductRecipeItem> {
     const schema = ProductRecipeItemMapper.toSchema(entity);
 
-    const save = await this.productRecipeItemReposiory.save(schema);
-    const productRecipeItemEntity = ProductRecipeItemMapper.toEntity(save);
+    const saved = await this.productRecipeItemReposiory.save(schema);
 
-    return productRecipeItemEntity;
+    return new ProductRecipeItem({
+      id: saved.id,
+      product: entity.product,
+      material: entity.material,
+      quantity: entity.quantity,
+      auditable: {
+        createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
+        deletedAt: saved.deletedAt,
+      },
+    });
   }
 
   async findAllByProductIdAndCompanyId(

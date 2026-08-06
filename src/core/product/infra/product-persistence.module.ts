@@ -8,9 +8,18 @@ import { ProductRecipeItemRepositoryImpl } from './database/typeorm/repository/p
 import { ProductRecipeItemSchema } from './database/typeorm/schema/product-recipe-item';
 import { ProductAdditionalCostRepositoryImpl } from './database/typeorm/repository/product-additional-cost.repository';
 import { ProductAdditionalCostSchema } from './database/typeorm/schema/product-additional-cost.schema';
+import { ProductRecipeLinkSchema } from './database/typeorm/schema/product-recipe-link.schema';
+import { ProductRecipeLinkRepositoryImpl } from './database/typeorm/repository/product-recipe-link.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductSchema, ProductRecipeItemSchema, ProductAdditionalCostSchema])],
+  imports: [
+    TypeOrmModule.forFeature([
+      ProductSchema,
+      ProductRecipeItemSchema,
+      ProductAdditionalCostSchema,
+      ProductRecipeLinkSchema,
+    ]),
+  ],
   providers: [
     { provide: PROVIDERS.PRODUCT_REPOSITORY, useClass: ProductRepositoryImpl },
     {
@@ -25,12 +34,17 @@ import { ProductAdditionalCostSchema } from './database/typeorm/schema/product-a
       provide: PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
       useClass: ProductAdditionalCostRepositoryImpl,
     },
+    {
+      provide: PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+      useClass: ProductRecipeLinkRepositoryImpl,
+    },
   ],
   exports: [
     PROVIDERS.PRODUCT_REPOSITORY,
     PROVIDERS.PRODUCT_QUERY_REPOSITORY,
     PROVIDERS.PRODUCT_RECIPE_ITEM,
     PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
+    PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
   ],
 })
 export class ProductPersistenceModule {}

@@ -84,17 +84,20 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         userRepository: UserRepository,
         hashService: HashService,
         jwtService: JwtService,
+        envConfigService: EnvConfig,
       ) => {
         return new UpdatePasswordUseCase(
           userRepository,
           hashService,
           jwtService,
+          envConfigService,
         );
       },
       inject: [
         PROVIDERS.USER_REPOSITORY,
         PROVIDERS.HASH_SERVICE,
         PROVIDERS.JWT_SERVICE,
+        PROVIDERS.ENV_CONFIG_SERVICE,
       ],
     },
     {

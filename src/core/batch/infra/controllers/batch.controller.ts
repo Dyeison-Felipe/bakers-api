@@ -145,9 +145,9 @@ export class BatchController {
   @Post(':id/discard')
   @Permission(PermissionBatch.BATCH_WRITE_OFF)
   @ApiOperation({
-    summary: 'Descarta a sobra de um lote como desperdício',
+    summary: 'Descarta ou registra a venda ao custo da sobra de um lote',
     description:
-      'Dá baixa na quantidade restante de um lote específico (ou parte dela) e registra como perda, pro cálculo de prejuízo com desperdício.',
+      'Dá baixa na quantidade restante de um lote específico (ou parte dela). Por padrão registra como perda (desperdício); com soldAtCost=true registra como vendido pelo preço de custo, sem contar como perda.',
   })
   @ApiParam({ name: 'id', description: 'Id do lote' })
   @ApiOkResponse({ type: DiscardBatchLeftoverPresenter })
@@ -159,6 +159,7 @@ export class BatchController {
       batchId: id,
       quantity: dto.quantity,
       reasonDescription: dto.reasonDescription,
+      soldAtCost: dto.soldAtCost,
     });
   }
 }

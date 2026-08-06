@@ -1,5 +1,7 @@
 export type DiscardBatchLeftoverOutput = {
   id: string;
   discardedQuantity: number;
-  lossValue: number;
+  soldAtCost: boolean;
+  lossValue: number | null;
+  recoveredValue: number | null;
 };

@@ -2,6 +2,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
 import { BatchMovement } from '@/core/batch/domain/entities/batch-movement.entity';
+import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { BatchMovementSchema } from '../schema/batch-movement.schema';
 import { BatchMovementMapper } from './mappers/batch-movement.mapper';
 
@@ -42,6 +43,31 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
     });
 
     return schemas.map((schema) => BatchMovementMapper.toEntity(schema));
+  }
+
+  async sumUnitCostByCompanyAndDateAndReason(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    reason: TypeBatchMovementReason,
+  ): Promise<number> {
+    const result = await this.batchMovementRepository
+      .createQueryBuilder('movement')
+      .leftJoin('movement.batch', 'batch')
+      .leftJoin('batch.company', 'company')
+      .select(
+        'COALESCE(SUM(movement.quantity * movement.unitCostSnapshot), 0)',
+        'total',
+      )
+      .where('company.id = :companyId', { companyId })
+      .andWhere('movement.reason = :reason', { reason })
+      .andWhere('movement.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
   }
 
   async update(): Promise<void> {

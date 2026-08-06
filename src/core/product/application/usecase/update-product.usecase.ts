@@ -28,6 +28,10 @@ import {
 import { ProductUnitCostCalculator } from '../services/product-unit-cost-calculator.service';
 import { ProductProfitCalculator } from '../services/product-proft-calculator.service';
 import { Product } from '../../domain/entities/product.entity';
+import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
+import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
+import { ProductRecipeLink } from '../../domain/entities/product-recipe-link.entity';
 
 type ProductMaterialInput = {
   id: string;
@@ -42,6 +46,10 @@ type AdditionalCostInput = {
 type AdditionalCostUsage = {
   additionalCost: AdditionalCost;
   value: number;
+};
+
+type RecipeLinkInput = {
+  id: string;
 };
 
 type Input = {
@@ -71,7 +79,8 @@ type Input = {
   category: string;
   image?: MulterFile;
   productMaterial?: ProductMaterialInput[];
-  additionalcost?: AdditionalCostInput[];
+  additionalCost?: AdditionalCostInput[];
+  recipeLinks?: RecipeLinkInput[];
 };
 
 type Output = {
@@ -94,6 +103,12 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     private readonly productAdditionalCostRepository: ProductAdditionalCostRepository,
     @Inject(PROVIDERS.ADDITIONAL_COST_REPOSITORY)
     private readonly additionalCostRepository: AdditionalCostRepository,
+    @Inject(PROVIDERS.RECIPE_REPOSITORY)
+    private readonly recipeRepository: RecipeRepository,
+    @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
+    private readonly recipeItemRepository: RecipeItemRepository,
+    @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
+    private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
   ) {}
 
   @Transactional()
@@ -101,16 +116,12 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const company = loggedUser.company;
     const isOwnProduction = input.typeProduct === TypeProduct.OWN_PRODUCTION;
+    const isResale = input.typeProduct === TypeProduct.RESALE;
+    const requiresPricing = isOwnProduction || isResale;
 
     if (isOwnProduction && !input.expirationDateInDays) {
       throw new BadRequestError(
         'Informe a validade em dias para produtos de produção própria',
-      );
-    }
-
-    if (isOwnProduction && !input.stockManagement) {
-      throw new BadRequestError(
-        'Produtos de produção própria precisam ter o controle de estoque habilitado',
       );
     }
 
@@ -134,6 +145,8 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     let costPrice = input.costPrice;
     let materialsUsage: MaterialUsage[] = [];
     let additionalCostsUsage: AdditionalCostUsage[] = [];
+    let recipesCost = 0;
+    let hasRecipeLinks = false;
 
     if (isOwnProduction) {
       materialsUsage = await this.syncRecipeItems(
@@ -144,11 +157,18 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
 
       additionalCostsUsage = await this.syncAdditionalCosts(
         product,
-        input.additionalcost ?? [],
+        input.additionalCost ?? [],
         company.id,
       );
 
-      if (materialsUsage.length || additionalCostsUsage.length) {
+      recipesCost = await this.syncRecipeLinks(
+        product,
+        input.recipeLinks ?? [],
+        company.id,
+      );
+      hasRecipeLinks = !!input.recipeLinks?.length;
+
+      if (materialsUsage.length || additionalCostsUsage.length || hasRecipeLinks) {
         const materialsCost = materialsUsage.length
           ? ProductRecipeCostCalculator.calculateTotalCost(materialsUsage)
           : 0;
@@ -158,13 +178,14 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
           0,
         );
 
-        costPrice = materialsCost + additionalCostsTotal;
+        costPrice = materialsCost + additionalCostsTotal + recipesCost;
       }
     } else {
       // Produto deixou de ser produção própria (ou nunca foi) —
       // garante que não sobra nenhum vínculo órfão.
       await this.deleteAllRecipeItems(product.id);
       await this.deleteAllAdditionalCosts(product.id);
+      await this.deleteAllRecipeLinks(product.id);
     }
 
     // 2. Custo unitário / por kg — matéria-prima E produção própria
@@ -179,11 +200,11 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
         unitOfMeasurement: input.unitOfMeasurement ?? null,
       });
 
-    // 3. Preço de venda / lucro — SOMENTE produção própria
+    // 3. Preço de venda / lucro — produção própria E revenda
     let salePrice: number | null = null;
     let profitPrice: number | null = null;
 
-    if (isOwnProduction && input.salePrice != null) {
+    if (requiresPricing && input.salePrice != null) {
       salePrice = input.salePrice;
 
       const basis = ProductProfitCalculator.getPricingBasis(
@@ -210,8 +231,8 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       barCode: input.barCode ?? product.barCode,
       ncm: input.ncm,
       costPrice,
-      salePrice: isOwnProduction ? salePrice : null,
-      profitPrice: isOwnProduction ? (profitPrice ?? 1) : null,
+      salePrice: requiresPricing ? salePrice : null,
+      profitPrice: requiresPricing ? (profitPrice ?? 1) : null,
       unitOfMeasurement: input.unitOfMeasurement ?? product.unitOfMeasurement,
       consumerUnit: input.consumerUnit ?? product.consumerUnit,
       expirationDateInDays:
@@ -319,6 +340,82 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     await Promise.all(
       existingItems.map((item) =>
         this.productRecipeItemRepository.deleteById(item.id),
+      ),
+    );
+  }
+
+  /**
+   * Faz o diff dos vínculos com receitas-base reutilizáveis (só cria/remove,
+   * não há "quantidade" nesse vínculo — quem tem quantidade é o item dentro
+   * da própria receita). Recalcula o custo de TODAS as receitas vinculadas
+   * a cada save, mesmo as que não mudaram, porque o preço das matérias-primas
+   * de uma receita pode ter mudado desde o último save do produto.
+   */
+  private async syncRecipeLinks(
+    ownProduct: Product,
+    recipeLinks: RecipeLinkInput[],
+    companyId: string,
+  ): Promise<number> {
+    const existingLinks =
+      await this.productRecipeLinkRepository.findAllByProductId(
+        ownProduct.id,
+      );
+
+    const existingByRecipeId = new Map(
+      existingLinks.map((link) => [link.recipe.id, link]),
+    );
+    const incomingByRecipeId = new Map(recipeLinks.map((r) => [r.id, r]));
+
+    const toRemove = existingLinks.filter(
+      (link) => !incomingByRecipeId.has(link.recipe.id),
+    );
+    await Promise.all(
+      toRemove.map((link) => this.productRecipeLinkRepository.delete(link.id)),
+    );
+
+    if (!recipeLinks.length) {
+      return 0;
+    }
+
+    const recipeIds = recipeLinks.map((r) => r.id);
+    const recipes = await this.recipeRepository.findAllByIdsAndCompanyId(
+      recipeIds,
+      companyId,
+    );
+    const recipesMap = new Map(recipes.map((r) => [r.id, r]));
+
+    const missing = recipeIds.filter((id) => !recipesMap.has(id));
+    if (missing.length) {
+      throw new NotFoundError(`Receita(s) não encontrada(s): ${missing.join(', ')}`);
+    }
+
+    await Promise.all(
+      recipeIds
+        .filter((id) => !existingByRecipeId.has(id))
+        .map((id) =>
+          this.productRecipeLinkRepository.save(
+            ProductRecipeLink.create({
+              product: ownProduct,
+              recipe: recipesMap.get(id)!,
+            }),
+          ),
+        ),
+    );
+
+    const items = await this.recipeItemRepository.findAllByRecipeIds(recipeIds);
+
+    return ProductRecipeCostCalculator.calculateTotalCost(
+      items.map((item) => ({ material: item.material, quantity: item.quantity })),
+    );
+  }
+
+  private async deleteAllRecipeLinks(productId: string): Promise<void> {
+    const existingLinks =
+      await this.productRecipeLinkRepository.findAllByProductId(productId);
+
+    await Promise.all(
+      existingLinks.map((link) =>
+        this.productRecipeLinkRepository.delete(link.id),
       ),
     );
   }

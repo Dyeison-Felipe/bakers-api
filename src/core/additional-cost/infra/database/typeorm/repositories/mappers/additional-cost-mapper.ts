@@ -31,4 +31,8 @@ export class AdditionalCostMapper {
     schema.updatedBy = entity.updatedBy;
     return schema;
   }
+
+  static toReference(id: string): AdditionalCostSchema {
+    return { id } as AdditionalCostSchema;
+  }
 }

@@ -14,7 +14,7 @@ export class DashboardController {
   @ApiOperation({
     summary: 'Resumo do dashboard',
     description:
-      'Custo de produção do dia e lucro apurado até o momento (vendas do dia − custo dos itens efetivamente vendidos).',
+      'Entradas do dia por forma de pagamento (dinheiro, Pix, cartão), custo de produção do dia e despesas do dia.',
   })
   @ApiOkResponse({ type: DashboardSummaryPresenter })
   async summary(): Promise<DashboardSummaryPresenter> {

@@ -30,6 +30,11 @@ import {
 } from '../services/product-recipe-cost-calculator.service';
 import { ProductUnitCostCalculator } from '../services/product-unit-cost-calculator.service';
 import { ProductProfitCalculator } from '../services/product-proft-calculator.service';
+import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
+import { Recipe } from '@/core/recipe/domain/entities/recipe.entity';
+import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
+import { ProductRecipeLink } from '../../domain/entities/product-recipe-link.entity';
 
 type CostPriceProduct = {
   id: string;
@@ -44,6 +49,10 @@ type AdditionalCostInput = {
 type AdditionalCostUsage = {
   additionalCost: AdditionalCost;
   value: number;
+};
+
+type RecipeLinkInput = {
+  id: string;
 };
 
 type Input = {
@@ -72,7 +81,8 @@ type Input = {
   category: string;
   image?: MulterFile;
   productMaterial?: CostPriceProduct[];
-  additionalcost?: AdditionalCostInput[];
+  additionalCost?: AdditionalCostInput[];
+  recipeLinks?: RecipeLinkInput[];
 };
 
 type Output = CreateProductOutput;
@@ -93,6 +103,12 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     private readonly productAdditionalCostRepository: ProductAdditionalCostRepository,
     @Inject(PROVIDERS.ADDITIONAL_COST_REPOSITORY)
     private readonly additionalCostRepository: AdditionalCostRepository,
+    @Inject(PROVIDERS.RECIPE_REPOSITORY)
+    private readonly recipeRepository: RecipeRepository,
+    @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
+    private readonly recipeItemRepository: RecipeItemRepository,
+    @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
+    private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
   ) {}
 
   @Transactional()
@@ -101,16 +117,12 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     const company = loggedUser.company;
 
     const isOwnProduction = input.typeProduct === TypeProduct.OWN_PRODUCTION;
+    const isResale = input.typeProduct === TypeProduct.RESALE;
+    const requiresPricing = isOwnProduction || isResale;
 
     if (isOwnProduction && !input.expirationDateInDays) {
       throw new BadRequestError(
         'Informe a validade em dias para produtos de produção própria',
-      );
-    }
-
-    if (isOwnProduction && !input.stockManagement) {
-      throw new BadRequestError(
-        'Produtos de produção própria precisam ter o controle de estoque habilitado',
       );
     }
 
@@ -137,6 +149,8 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     let costPrice = input.costPrice;
     let materialsUsage: MaterialUsage[] = [];
     let additionalCostsUsage: AdditionalCostUsage[] = [];
+    let resolvedRecipes: Recipe[] = [];
+    let recipesCost = 0;
 
     if (isOwnProduction && input.productMaterial) {
       materialsUsage = await this.resolveMaterialsUsage(
@@ -146,14 +160,23 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     }
 
     // 1.1 Custos adicionais — SOMENTE produção própria
-    if (isOwnProduction && input.additionalcost) {
+    if (isOwnProduction && input.additionalCost) {
       additionalCostsUsage = await this.resolveAdditionalCostsUsage(
-        input.additionalcost,
+        input.additionalCost,
         company.id,
       );
     }
 
-    if (materialsUsage.length || additionalCostsUsage.length) {
+    // 1.2 Receitas-base reutilizáveis — SOMENTE produção própria
+    if (isOwnProduction && input.recipeLinks?.length) {
+      resolvedRecipes = await this.resolveRecipeLinks(
+        input.recipeLinks,
+        company.id,
+      );
+      recipesCost = await this.calculateRecipesCost(resolvedRecipes);
+    }
+
+    if (materialsUsage.length || additionalCostsUsage.length || resolvedRecipes.length) {
       const materialsCost = materialsUsage.length
         ? ProductRecipeCostCalculator.calculateTotalCost(materialsUsage)
         : 0;
@@ -163,7 +186,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
         0,
       );
 
-      costPrice = materialsCost + additionalCostsTotal;
+      costPrice = materialsCost + additionalCostsTotal + recipesCost;
     }
 
     // 2. Custo unitário / por kg — matéria-prima E produção própria
@@ -178,11 +201,11 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
         unitOfMeasurement: input.unitOfMeasurement ?? null,
       });
 
-    // 3. Preço de venda / lucro — SOMENTE produção própria
+    // 3. Preço de venda / lucro — produção própria E revenda
     let salePrice: number | null = null;
     let profitPrice: number | null = null;
 
-    if (isOwnProduction && input.salePrice != null) {
+    if (requiresPricing && input.salePrice != null) {
       salePrice = input.salePrice;
 
       const basis = ProductProfitCalculator.getPricingBasis(
@@ -209,8 +232,8 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       expirationDateInDays: input.expirationDateInDays ?? null,
       ncm: input.ncm,
       typeProduct: input.typeProduct,
-      profitPrice: isOwnProduction ? (profitPrice ?? 1) : null,
-      salePrice: isOwnProduction ? salePrice : null,
+      profitPrice: requiresPricing ? (profitPrice ?? 1) : null,
+      salePrice: requiresPricing ? salePrice : null,
       scaleReference: input.scaleReference ?? null,
       stockAtual: input.currentStock ?? null,
       stockMin: input.stockMin ?? null,
@@ -238,7 +261,54 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       await this.saveAdditionalCosts(saveProduct, additionalCostsUsage);
     }
 
+    if (isOwnProduction && resolvedRecipes.length) {
+      await this.saveRecipeLinks(saveProduct, resolvedRecipes);
+    }
+
     return { id: saveProduct.id };
+  }
+
+  private async resolveRecipeLinks(
+    recipeLinks: RecipeLinkInput[],
+    companyId: string,
+  ): Promise<Recipe[]> {
+    const recipeIds = recipeLinks.map((r) => r.id);
+
+    const recipes = await this.recipeRepository.findAllByIdsAndCompanyId(
+      recipeIds,
+      companyId,
+    );
+    const recipesMap = new Map(recipes.map((r) => [r.id, r]));
+
+    const missing = recipeIds.filter((id) => !recipesMap.has(id));
+    if (missing.length) {
+      throw new NotFoundError(`Receita(s) não encontrada(s): ${missing.join(', ')}`);
+    }
+
+    return recipeIds.map((id) => recipesMap.get(id)!);
+  }
+
+  private async calculateRecipesCost(recipes: Recipe[]): Promise<number> {
+    const items = await this.recipeItemRepository.findAllByRecipeIds(
+      recipes.map((r) => r.id),
+    );
+
+    return ProductRecipeCostCalculator.calculateTotalCost(
+      items.map((item) => ({ material: item.material, quantity: item.quantity })),
+    );
+  }
+
+  private async saveRecipeLinks(
+    product: Product,
+    recipes: Recipe[],
+  ): Promise<void> {
+    await Promise.all(
+      recipes.map((recipe) =>
+        this.productRecipeLinkRepository.save(
+          ProductRecipeLink.create({ product, recipe }),
+        ),
+      ),
+    );
   }
 
   private async resolveMaterialsUsage(

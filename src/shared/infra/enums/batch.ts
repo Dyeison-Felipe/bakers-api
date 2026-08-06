@@ -12,4 +12,5 @@ export enum TypeBatchMovementReason {
   DELETION = 'DELETION',
   SALE = 'SALE',
   WASTE = 'WASTE',
+  LEFTOVER_SOLD_AT_COST = 'LEFTOVER_SOLD_AT_COST',
 }

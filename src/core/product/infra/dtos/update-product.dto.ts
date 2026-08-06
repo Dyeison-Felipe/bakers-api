@@ -22,6 +22,7 @@ import { Type } from 'class-transformer';
 import { MulterFileDto } from '@/shared/infra/dto/multer-file';
 import { ProductMaterialDto } from './calculate-recipe-cost.dto';
 import { AdditionalCostInputDto } from './additional-cost.dto';
+import { RecipeLinkInputDto } from './recipe-link.dto';
 
 export class UpdateProductDto {
   @IsUUID()
@@ -265,7 +266,17 @@ export class UpdateProductDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AdditionalCostInputDto)
-  additionalcost?: AdditionalCostInputDto[];
+  additionalCost?: AdditionalCostInputDto[];
+
+  @ApiPropertyOptional({
+    description: 'Receitas reutilizáveis vinculadas ao produto (produção própria)',
+    type: [RecipeLinkInputDto],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RecipeLinkInputDto)
+  recipeLinks?: RecipeLinkInputDto[];
 }
 
 export class UpdateProductRequestDto {

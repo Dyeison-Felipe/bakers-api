@@ -122,4 +122,8 @@ export class ProductMapper {
       deletedAt: entity.auditable?.deletedAt,
     });
   }
+
+  static toReference(id: string): ProductSchema {
+    return { id } as ProductSchema;
+  }
 }

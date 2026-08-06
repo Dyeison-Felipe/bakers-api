@@ -17,8 +17,8 @@ export class ProductAdditionalCostMapper {
   static toSchema(entity: ProductAdditionalCost): ProductAdditionalCostSchema {
     const schema = new ProductAdditionalCostSchema();
     schema.id = entity.id;
-    schema.product = ProductMapper.toSchema(entity.product!);
-    schema.additionalCost = AdditionalCostMapper.toSchema(entity.additionalCost!);
+    schema.product = ProductMapper.toReference(entity.product!.id);
+    schema.additionalCost = AdditionalCostMapper.toReference(entity.additionalCost!.id);
     schema.value = entity.value;
     return schema;
   }

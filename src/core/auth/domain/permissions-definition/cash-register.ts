@@ -11,4 +11,8 @@ export const PermissionCashRegister = {
     action: 'reader',
     resource: 'cash_register',
   },
+  CASH_REGISTER_MOVEMENT_CREATE: {
+    action: 'movement_create',
+    resource: 'cash_register',
+  },
 } as const;

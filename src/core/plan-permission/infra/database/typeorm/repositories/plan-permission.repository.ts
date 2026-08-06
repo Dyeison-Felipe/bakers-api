@@ -66,4 +66,10 @@ export class PlanPermissionRepositoryImpl implements PlanPermissionRepository {
   async delete(id: string): Promise<void> {
     await this.planPermissionRepository.softDelete(id);
   }
+
+  async deleteAllByPlanId(planId: string): Promise<void> {
+    await this.planPermissionRepository.softDelete({
+      plan: { id: planId },
+    });
+  }
 }

@@ -21,5 +21,9 @@ export type CashRegisterSessionDetailOutput = {
   productionCost: number;
   expenses: CashRegisterSessionDetailExpenseOutput[];
   totalExpenses: number;
+  totalWaste: number;
+  totalRecoveredAtCost: number;
+  totalSupplies: number;
+  totalWithdrawals: number;
   profit: number;
 };

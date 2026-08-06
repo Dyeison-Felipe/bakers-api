@@ -16,12 +16,16 @@ import { FindOpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-reg
 import { CloseCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/close-cash-register.presenter';
 import { FindAllCashRegisterSessionsItemPresenter } from '@/shared/infra/presenter/cash-register/find-all-cash-register-sessions-item.presenter';
 import { CashRegisterSessionDetailPresenter } from '@/shared/infra/presenter/cash-register/cash-register-session-detail.presenter';
+import { CashRegisterMovementPresenter } from '@/shared/infra/presenter/cash-register/cash-register-movement.presenter';
 import { OpenCashRegisterDto } from '../dtos/open-cash-register.dto';
+import { CreateCashRegisterMovementDto } from '../dtos/create-cash-register-movement.dto';
 import { OpenCashRegisterSessionUseCase } from '../../application/usecase/open-cash-register-session.usecase';
 import { FindOpenCashRegisterSessionUseCase } from '../../application/usecase/find-open-cash-register-session.usecase';
 import { CloseCashRegisterSessionUseCase } from '../../application/usecase/close-cash-register-session.usecase';
 import { FindAllCashRegisterSessionsUseCase } from '../../application/usecase/find-all-cash-register-sessions.usecase';
 import { FindCashRegisterSessionDetailUseCase } from '../../application/usecase/find-cash-register-session-detail.usecase';
+import { CreateCashRegisterMovementUseCase } from '../../application/usecase/create-cash-register-movement.usecase';
+import { FindCashRegisterMovementsUseCase } from '../../application/usecase/find-cash-register-movements.usecase';
 
 @ApiTags('Cash Register')
 @Controller('v1/cash-register')
@@ -32,6 +36,8 @@ export class CashRegisterController {
     private readonly closeCashRegisterSessionUseCase: CloseCashRegisterSessionUseCase,
     private readonly findAllCashRegisterSessionsUseCase: FindAllCashRegisterSessionsUseCase,
     private readonly findCashRegisterSessionDetailUseCase: FindCashRegisterSessionDetailUseCase,
+    private readonly createCashRegisterMovementUseCase: CreateCashRegisterMovementUseCase,
+    private readonly findCashRegisterMovementsUseCase: FindCashRegisterMovementsUseCase,
   ) {}
 
   @Post('open')
@@ -104,5 +110,32 @@ export class CashRegisterController {
     @Param('id') id: string,
   ): Promise<CashRegisterSessionDetailPresenter> {
     return await this.findCashRegisterSessionDetailUseCase.execute({ id });
+  }
+
+  @Post('movement')
+  @Permission(PermissionCashRegister.CASH_REGISTER_MOVEMENT_CREATE)
+  @ApiOperation({
+    summary: 'Registra sangria ou incremento no caixa aberto',
+    description:
+      'Sangria (retirada) exige motivo e, se o motivo for pagamento de despesa, cria automaticamente um lançamento na tela de Despesas. Incremento é entrada de dinheiro no caixa.',
+  })
+  @ApiOkResponse({ type: CashRegisterMovementPresenter })
+  async createMovement(
+    @Body() dto: CreateCashRegisterMovementDto,
+  ): Promise<CashRegisterMovementPresenter> {
+    return await this.createCashRegisterMovementUseCase.execute(dto);
+  }
+
+  @Get(':id/movements')
+  @Permission(PermissionCashRegister.CASH_REGISTER_READER)
+  @ApiOperation({ summary: 'Lista as sangrias e incrementos de um caixa' })
+  @ApiParam({ name: 'id', description: 'Id do caixa' })
+  @ApiOkResponse({ type: CashRegisterMovementPresenter, isArray: true })
+  async findMovements(
+    @Param('id') id: string,
+  ): Promise<CashRegisterMovementPresenter[]> {
+    return await this.findCashRegisterMovementsUseCase.execute({
+      cashRegisterSessionId: id,
+    });
   }
 }

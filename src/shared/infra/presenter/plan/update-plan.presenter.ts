@@ -12,5 +12,6 @@ export class UpdatePlanPresenter {
     this.description = props.description;
     this.price = props.price;
     this.duration = props.duration;
+    this.active = props.active;
   }
 }

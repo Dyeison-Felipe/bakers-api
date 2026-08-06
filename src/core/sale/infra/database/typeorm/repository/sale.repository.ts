@@ -109,6 +109,27 @@ export class SaleRepositoryImpl implements SaleRepository {
     return Number(result?.total ?? 0);
   }
 
+  async sumTotalByCompanyAndDateRangeAndPaymentMethod(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    paymentMethod: TypePaymentMethod,
+  ): Promise<number> {
+    const result = await this.saleRepository
+      .createQueryBuilder('sale')
+      .leftJoin('sale.company', 'company')
+      .select('COALESCE(SUM(sale.totalAmount), 0)', 'total')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .andWhere('sale.paymentMethod = :paymentMethod', { paymentMethod })
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
+  }
+
   async update(entity: Sale): Promise<void> {
     const schema = SaleMapper.toSchema(entity);
     await this.saleRepository.save(schema);

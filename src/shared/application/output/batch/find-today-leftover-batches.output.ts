@@ -5,6 +5,7 @@ export type LeftoverBatchOutput = {
   product: {
     id: string;
     name: string;
+    currentStock: number | null;
   };
   unitOfMeasurement: TypeUnitOfMeasurement;
   producedQuantity: number;

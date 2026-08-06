@@ -42,6 +42,7 @@ export class FindTodayLeftoverBatchesUseCase implements UseCase<Input, Output> {
         product: {
           id: batch.product!.id,
           name: batch.product!.name,
+          currentStock: batch.product!.currentStock,
         },
         unitOfMeasurement: batch.unitOfMeasurement,
         producedQuantity: batch.quantity,

@@ -25,4 +25,11 @@ export interface SaleRepository extends BaseRepository<Sale> {
     cashRegisterSessionId: string,
     paymentMethod: TypePaymentMethod,
   ): Promise<number>;
+
+  sumTotalByCompanyAndDateRangeAndPaymentMethod(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    paymentMethod: TypePaymentMethod,
+  ): Promise<number>;
 }

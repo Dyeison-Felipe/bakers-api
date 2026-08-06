@@ -49,8 +49,10 @@ export class CompanyRepositoryMapper {
       createdBy: entity.createdBy,
       updatedBy: entity.updatedBy,
       deletedBy: entity.deletedBy,
-      address: AddressRepositoryMapper.toSchema(entity.address!),
-      plan: PlanMapper.toSchema(entity.plan!),
+      address: entity.address
+        ? AddressRepositoryMapper.toSchema(entity.address)
+        : undefined,
+      plan: entity.plan ? PlanMapper.toSchema(entity.plan) : undefined,
     });
 
     return schema;

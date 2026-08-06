@@ -100,6 +100,9 @@ export class UserQueryImpl implements UserQuery {
       .leftJoin('user.userPermissions', 'userPermissions')
       .leftJoin('userPermissions.permission', 'permission')
       .leftJoin('user.company', 'company')
+      .leftJoin('company.plan', 'plan')
+      .leftJoin('plan.planPermission', 'planPermission')
+      .leftJoin('planPermission.permission', 'planPerm')
       .select([
         'user.id',
         'user.email',
@@ -115,6 +118,15 @@ export class UserQueryImpl implements UserQuery {
         'permission.id',
         'permission.action',
         'permission.subject',
+        'plan.id',
+        'plan.name',
+        'plan.price',
+        'plan.duration',
+        'planPermission.id',
+        'planPerm.id',
+        'planPerm.action',
+        'planPerm.subject',
+        'planPerm.description',
       ])
       .where('user.email = :email', { email })
       .getOne();
@@ -134,6 +146,21 @@ export class UserQueryImpl implements UserQuery {
         stateRegistration: queryBuilder.company.stateRegistration,
         socialReazon: queryBuilder.company.socialReazon,
         fantasyName: queryBuilder.company.fantasyName,
+        plan: queryBuilder.company.plan
+          ? {
+              id: queryBuilder.company.plan.id,
+              name: queryBuilder.company.plan.name,
+              price: queryBuilder.company.plan.price,
+              duration: queryBuilder.company.plan.duration,
+              permissions:
+                queryBuilder.company.plan.planPermission?.map((pp) => ({
+                  id: pp.permission.id,
+                  action: pp.permission.action,
+                  subject: pp.permission.subject,
+                  description: pp.permission.description,
+                })) ?? [],
+            }
+          : undefined,
       },
       permissions:
         queryBuilder.userPermissions?.map((up) => ({

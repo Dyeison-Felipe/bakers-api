@@ -31,6 +31,10 @@ export class ProductUnitCostCalculator {
       return this.calculateForOwnProduction(input);
     }
 
+    if (input.typeProduct === TypeProduct.RESALE) {
+      return this.calculateForResale(input);
+    }
+
     return { unitCostPrice: null, pricePerKilogram: null };
   }
 
@@ -53,6 +57,31 @@ export class ProductUnitCostCalculator {
 
     const pricePerKilogram = consumerDivisor
       ? unitCostPrice / consumerDivisor
+      : null;
+
+    return { unitCostPrice, pricePerKilogram };
+  }
+
+  private static calculateForResale(
+    input: UnitCostCalculatorInput,
+  ): UnitCostCalculatorResult {
+    const costDivisor = this.positiveOrNull(input.quantity);
+
+    if (!costDivisor) {
+      return { unitCostPrice: null, pricePerKilogram: null };
+    }
+
+    const unitCostPrice = input.costPrice / costDivisor;
+
+    // Revenda não tem consumerUnit — quem decide se precisa de preço por kg
+    // é a própria unidade de venda (mesmo campo usado pelo PDV).
+    const weightDivisor =
+      input.unitOfMeasurement === TypeUnitOfMeasurement.KG
+        ? this.positiveOrNull(input.weight)
+        : null;
+
+    const pricePerKilogram = weightDivisor
+      ? unitCostPrice / weightDivisor
       : null;
 
     return { unitCostPrice, pricePerKilogram };

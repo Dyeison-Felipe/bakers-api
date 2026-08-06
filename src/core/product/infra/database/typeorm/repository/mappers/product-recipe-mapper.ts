@@ -20,8 +20,8 @@ export class ProductRecipeItemMapper {
   static toSchema(entity: ProductRecipeItem): ProductRecipeItemSchema {
     return ProductRecipeItemSchema.with({
       id: entity.id,
-      product: ProductMapper.toSchema(entity.product),
-      material: ProductMapper.toSchema(entity.material),
+      product: ProductMapper.toReference(entity.product.id),
+      material: ProductMapper.toReference(entity.material.id),
       quantity: entity.quantity,
       createdAt: entity.auditable?.createdAt,
       updatedAt: entity.auditable?.updatedAt,

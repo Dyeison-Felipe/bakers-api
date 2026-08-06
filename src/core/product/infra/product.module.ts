@@ -27,12 +27,17 @@ import {
 import { AdditionalCostModule } from '@/core/additional-cost/infra/additional-cost.module';
 import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import { FindLowStockProductsUseCase } from '../application/usecase/find-low-stock-products.usecase';
+import { RecipeModule } from '@/core/recipe/infra/recipe.module';
+import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
+import { ProductRecipeLinkRepository } from '../domain/repositories/product-recipe-link.repository';
 
 @Module({
   imports: [
     ProductPersistenceModule,
     CategoryPersistenceModule,
     AdditionalCostModule,
+    RecipeModule,
   ],
   controllers: [ProductController],
   providers: [
@@ -46,6 +51,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
         productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         additionalCostRepository: AdditionalCostRepository,
+        recipeRepository: RecipeRepository,
+        recipeItemRepository: RecipeItemRepository,
+        productRecipeLinkRepository: ProductRecipeLinkRepository,
       ) => {
         return new CreateProductUseCase(
           productRepository,
@@ -55,6 +63,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
           productRecipeItemRepository,
           productAdditionalCostRepository,
           additionalCostRepository,
+          recipeRepository,
+          recipeItemRepository,
+          productRecipeLinkRepository,
         );
       },
       inject: [
@@ -65,6 +76,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
         PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.RECIPE_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
+        PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
       ],
     },
     {
@@ -90,6 +104,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
         productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         additionalCostRepository: AdditionalCostRepository,
+        recipeRepository: RecipeRepository,
+        recipeItemRepository: RecipeItemRepository,
+        productRecipeLinkRepository: ProductRecipeLinkRepository,
       ) => {
         return new UpdateProductUseCase(
           productRepository,
@@ -99,6 +116,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
           productRecipeItemRepository,
           productAdditionalCostRepository,
           additionalCostRepository,
+          recipeRepository,
+          recipeItemRepository,
+          productRecipeLinkRepository,
         );
       },
       inject: [
@@ -109,6 +129,9 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
         PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.RECIPE_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
+        PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
       ],
     },
     {
@@ -163,17 +186,23 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
         productRepository: ProductRepository,
         loggedUserService: LoggedUserService,
         additionalCostRepository: AdditionalCostRepository,
+        recipeRepository: RecipeRepository,
+        recipeItemRepository: RecipeItemRepository,
       ) => {
         return new CalculateRecipeCostUseCase(
           productRepository,
           loggedUserService,
           additionalCostRepository,
+          recipeRepository,
+          recipeItemRepository,
         );
       },
       inject: [
         PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.RECIPE_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
       ],
     },
     {
@@ -188,15 +217,21 @@ import { FindLowStockProductsUseCase } from '../application/usecase/find-low-sto
       useFactory: (
         productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
+        productRecipeLinkRepository: ProductRecipeLinkRepository,
+        recipeItemRepository: RecipeItemRepository,
       ) => {
         return new FindProductRecipeUseCase(
           productRecipeItemRepository,
           productAdditionalCostRepository,
+          productRecipeLinkRepository,
+          recipeItemRepository,
         );
       },
       inject: [
         PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
       ],
     },
     {

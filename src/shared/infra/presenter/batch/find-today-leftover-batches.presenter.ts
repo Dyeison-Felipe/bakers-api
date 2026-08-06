@@ -6,7 +6,7 @@ export class LeftoverBatchPresenter {
   readonly batchId: string;
 
   @ApiProperty({ description: 'Produto' })
-  readonly product: { id: string; name: string };
+  readonly product: { id: string; name: string; currentStock: number | null };
 
   @ApiProperty({ description: 'Unidade de medida', enum: TypeUnitOfMeasurement })
   readonly unitOfMeasurement: TypeUnitOfMeasurement;
