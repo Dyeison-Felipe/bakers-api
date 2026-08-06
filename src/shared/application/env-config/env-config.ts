@@ -2,6 +2,9 @@ export interface EnvConfig {
   getStoragePath(): string;
   getExpiresInSecondsForgotPassword(): number;
   getJwtSecretForgotPassword(): string;
+  getExpiresInSecondsEmailVerification(): number;
+  getJwtSecretEmailVerification(): string;
+  getFrontendUrl(): string;
   getCookieSecret(): string;
   getCookieSameSite(): string;
   getCookieSecure(): boolean;

@@ -14,6 +14,11 @@ export interface ProductRepository extends BaseRepository<Product> {
     name: string,
     companyId: string,
   ): Promise<Product | null>;
+  findProductByBarCodeAndCompanyId(
+    barCode: string,
+    companyId: string,
+    excludeProductId?: string,
+  ): Promise<Product | null>;
   findAllProductsByCompanyId(
     companyId: string,
     status?: boolean,

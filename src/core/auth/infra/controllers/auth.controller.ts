@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -32,6 +33,8 @@ import { UpdatePasswordUseCase } from '../../application/usecase/update-password
 import { UpdatePasswordDto } from '../dtos/update-password.dto';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import { LogoutUseCase } from '../../application/usecase/logout.usecase';
+import { VerifyEmailUseCase } from '../../application/usecase/verify-email.usecase';
+import { VerifyEmailDto } from '../dtos/verify-email.dto';
 
 @ApiTags('Auth')
 @Controller('/v1/auth')
@@ -42,6 +45,7 @@ export class AuthController {
     private readonly verifyCodeUseCase: VerifyCodeUseCase,
     private readonly updatePasswordUseCase: UpdatePasswordUseCase,
     private readonly logoutUseCase: LogoutUseCase,
+    private readonly verifyEmailUseCase: VerifyEmailUseCase,
   ) {}
 
   @Post('/login')
@@ -94,6 +98,14 @@ export class AuthController {
     @Req() req: FastifyRequest,
   ): Promise<void> {
     await this.updatePasswordUseCase.execute({ password: dto.password, req });
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Get('verify-email')
+  @Public()
+  @ApiOperation({ summary: 'Verifica o e-mail do usuário a partir do token enviado por e-mail' })
+  async verifyEmail(@Query() dto: VerifyEmailDto): Promise<void> {
+    await this.verifyEmailUseCase.execute(dto);
   }
 
   @ApiOperation({ summary: 'Faz o logout de um usuário' })

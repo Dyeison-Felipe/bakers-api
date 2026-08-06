@@ -37,6 +37,12 @@ export class LoginUseCase implements UseCase<Input, Output> {
       throw new UnauthorizedError(`Usuário ou senha invalido`);
     }
 
+    if (!user.emailVerified) {
+      throw new UnauthorizedError(
+        `Verifique seu e-mail antes de fazer login`,
+      );
+    }
+
     const comparePassword = this.hashService.compareHash(
       password,
       user.password,

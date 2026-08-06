@@ -22,6 +22,9 @@ import { CreateCompanyOutput } from '@/shared/application/output/company/create-
 import { CityRepository } from '@/core/city/domain/repositories/city.repository';
 import { UserPermissionRepository } from '@/core/user-permission/domain/repositories/user-permission.repository';
 import { UserPermissionEntity } from '@/core/user-permission/domain/entities/user-permission.entity';
+import { JwtService } from '@/shared/application/jwt/jwt.service';
+import { EnvConfig } from '@/shared/application/env-config/env-config';
+import { MailService } from '@/shared/application/mail/mail.service';
 
 type UserInput = {
   username: string;
@@ -60,6 +63,10 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.HASH_SERVICE) private readonly hashService: HashService,
     @Inject(PROVIDERS.USER_PERMISSION_REPOSITORY)
     private readonly userPermissionRepository: UserPermissionRepository,
+    @Inject(PROVIDERS.JWT_SERVICE) private readonly jwtService: JwtService,
+    @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
+    private readonly envConfigService: EnvConfig,
+    @Inject(PROVIDERS.MAIL_SERVICE) private readonly mailService: MailService,
   ) {}
 
   private readonly logger = new Logger(CreateCompanyUseCase.name);
@@ -199,12 +206,52 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       }
 
       await this.userPermissionRepository.saveMany(userPermissions);
+
+      await this.sendVerificationEmail(saveUser, role);
     } catch (error) {
       this.logger.error(
         'Ocorreu um erro ao criar o usuário da empresa',
         getErrorStack(error),
       );
       throw new BadRequestError(`Ocorreu um erro ao criar o usuário`);
+    }
+  }
+
+  private async sendVerificationEmail(
+    user: UserEntity,
+    role: Role,
+  ): Promise<void> {
+    try {
+      const { token } = await this.jwtService.generateJwt(
+        {
+          sub: user.id,
+          email: user.email,
+          username: user.username,
+          role: role.name,
+        },
+        {
+          secret: this.envConfigService.getJwtSecretEmailVerification(),
+          expiresIn: this.envConfigService.getExpiresInSecondsEmailVerification(),
+        },
+      );
+
+      const verificationLink = `${this.envConfigService.getFrontendUrl()}/verify-email?token=${token}`;
+
+      await this.mailService.sendMail({
+        to: user.email,
+        template: 'email-verification',
+        subject: 'Confirme seu e-mail',
+        context: {
+          name: user.username,
+          verificationLink,
+          year: new Date().getFullYear(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        'Falha ao enviar o e-mail de verificação do usuário',
+        getErrorStack(error),
+      );
     }
   }
 }

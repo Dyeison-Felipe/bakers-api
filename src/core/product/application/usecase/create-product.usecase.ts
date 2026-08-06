@@ -136,6 +136,18 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       throw new ConflictError(`Produto ${input.name} já está cadastrado`);
     }
 
+    if (input.barCode) {
+      const existingBarCode =
+        await this.productRepository.findProductByBarCodeAndCompanyId(
+          input.barCode,
+          company.id,
+        );
+
+      if (existingBarCode) {
+        throw new ConflictError('Código de barras já está em uso');
+      }
+    }
+
     const category = await this.categoryRepository.findCategoryByIdAndCompanyId(
       input.category,
       company.id,

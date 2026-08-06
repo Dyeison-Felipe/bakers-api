@@ -37,6 +37,14 @@ export class UserRules {
   @IsNotEmpty()
   active: boolean;
 
+  @IsBoolean()
+  @IsNotEmpty()
+  emailVerified: boolean;
+
+  @IsDate()
+  @IsOptional()
+  emailVerifiedAt?: Date | null;
+
   @IsString()
   @IsOptional()
   passwordResetCode?: string | null;

@@ -5,6 +5,7 @@ import {
   FindOptionsRelations,
   FindOptionsWhere,
   In,
+  Not,
   Repository,
 } from 'typeorm';
 import { Product } from '@/core/product/domain/entities/product.entity';
@@ -190,6 +191,24 @@ export class ProductRepositoryImpl implements ProductRepository {
     const productEntity = ProductMapper.toEntity(productSchema);
 
     return productEntity;
+  }
+
+  async findProductByBarCodeAndCompanyId(
+    barCode: string,
+    companyId: string,
+    excludeProductId?: string,
+  ): Promise<Product | null> {
+    const productSchema = await this.productRepository.findOne({
+      where: {
+        barCode,
+        company: { id: companyId },
+        ...(excludeProductId ? { id: Not(excludeProductId) } : {}),
+      },
+    });
+
+    if (!productSchema) return null;
+
+    return ProductMapper.toEntity(productSchema);
   }
 
   async save(entity: Product): Promise<Product> {

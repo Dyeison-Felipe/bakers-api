@@ -20,6 +20,9 @@ import { CityModule } from '@/core/city/infra/city.module';
 import { CityRepository } from '@/core/city/domain/repositories/city.repository';
 import { UserPermissionRepository } from '@/core/user-permission/domain/repositories/user-permission.repository';
 import { UserPermissionModule } from '@/core/user-permission/infra/user-permission.module';
+import { JwtService } from '@/shared/application/jwt/jwt.service';
+import { EnvConfig } from '@/shared/application/env-config/env-config';
+import { MailService } from '@/shared/application/mail/mail.service';
 
 @Module({
   imports: [
@@ -49,6 +52,9 @@ import { UserPermissionModule } from '@/core/user-permission/infra/user-permissi
         roleRepository: RoleRepository,
         hashService: HashService,
         userPermissionRepository: UserPermissionRepository,
+        jwtService: JwtService,
+        envConfigService: EnvConfig,
+        mailService: MailService,
       ) => {
         return new CreateCompanyUseCase(
           companyRepository,
@@ -59,6 +65,9 @@ import { UserPermissionModule } from '@/core/user-permission/infra/user-permissi
           roleRepository,
           hashService,
           userPermissionRepository,
+          jwtService,
+          envConfigService,
+          mailService,
         );
       },
       inject: [
@@ -70,6 +79,9 @@ import { UserPermissionModule } from '@/core/user-permission/infra/user-permissi
         PROVIDERS.ROLE_REPOSITORY,
         PROVIDERS.HASH_SERVICE,
         PROVIDERS.USER_PERMISSION_REPOSITORY,
+        PROVIDERS.JWT_SERVICE,
+        PROVIDERS.ENV_CONFIG_SERVICE,
+        PROVIDERS.MAIL_SERVICE,
       ],
     },
   ],

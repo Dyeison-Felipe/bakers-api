@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
   ValidateNested,
@@ -48,13 +49,15 @@ export class CreateProductDto {
   scaleReference?: string;
 
   @ApiPropertyOptional({
-    description: 'Código de barras do produto',
+    description: 'Código de barras do produto (EAN13)',
     example: '7891234567895',
-    maxLength: 14,
+    pattern: '^\\d{13}$',
   })
   @IsOptional()
   @IsString()
-  @MaxLength(14)
+  @Matches(/^\d{13}$/, {
+    message: 'Código de barras deve ter 13 dígitos numéricos (EAN13)',
+  })
   barCode?: string;
 
   @ApiProperty({

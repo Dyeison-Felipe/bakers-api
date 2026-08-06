@@ -11,6 +11,7 @@ export type UserByLogin = {
   password: string;
   email: string;
   active: boolean;
+  emailVerified: boolean;
   company: Company
   role: string;
   permissions?: Permissions[] | null;

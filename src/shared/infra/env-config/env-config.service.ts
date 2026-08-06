@@ -17,6 +17,16 @@ export class EnvConfigService implements EnvConfig {
     return this.envConfigService.get<string>('JWT_SECRET_FORGOT_PASSWORD') as string;
   }
 
+  getExpiresInSecondsEmailVerification(): number {
+    return +(this.envConfigService.get<string>('JWT_EXPIRES_IN_EMAIL_VERIFICATION') as string);
+  }
+  getJwtSecretEmailVerification(): string {
+    return this.envConfigService.get<string>('JWT_SECRET_EMAIL_VERIFICATION') as string;
+  }
+  getFrontendUrl(): string {
+    return this.envConfigService.get<string>('FRONTEND_URL') as string;
+  }
+
   getCookieSecret(): string {
     return this.envConfigService.get<string>('COOKIE_SECRET') as string;
   }

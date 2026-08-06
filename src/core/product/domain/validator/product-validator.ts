@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
   ValidateNested,
@@ -36,7 +37,9 @@ export class ProductRules {
   scaleReference: string | null;
 
   @IsString()
-  @MaxLength(14)
+  @Matches(/^\d{13}$/, {
+    message: 'Código de barras deve ter 13 dígitos numéricos (EAN13)',
+  })
   @IsOptional()
   barCode: string | null;
 

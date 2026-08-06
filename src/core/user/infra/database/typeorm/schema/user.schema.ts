@@ -18,6 +18,12 @@ export class UserSchema extends BaseSchema {
   @Column()
   active: boolean;
 
+  @Column({ name: 'email_verified' })
+  emailVerified: boolean;
+
+  @Column({ name: 'email_verified_at', type: 'timestamp', nullable: true })
+  emailVerifiedAt: Date | null;
+
   @Column({
     name: 'password_reset_code',
     type: 'varchar',

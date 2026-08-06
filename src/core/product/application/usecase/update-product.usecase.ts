@@ -21,6 +21,7 @@ import { AdditionalCost } from '@/core/additional-cost/domain/entities/additiona
 import { Transactional } from 'typeorm-transactional';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { ConflictError } from '@/shared/application/errors/conflict-error';
 import {
   MaterialUsage,
   ProductRecipeCostCalculator,
@@ -139,6 +140,19 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     );
     if (!category) {
       throw new NotFoundException('Categoria não encontrada');
+    }
+
+    if (input.barCode) {
+      const existingBarCode =
+        await this.productRepository.findProductByBarCodeAndCompanyId(
+          input.barCode,
+          company.id,
+          product.id,
+        );
+
+      if (existingBarCode) {
+        throw new ConflictError('Código de barras já está em uso');
+      }
     }
 
     // 1. Diff + persistência dos recipe items e custos adicionais — SOMENTE produção própria
