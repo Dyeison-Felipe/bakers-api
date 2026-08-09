@@ -12,6 +12,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { UpdateUserUseCase } from '../application/usecase/update-user.usecase';
 import { InactivateUserUseCase } from '../application/usecase/inactivate-user.usecase';
 import { UpdateUserPasswordUseCase } from '../application/usecase/update-user-password.usecase';
+import { FindAllUsersUseCase } from '../application/usecase/find-all-users.usecase';
+import { FindUserByIdUseCase } from '../application/usecase/find-user-by-id.usecase';
 import { JwtConfigModule } from '@/shared/infra/jwt/jwt.module';
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { RoleModule } from '@/core/role/infra/role.module';
@@ -129,6 +131,26 @@ import { PermissionRepository } from '@/core/permission/domain/repositories/perm
         PROVIDERS.JWT_SERVICE,
         PROVIDERS.HASH_SERVICE,
       ],
+    },
+    {
+      provide: FindAllUsersUseCase,
+      useFactory: (
+        userRepository: UserRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindAllUsersUseCase(userRepository, loggedUserService);
+      },
+      inject: [PROVIDERS.USER_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindUserByIdUseCase,
+      useFactory: (
+        userRepository: UserRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindUserByIdUseCase(userRepository, loggedUserService);
+      },
+      inject: [PROVIDERS.USER_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [PROVIDERS.USER_REPOSITORY, PROVIDERS.USER_QUERY],

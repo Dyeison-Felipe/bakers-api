@@ -116,6 +116,7 @@ export class UserQueryImpl implements UserQuery {
         'company.socialReazon',
         'company.cnpj',
         'company.stateRegistration',
+        'userPermissions.id',
         'permission.id',
         'permission.action',
         'permission.subject',

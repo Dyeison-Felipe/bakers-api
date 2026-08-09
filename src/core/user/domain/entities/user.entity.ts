@@ -9,6 +9,7 @@ import { UserPermissionEntity } from '@/core/user-permission/domain/entities/use
 
 export type UserProps = {
   username: string;
+  name: string;
   password: string;
   active: boolean;
   passwordResetCode?: string | null;
@@ -26,6 +27,7 @@ export type UserProps = {
 
 type CreateUserProps = {
   username: string;
+  name: string;
   password: string;
   email: string;
   role: Role;
@@ -36,6 +38,7 @@ type CreateUserProps = {
 
 type UpdateUserProps = {
   username: string;
+  name: string;
   email: string;
   role: Role;
   updatedBy: string;
@@ -54,6 +57,7 @@ export class UserEntity extends BaseEntity<UserProps> {
     const entity = new UserEntity({
       id: crypto.randomUUID(),
       username: props.username,
+      name: props.name,
       password: props.password,
       active: true,
       email: props.email,
@@ -75,6 +79,7 @@ export class UserEntity extends BaseEntity<UserProps> {
 
   update(props: UpdateUserProps): void {
     this.username = props.username;
+    this.name = props.name;
     this.email = props.email;
     this.role = props.role;
     this.updatedBy = props.updatedBy;

@@ -19,6 +19,15 @@ export class CreateUserDto {
   @IsString()
   username: string;
 
+  @ApiProperty({
+    description: 'Nome completo do usuário',
+    type: String,
+    maxLength: 255,
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @IsUUID()
   role: string;
 

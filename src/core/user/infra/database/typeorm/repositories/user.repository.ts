@@ -4,6 +4,7 @@ import { UserSchema } from '../schema/user.schema';
 import { FindOptionsRelations, Repository } from 'typeorm';
 import { UserRepositoryMapper } from './mapper/user-mapper';
 import { UserEntity } from '@/core/user/domain/entities/user.entity';
+import { Pagination, PaginationInput } from '@/shared/domain/pagination/pagination';
 
 export class UserRepositoryImpl implements UserRepository {
   constructor(
@@ -58,6 +59,54 @@ export class UserRepositoryImpl implements UserRepository {
     const userEntity = UserRepositoryMapper.toEntity(userSchema);
 
     return userEntity;
+  }
+
+  async findByUsernameAndCompany(
+    username: string,
+    companyId: string,
+  ): Promise<UserEntity | null> {
+    const userSchema = await this.userRepository.findOne({
+      where: { username, company: { id: companyId } },
+      relations: this.getRelations(),
+    });
+
+    if (!userSchema) return null;
+
+    const userEntity = UserRepositoryMapper.toEntity(userSchema);
+
+    return userEntity;
+  }
+
+  async findAllByCompany(
+    companyId: string,
+    pagination?: PaginationInput,
+  ): Promise<Pagination<UserEntity>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+    const direction = pagination?.direction ?? 'DESC';
+
+    const [usersSchema, totalItems] = await this.userRepository.findAndCount({
+      where: { company: { id: companyId } },
+      relations: this.getRelations(),
+      order: { createdAt: direction },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const usersEntity = usersSchema.map((schema) =>
+      UserRepositoryMapper.toEntity(schema),
+    );
+
+    return {
+      items: usersEntity,
+      meta: {
+        totalItems,
+        itemCount: usersEntity.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async findById(id: string): Promise<UserEntity | null> {

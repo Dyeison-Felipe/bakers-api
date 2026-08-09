@@ -24,6 +24,15 @@ export class UpdateUserDto {
   @IsString()
   username: string;
 
+  @ApiProperty({
+    description: 'Nome completo do usuário',
+    type: String,
+    maxLength: 255,
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @IsEmail()
   @IsNotEmpty()
   email: string;

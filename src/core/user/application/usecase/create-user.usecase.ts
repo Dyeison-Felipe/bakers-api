@@ -13,6 +13,7 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { Transactional } from '@/shared/infra/database/typeorm/decorators/transactional.decorator';
 import { RoleRepository } from '@/core/role/domain/repositories/role.repository';
+import { Role } from '@/core/role/domain/entities/role.entity';
 import { UserPermissionRepository } from '@/core/user-permission/domain/repositories/user-permission.repository';
 import { PermissionRepository } from '@/core/permission/domain/repositories/permission.repository';
 import { UserPermissionEntity } from '@/core/user-permission/domain/entities/user-permission.entity';
@@ -50,6 +51,15 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
       throw new ConflictError(`E-mail invalido`);
     }
 
+    const existUsername = await this.userRepository.findByUsernameAndCompany(
+      input.username,
+      loggedUser.company.id,
+    );
+
+    if (existUsername) {
+      throw new ConflictError(`Já existe um usuário com esse username`);
+    }
+
     const role = await this.roleRepository.findById(input.role);
 
     if (!role) {
@@ -74,6 +84,10 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
       updatedBy: loggedUser?.id ?? ID_USER_DEFAULT,
     });
 
+    // Usuário criado por um admin já entra pronto pra uso — não passa pelo
+    // fluxo de verificação de e-mail (esse só existe no cadastro público).
+    userEntity.verifyEmail();
+
     const newUser = await this.userRepository.save(userEntity);
 
     await this.createUserPermission(
@@ -81,16 +95,28 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
       newUser,
     );
 
-    const output = this.outputUser(newUser);
+    const output = this.outputUser(newUser, role, permissions);
 
     return output;
   }
 
   outputUser(
     userEntity: UserEntity,
+    role: Role,
+    permissions: Permission[],
   ): Output {
     const output: Output = {
       id: userEntity.id,
+      username: userEntity.username,
+      name: userEntity.name,
+      email: userEntity.email,
+      role: { id: role.id, name: role.name },
+      permissions: permissions.map((permission) => ({
+        id: permission.id,
+        action: permission.action,
+        subject: permission.subject,
+        description: permission.description,
+      })),
     };
 
     return output;

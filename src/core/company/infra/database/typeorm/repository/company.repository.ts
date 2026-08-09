@@ -38,7 +38,7 @@ export class CompanyRepositoryImpl implements CompanyRepository {
   async findById(id: string): Promise<Company | null> {
     const companySchema = await this.companyRepository.findOne({
       where: { id },
-      relations: ['address'],
+      relations: ['address', 'address.city', 'address.city.state', 'plan'],
     });
 
     if (!companySchema) return null;

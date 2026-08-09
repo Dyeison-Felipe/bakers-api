@@ -28,6 +28,7 @@ import { MailService } from '@/shared/application/mail/mail.service';
 
 type UserInput = {
   username: string;
+  name: string;
   password: string;
   email: string;
 };
@@ -121,7 +122,11 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
     const savedCompany = await this.companyRepository.save(company);
 
-    const role = await this.createRole(company);
+    const role = await this.createRole(company, 'Admin');
+    // Cargo base pra funcionários — os packs de permissão da tela de Usuários só
+    // têm efeito prático em um usuário que não seja Admin (Admin ignora as
+    // permissões individuais e usa tudo que o plano da empresa permitir).
+    await this.createRole(company, 'Funcionário');
 
     await this.createUser(input.user, company, role);
 
@@ -148,10 +153,10 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     return output;
   }
 
-  private async createRole(company: Company): Promise<Role> {
+  private async createRole(company: Company, name: string): Promise<Role> {
     try {
       const role = Role.create({
-        name: 'Admin',
+        name,
         company,
         createdBy: ID_USER_DEFAULT,
         updatedBy: ID_USER_DEFAULT,
@@ -180,6 +185,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       const user = UserEntity.create({
         email: userInput.email,
         username: userInput.username,
+        name: userInput.name,
         password: passwordHased,
         role,
         company,

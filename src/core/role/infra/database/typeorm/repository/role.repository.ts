@@ -21,6 +21,15 @@ export class RoleRepositoryImpl implements RoleRepository {
     return roleEntity;
   }
 
+  async findAllByCompany(companyId: string): Promise<Role[]> {
+    const roleSchemas = await this.roleRepository.find({
+      where: { company: { id: companyId } },
+      relations: ['company'],
+    });
+
+    return roleSchemas.map((schema) => RoleRepositoryMapper.toEntity(schema));
+  }
+
   async findById(id: string): Promise<Role | null> {
     const roleSchema = await this.roleRepository.findOne({
       where: { id },

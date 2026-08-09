@@ -16,6 +16,16 @@ export class CreateUserCompanyDto {
   @IsNotEmpty()
   @MaxLength(255)
   @ApiProperty({
+    example: 'Fulano de Tal',
+    description: 'Nome completo do usuário',
+    format: 'string',
+  })
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  @ApiProperty({
     example: '********',
     description: 'Senha do usuário',
     format: 'string',

@@ -79,10 +79,8 @@ export class LoginUseCase implements UseCase<Input, Output> {
         email: user.email,
         role: user.role,
         permissions: (user?.permissions ?? []).map((permission) => ({
-          id: permission.id,
           action: permission.action,
           subject: permission.subject,
-          description: permission.description,
         })),
       },
       company: {

@@ -11,6 +11,7 @@ export class UserRepositoryMapper {
     return new UserEntity({
       id: schema.id,
       username: schema.username,
+      name: schema.name,
       password: schema.password,
       active: schema.active,
       email: schema.email,
@@ -37,6 +38,7 @@ export class UserRepositoryMapper {
     return UserSchema.with({
       id: entity.id,
       username: entity.username,
+      name: entity.name,
       password: entity.password,
       active: entity.active,
       email: entity.email,

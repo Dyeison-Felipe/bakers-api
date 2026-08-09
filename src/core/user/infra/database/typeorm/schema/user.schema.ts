@@ -10,6 +10,9 @@ export class UserSchema extends BaseSchema {
   username: string;
 
   @Column()
+  name: string;
+
+  @Column()
   password: string;
 
   @Column()

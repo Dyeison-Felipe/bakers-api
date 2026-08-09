@@ -9,6 +9,8 @@ import { HashModule } from '@/shared/infra/hash/hash.module';
 import { RoleModule } from '@/core/role/infra/role.module';
 import { PlanModule } from '@/core/plan/infra/plan.module';
 import { CreateCompanyUseCase } from '../application/usecase/create-company.usecase';
+import { FindCompanyUseCase } from '../application/usecase/find-company.usecase';
+import { UpdateCompanyUseCase } from '../application/usecase/update-company.usecase';
 import { CompanyRepository } from '../domain/repositories/company.repository';
 import { PlanRepository } from '@/core/plan/domain/repositories/plan.repository';
 import { AddressRepository } from '@/core/address/domain/repositories/address.repository';
@@ -23,6 +25,7 @@ import { UserPermissionModule } from '@/core/user-permission/infra/user-permissi
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { MailService } from '@/shared/application/mail/mail.service';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 @Module({
   imports: [
@@ -82,6 +85,38 @@ import { MailService } from '@/shared/application/mail/mail.service';
         PROVIDERS.JWT_SERVICE,
         PROVIDERS.ENV_CONFIG_SERVICE,
         PROVIDERS.MAIL_SERVICE,
+      ],
+    },
+    {
+      provide: FindCompanyUseCase,
+      useFactory: (
+        companyRepository: CompanyRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindCompanyUseCase(companyRepository, loggedUserService);
+      },
+      inject: [PROVIDERS.COMPANY_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: UpdateCompanyUseCase,
+      useFactory: (
+        companyRepository: CompanyRepository,
+        addressRepository: AddressRepository,
+        cityRepository: CityRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new UpdateCompanyUseCase(
+          companyRepository,
+          addressRepository,
+          cityRepository,
+          loggedUserService,
+        );
+      },
+      inject: [
+        PROVIDERS.COMPANY_REPOSITORY,
+        PROVIDERS.ADDRESS_REPOSITORY,
+        PROVIDERS.CITY_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
   ],

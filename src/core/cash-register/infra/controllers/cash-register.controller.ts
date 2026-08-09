@@ -82,7 +82,7 @@ export class CashRegisterController {
   }
 
   @Get()
-  @Permission(PermissionCashRegister.CASH_REGISTER_READER)
+  @Permission(PermissionCashRegister.CASH_REGISTER_HISTORY_READER)
   @ApiOperation({ summary: 'Lista o histórico de sessões de caixa' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -98,7 +98,7 @@ export class CashRegisterController {
   }
 
   @Get(':id')
-  @Permission(PermissionCashRegister.CASH_REGISTER_READER)
+  @Permission(PermissionCashRegister.CASH_REGISTER_HISTORY_READER)
   @ApiOperation({
     summary: 'Detalha uma sessão de caixa',
     description:

@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionPresenter } from '../permission/permission.presenter';
 import { CompanyPresenter } from '../company/company-presenter';
+
+export class PermissionRefPresenter {
+  @ApiProperty({ description: 'Ação da permissão' })
+  readonly action: string;
+
+  @ApiProperty({ description: 'Escopo/assunto da permissão' })
+  readonly subject: string;
+}
 
 export class UserLoginPresenter {
   @ApiProperty({
@@ -25,6 +32,7 @@ export class UserLoginPresenter {
 
   @ApiProperty({
     description: 'Permissões do usuário que realizou a autenticação',
+    type: [PermissionRefPresenter],
   })
-  readonly permissions?: PermissionPresenter[] | null;
+  readonly permissions?: PermissionRefPresenter[] | null;
 }
