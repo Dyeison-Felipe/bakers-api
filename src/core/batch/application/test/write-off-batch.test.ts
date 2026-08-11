@@ -1,7 +1,7 @@
 import { WriteOffBatchUseCase } from '../usecase/write-off-batch.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
-import { TypeOperationStock } from '@/shared/infra/enums/product';
+import { TypeOperationStock, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { TypeBatchMovement, TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { makeBatch, makeLoggedUser, makeProduct } from './fixtures';
 import type { BatchRepository } from '../../domain/repositories/batch.repository';
@@ -115,6 +115,8 @@ describe('WriteOffBatchUseCase', () => {
     expect(firstMovement.type).toBe(TypeBatchMovement.EXIT);
     expect(firstMovement.reason).toBe(TypeBatchMovementReason.WASTE);
     expect(firstMovement.reasonDescription).toBe('quebrou');
+    expect(firstMovement.unitCostSnapshot).toBe(product.unitCostPrice);
+    expect(secondMovement.unitCostSnapshot).toBe(product.unitCostPrice);
 
     expect(updateStockProductUseCase.execute).toHaveBeenCalledTimes(1);
     expect(updateStockProductUseCase.execute).toHaveBeenCalledWith({
@@ -154,5 +156,31 @@ describe('WriteOffBatchUseCase', () => {
 
     expect(output.batchesAffected).toBe(1);
     expect(availableBatch.remainingQuantity).toBe(2);
+  });
+
+  it('should snapshot the cost by pricePerKilogram when the product is weight-based', async () => {
+    const product = makeProduct({
+      unitOfMeasurement: TypeUnitOfMeasurement.KG,
+      pricePerKilogram: 15,
+    } as never);
+    productRepository.findProductByIdAndCompanyId.mockResolvedValue(product);
+    const batch = makeBatch({
+      id: '55555555-5555-4555-8555-555555555555',
+      remainingQuantity: 5,
+    });
+    batchRepository.findAvailableByProductIdOrderByExpiration.mockResolvedValue([
+      batch,
+    ]);
+
+    await sut.execute({
+      productId: product.id,
+      quantity: 2,
+      reason: TypeBatchMovementReason.MANUAL_DISCARD,
+    });
+
+    const [movement] = batchMovementRepository.save.mock.calls.map(
+      (call) => call[0],
+    );
+    expect(movement.unitCostSnapshot).toBe(15);
   });
 });

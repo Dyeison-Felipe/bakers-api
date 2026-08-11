@@ -4,7 +4,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { WriteOffBatchOutput } from '@/shared/application/output/batch/write-off-batch.output';
-import { TypeOperationStock } from '@/shared/infra/enums/product';
+import { TypeOperationStock, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { TypeBatchMovement, TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { Transactional } from 'typeorm-transactional';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
@@ -68,6 +68,11 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
       availableBatches.map((batch) => [batch.id, batch]),
     );
 
+    const isWeightBased = product.unitOfMeasurement === TypeUnitOfMeasurement.KG;
+    const costBasis = isWeightBased
+      ? (product.pricePerKilogram ?? 0)
+      : product.unitCostPrice;
+
     for (const allocation of allocations) {
       const batch = batchesById.get(allocation.batchId)!;
 
@@ -82,7 +87,7 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
           quantity: allocation.quantityToTake,
           reason: input.reason,
           reasonDescription: input.reasonDescription ?? null,
-          unitCostSnapshot: null,
+          unitCostSnapshot: costBasis,
           createdBy: loggedUser.id,
         }),
       );

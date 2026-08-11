@@ -96,13 +96,13 @@ export class FindCashRegisterSessionDetailUseCase
         companyId,
         sessionWindowStart,
         sessionWindowEnd,
-        TypeBatchMovementReason.WASTE,
+        [TypeBatchMovementReason.WASTE, TypeBatchMovementReason.MANUAL_DISCARD],
       ),
       this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
         companyId,
         sessionWindowStart,
         sessionWindowEnd,
-        TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST,
+        [TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST],
       ),
       this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
         session.id,

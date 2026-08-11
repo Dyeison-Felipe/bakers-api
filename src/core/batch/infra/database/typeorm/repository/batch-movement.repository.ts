@@ -49,7 +49,7 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
     companyId: string,
     dateFrom: Date,
     dateTo: Date,
-    reason: TypeBatchMovementReason,
+    reasons: TypeBatchMovementReason[],
   ): Promise<number> {
     const result = await this.batchMovementRepository
       .createQueryBuilder('movement')
@@ -60,7 +60,7 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
         'total',
       )
       .where('company.id = :companyId', { companyId })
-      .andWhere('movement.reason = :reason', { reason })
+      .andWhere('movement.reason IN (:...reasons)', { reasons })
       .andWhere('movement.createdAt BETWEEN :dateFrom AND :dateTo', {
         dateFrom,
         dateTo,

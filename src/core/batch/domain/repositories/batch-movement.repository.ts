@@ -9,6 +9,6 @@ export interface BatchMovementRepository extends BaseRepository<BatchMovement> {
     companyId: string,
     dateFrom: Date,
     dateTo: Date,
-    reason: TypeBatchMovementReason,
+    reasons: TypeBatchMovementReason[],
   ): Promise<number>;
 }

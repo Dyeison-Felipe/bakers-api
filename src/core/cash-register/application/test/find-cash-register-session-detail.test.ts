@@ -1,5 +1,6 @@
 import { FindCashRegisterSessionDetailUseCase } from '../usecase/find-cash-register-session-detail.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { makeLoggedUser, makePagination, makeSession } from './fixtures';
 import type { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import type { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
@@ -100,8 +101,10 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
       { status: 'PRODUCED', plannedCost: 60 } as never,
     ]);
     batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
-      (_companyId, _from, _to, reason) =>
-        Promise.resolve(reason === 'WASTE' ? 40 : 10),
+      (_companyId, _from, _to, reasons) =>
+        Promise.resolve(
+          reasons.includes(TypeBatchMovementReason.WASTE) ? 40 : 10,
+        ),
     );
 
     const output = await sut.execute({ id: session.id });
@@ -144,14 +147,32 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     const session = makeSession();
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
     batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
-      (_companyId, _from, _to, reason) =>
-        Promise.resolve(reason === 'WASTE' ? 40 : 15),
+      (_companyId, _from, _to, reasons) =>
+        Promise.resolve(
+          reasons.includes(TypeBatchMovementReason.WASTE) ? 40 : 15,
+        ),
     );
 
     const output = await sut.execute({ id: session.id });
 
     expect(output.totalWaste).toBe(40);
     expect(output.totalRecoveredAtCost).toBe(15);
+  });
+
+  it('should include MANUAL_DISCARD write-offs (from the batch write-off screen) alongside WASTE when summing totalWaste', async () => {
+    const session = makeSession();
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
+
+    await sut.execute({ id: session.id });
+
+    const [wasteCall] =
+      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls;
+    const [, , , reasons] = wasteCall;
+    expect(reasons).toEqual(['WASTE', 'MANUAL_DISCARD']);
+
+    const [, , , recoveredReasons] =
+      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[1];
+    expect(recoveredReasons).toEqual(['LEFTOVER_SOLD_AT_COST']);
   });
 
   it('should map totalSupplies and totalWithdrawals from cash register movement sums', async () => {
