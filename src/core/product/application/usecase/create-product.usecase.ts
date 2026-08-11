@@ -249,7 +249,10 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       scaleReference: input.scaleReference ?? null,
       stockAtual: input.currentStock ?? null,
       stockMin: input.stockMin ?? null,
-      stockManagement: input.stockManagement,
+      stockManagement:
+        input.unitOfMeasurement === TypeUnitOfMeasurement.KG
+          ? false
+          : input.stockManagement,
       unitOfMeasurement: input.unitOfMeasurement ?? null,
       consumerUnit: input.consumerUnit ?? null,
       purchaseUnit: input.purchaseUnit ?? null,

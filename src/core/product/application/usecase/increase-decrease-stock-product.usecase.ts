@@ -41,9 +41,7 @@ export class UpdateStockProductUseCase implements UseCase<
     }
 
     if (!product.stockManagement) {
-      throw new BadRequestError(
-        `O produto ${product.name} não possui gerencimanto de estoque`,
-      );
+      return { id: product.id };
     }
 
     const currentStock = product.currentStock ?? 0;

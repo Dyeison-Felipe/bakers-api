@@ -76,6 +76,18 @@ export class DailyProductionRepositoryImpl implements DailyProductionRepository 
       });
     }
 
+    if (filters?.productionDateFrom) {
+      query.andWhere('dailyProduction.productionDate >= :productionDateFrom', {
+        productionDateFrom: formatDateOnly(filters.productionDateFrom),
+      });
+    }
+
+    if (filters?.productionDateTo) {
+      query.andWhere('dailyProduction.productionDate <= :productionDateTo', {
+        productionDateTo: formatDateOnly(filters.productionDateTo),
+      });
+    }
+
     query
       .orderBy('dailyProduction.productionDate', direction)
       .skip((page - 1) * limit)

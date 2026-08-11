@@ -24,7 +24,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     Pick<DailyProductionItemRepository, 'findAllByDailyProductionId'>
   >;
   let expenseRepository: jest.Mocked<
-    Pick<ExpenseRepository, 'findAllByCompanyAndDate'>
+    Pick<ExpenseRepository, 'findAllByCompanyId'>
   >;
   let batchMovementRepository: jest.Mocked<
     Pick<BatchMovementRepository, 'sumUnitCostByCompanyAndDateAndReason'>
@@ -48,7 +48,9 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     dailyProductionItemRepository = {
       findAllByDailyProductionId: jest.fn().mockResolvedValue([]),
     };
-    expenseRepository = { findAllByCompanyAndDate: jest.fn().mockResolvedValue([]) };
+    expenseRepository = {
+      findAllByCompanyId: jest.fn().mockResolvedValue(makePagination([])),
+    };
     batchMovementRepository = {
       sumUnitCostByCompanyAndDateAndReason: jest.fn().mockResolvedValue(0),
     };
@@ -78,27 +80,42 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     await expect(sut.execute({ id: 'session-1' })).rejects.toThrow(NotFoundError);
   });
 
-  it('should compute profit as totalSales - costOfSold - totalExpenses', async () => {
+  it('should compute profit as totalSales + totalRecoveredAtCost - productionCost - totalWaste - totalExpenses', async () => {
     const session = makeSession();
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
     saleItemRepository.sumRevenueAndCostByCashRegisterSessionId.mockResolvedValue({
       totalRevenue: 500,
       totalCost: 200,
     });
-    expenseRepository.findAllByCompanyAndDate.mockResolvedValue([
-      { id: 'e1', value: 50 } as never,
-      { id: 'e2', value: 30 } as never,
+    expenseRepository.findAllByCompanyId.mockResolvedValue(
+      makePagination([
+        { id: 'e1', value: 50 } as never,
+        { id: 'e2', value: 30 } as never,
+      ]),
+    );
+    dailyProductionRepository.findAllByCompanyId.mockResolvedValue(
+      makePagination([{ id: 'dp-1' } as never]),
+    );
+    dailyProductionItemRepository.findAllByDailyProductionId.mockResolvedValue([
+      { status: 'PRODUCED', plannedCost: 60 } as never,
     ]);
+    batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
+      (_companyId, _from, _to, reason) =>
+        Promise.resolve(reason === 'WASTE' ? 40 : 10),
+    );
 
     const output = await sut.execute({ id: session.id });
 
     expect(output.totalSales).toBe(500);
     expect(output.costOfSold).toBe(200);
+    expect(output.productionCost).toBe(60);
+    expect(output.totalWaste).toBe(40);
+    expect(output.totalRecoveredAtCost).toBe(10);
     expect(output.totalExpenses).toBe(80);
-    expect(output.profit).toBe(220); // 500 - 200 - 80
+    expect(output.profit).toBe(330); // 500 + 10 - 60 - 40 - 80
   });
 
-  it('should sum plannedCost across all items of every daily production on the session day', async () => {
+  it('should sum plannedCost only across PRODUCED items of every daily production on the session day', async () => {
     const session = makeSession();
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
     dailyProductionRepository.findAllByCompanyId.mockResolvedValue(
@@ -108,8 +125,13 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
       (dailyProductionId) =>
         Promise.resolve(
           dailyProductionId === 'dp-1'
-            ? [{ plannedCost: 10 } as never, { plannedCost: 15 } as never]
-            : [{ plannedCost: 20 } as never],
+            ? [
+                { status: 'PRODUCED', plannedCost: 10 } as never,
+                { status: 'PRODUCED', plannedCost: 15 } as never,
+                { status: 'PLANNED', plannedCost: 999 } as never,
+                { status: 'CANCELLED', plannedCost: 999 } as never,
+              ]
+            : [{ status: 'PRODUCED', plannedCost: 20 } as never],
         ),
     );
 
@@ -143,6 +165,52 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
 
     expect(output.totalSupplies).toBe(60);
     expect(output.totalWithdrawals).toBe(25);
+  });
+
+  it('should scope production, expenses and batch movements to the full session window, not just the opening day', async () => {
+    const session = makeSession({
+      openedAt: new Date('2026-08-06T09:00:00'),
+      closedAt: new Date('2026-08-10T18:30:00'),
+      status: 'CLOSED',
+    });
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
+
+    await sut.execute({ id: session.id });
+
+    const [, productionFilters] =
+      dailyProductionRepository.findAllByCompanyId.mock.calls[0];
+    expect(productionFilters).toEqual({
+      productionDateFrom: new Date(2026, 7, 6),
+      productionDateTo: new Date(2026, 7, 10),
+    });
+
+    const [, expenseFilters] = expenseRepository.findAllByCompanyId.mock.calls[0];
+    expect(expenseFilters).toEqual({
+      dateFrom: new Date(2026, 7, 6),
+      dateTo: new Date(2026, 7, 10),
+    });
+
+    const [, waitFrom, waitTo] =
+      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
+    expect(waitFrom).toEqual(session.openedAt);
+    expect(waitTo).toEqual(session.closedAt);
+  });
+
+  it('should use "now" as the batch movement window end when the session is still open', async () => {
+    const session = makeSession({
+      openedAt: new Date('2026-08-06T09:00:00'),
+      closedAt: null,
+    });
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
+
+    const before = new Date();
+    await sut.execute({ id: session.id });
+    const after = new Date();
+
+    const [, , windowEnd] =
+      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
+    expect((windowEnd as Date).getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect((windowEnd as Date).getTime()).toBeLessThanOrEqual(after.getTime());
   });
 
   it('should pass through the session summary fields (openingAmount, status, totals)', async () => {

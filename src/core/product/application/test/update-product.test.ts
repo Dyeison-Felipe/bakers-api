@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { UpdateProductUseCase } from '../usecase/update-product.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
-import { TypeProduct } from '@/shared/infra/enums/product';
+import { TypeProduct, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import {
   makeCategory,
   makeLoggedUser,
@@ -261,5 +261,27 @@ describe('UpdateProductUseCase', () => {
 
     expect(storageService.deleteProductImage).toHaveBeenCalledWith('company-1', 'old.png');
     expect(storageService.saveProductImage).toHaveBeenCalled();
+  });
+
+  it('should force stockManagement to false for a kg product even when input requests true', async () => {
+    await sut.execute({
+      ...baseInput,
+      unitOfMeasurement: TypeUnitOfMeasurement.KG,
+      stockManagement: true,
+    });
+
+    const updatedProduct = productRepository.update.mock.calls[0][0];
+    expect(updatedProduct.stockManagement).toBe(false);
+  });
+
+  it('should force stockManagement to false when the existing product is kg and input omits unitOfMeasurement', async () => {
+    productRepository.findProductByIdAndCompanyId.mockResolvedValue(
+      makeProduct({ id: 'product-1', unitOfMeasurement: TypeUnitOfMeasurement.KG }),
+    );
+
+    await sut.execute({ ...baseInput, unitOfMeasurement: undefined, stockManagement: true });
+
+    const updatedProduct = productRepository.update.mock.calls[0][0];
+    expect(updatedProduct.stockManagement).toBe(false);
   });
 });

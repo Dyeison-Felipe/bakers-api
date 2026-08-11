@@ -35,14 +35,19 @@ describe('UpdateStockProductUseCase', () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('should throw BadRequestError when the product has no stock management', async () => {
+  it('should no-op and not update the product when it has no stock management', async () => {
     productRepository.findProductByIdAndCompanyId.mockResolvedValue(
       makeProduct({ stockManagement: false }),
     );
 
-    await expect(
-      sut.execute({ productId: 'product-1', type: TypeOperationStock.INCREASE, value: 1 }),
-    ).rejects.toThrow(BadRequestError);
+    const output = await sut.execute({
+      productId: 'product-1',
+      type: TypeOperationStock.INCREASE,
+      value: 1,
+    });
+
+    expect(output).toEqual({ id: 'product-1' });
+    expect(productRepository.update).not.toHaveBeenCalled();
   });
 
   it('should increase current stock', async () => {

@@ -89,14 +89,14 @@ describe('AddDailyProductionItemUseCase', () => {
     ).rejects.toThrow(BadRequestError);
   });
 
-  it('should throw BadRequestError when the product has no stock management enabled', async () => {
+  it('should allow adding an item even when the product has no stock management enabled (e.g. kg products)', async () => {
     productRepository.findProductByIdAndCompanyId.mockResolvedValue(
       makeProduct({ stockManagement: false }),
     );
 
-    await expect(
-      sut.execute({ ...baseInput, plannedQuantity: 10 }),
-    ).rejects.toThrow(BadRequestError);
+    const output = await sut.execute({ ...baseInput, plannedQuantity: 10 });
+
+    expect(output.id).toEqual(expect.any(String));
   });
 
   it('should propagate the BadRequestError from the cost calculator when quantity is missing for a unit-based product', async () => {

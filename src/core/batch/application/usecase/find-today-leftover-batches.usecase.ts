@@ -23,11 +23,9 @@ export class FindTodayLeftoverBatchesUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
 
-    const today = new Date();
-
     const batches = await this.batchRepository.findAllByCompanyId(
       companyId,
-      { onlyAvailable: true, producedOn: today },
+      { onlyAvailable: true },
       { limit: 500 },
     );
 

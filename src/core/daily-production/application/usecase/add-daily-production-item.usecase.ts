@@ -74,12 +74,6 @@ export class AddDailyProductionItemUseCase implements UseCase<Input, Output> {
       );
     }
 
-    if (!product.stockManagement) {
-      throw new BadRequestError(
-        `O produto ${product.name} não possui gerenciamento de estoque habilitado. Habilite o controle de estoque no cadastro do produto para incluí-lo na produção diária`,
-      );
-    }
-
     const unitOfMeasurement = product.unitOfMeasurement;
     const isWeightBased = unitOfMeasurement === TypeUnitOfMeasurement.KG;
 

@@ -11,6 +11,7 @@ import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.re
 import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
 import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
 
@@ -24,17 +25,6 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 
 const toDateOnly = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const toEndOfDay = (date: Date): Date =>
-  new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    23,
-    59,
-    59,
-    999,
-  );
 
 export class FindCashRegisterSessionDetailUseCase
   implements UseCase<Input, Output>
@@ -71,8 +61,14 @@ export class FindCashRegisterSessionDetailUseCase
       throw new NotFoundError('Caixa não encontrado');
     }
 
-    const day = toDateOnly(session.openedAt);
-    const endOfDay = toEndOfDay(session.openedAt);
+    // Um caixa pode ficar aberto por vários dias (ex: abre segunda, fecha
+    // sábado) — todo cálculo do detalhe usa a janela real da sessão inteira
+    // (abertura até fechamento, ou até agora se ainda estiver aberto), nunca
+    // só o dia calendário da abertura.
+    const sessionWindowStart = session.openedAt;
+    const sessionWindowEnd = session.closedAt ?? new Date();
+    const sessionDayFrom = toDateOnly(sessionWindowStart);
+    const sessionDayTo = toDateOnly(sessionWindowEnd);
 
     const [
       salesSummary,
@@ -86,20 +82,26 @@ export class FindCashRegisterSessionDetailUseCase
       this.saleItemRepository.sumRevenueAndCostByCashRegisterSessionId(
         session.id,
       ),
-      this.dailyProductionRepository.findAllByCompanyId(companyId, {
-        productionDate: day,
-      }),
-      this.expenseRepository.findAllByCompanyAndDate(companyId, day),
+      this.dailyProductionRepository.findAllByCompanyId(
+        companyId,
+        { productionDateFrom: sessionDayFrom, productionDateTo: sessionDayTo },
+        { limit: 1000 },
+      ),
+      this.expenseRepository.findAllByCompanyId(
+        companyId,
+        { dateFrom: sessionDayFrom, dateTo: sessionDayTo },
+        { limit: 1000 },
+      ),
       this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
         companyId,
-        day,
-        endOfDay,
+        sessionWindowStart,
+        sessionWindowEnd,
         TypeBatchMovementReason.WASTE,
       ),
       this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
         companyId,
-        day,
-        endOfDay,
+        sessionWindowStart,
+        sessionWindowEnd,
         TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST,
       ),
       this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
@@ -123,15 +125,23 @@ export class FindCashRegisterSessionDetailUseCase
     const productionCost = round2(
       productionItemsByProduction
         .flat()
+        .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
         .reduce((sum, item) => sum + item.plannedCost, 0),
     );
 
     const totalExpenses = round2(
-      expenses.reduce((sum, expense) => sum + expense.value, 0),
+      expenses.items.reduce((sum, expense) => sum + expense.value, 0),
     );
 
+    // Lucro real = vendas (+ o que foi recuperado vendendo sobra ao custo,
+    // já que isso não é perda) − custo do que foi efetivamente produzido −
+    // valor perdido em descarte − despesas do dia.
     const profit = round2(
-      salesSummary.totalRevenue - salesSummary.totalCost - totalExpenses,
+      salesSummary.totalRevenue +
+        totalRecoveredAtCost -
+        productionCost -
+        totalWaste -
+        totalExpenses,
     );
 
     return {
@@ -146,7 +156,7 @@ export class FindCashRegisterSessionDetailUseCase
       totalSales: round2(salesSummary.totalRevenue),
       costOfSold: round2(salesSummary.totalCost),
       productionCost,
-      expenses: expenses.map((expense) => ({
+      expenses: expenses.items.map((expense) => ({
         id: expense.id,
         date: expense.date,
         value: expense.value,

@@ -251,7 +251,11 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       consumerUnit: input.consumerUnit ?? product.consumerUnit,
       expirationDateInDays:
         input.expirationDateInDays ?? product.expirationDateInDays,
-      stockManagement: input.stockManagement,
+      stockManagement:
+        (input.unitOfMeasurement ?? product.unitOfMeasurement) ===
+        TypeUnitOfMeasurement.KG
+          ? false
+          : input.stockManagement,
       typeProduct: input.typeProduct,
       pricePerKilogram: pricePerKilogram ?? input.pricePerKilogram,
       unitCostPrice: unitCostPrice ?? input.unitCostPrice,

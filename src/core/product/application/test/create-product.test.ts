@@ -2,7 +2,7 @@ import { CreateProductUseCase } from '../usecase/create-product.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
-import { TypeProduct } from '@/shared/infra/enums/product';
+import { TypeProduct, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import {
   makeAdditionalCost,
   makeCategory,
@@ -208,5 +208,16 @@ describe('CreateProductUseCase', () => {
     const output = await sut.execute(ownProductionInput);
 
     expect(output).toEqual({ id: expect.any(String) });
+  });
+
+  it('should force stockManagement to false for a kg product even when input requests true', async () => {
+    await sut.execute({
+      ...ownProductionInput,
+      unitOfMeasurement: TypeUnitOfMeasurement.KG,
+      stockManagement: true,
+    });
+
+    const savedProduct = productRepository.save.mock.calls[0][0];
+    expect(savedProduct.stockManagement).toBe(false);
   });
 });

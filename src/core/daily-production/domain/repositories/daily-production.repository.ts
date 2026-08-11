@@ -9,6 +9,8 @@ import { DailyProduction } from '../entities/daily-production.entity';
 export type FindAllDailyProductionsFilters = {
   status?: TypeDailyProductionStatus;
   productionDate?: Date;
+  productionDateFrom?: Date;
+  productionDateTo?: Date;
 };
 
 export interface DailyProductionRepository

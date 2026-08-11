@@ -22,7 +22,7 @@ describe('FindTodayLeftoverBatchesUseCase', () => {
     );
   });
 
-  it('should query only available batches produced today, capped at 500', async () => {
+  it('should query all available batches regardless of production date, capped at 500', async () => {
     batchRepository.findAllByCompanyId.mockResolvedValue(makePagination([]));
 
     await sut.execute();
@@ -30,8 +30,7 @@ describe('FindTodayLeftoverBatchesUseCase', () => {
     const [companyId, filters, pagination] =
       batchRepository.findAllByCompanyId.mock.calls[0];
     expect(companyId).toBe('company-1');
-    expect(filters).toMatchObject({ onlyAvailable: true });
-    expect(filters?.producedOn).toBeInstanceOf(Date);
+    expect(filters).toEqual({ onlyAvailable: true });
     expect(pagination).toEqual({ limit: 500 });
   });
 
