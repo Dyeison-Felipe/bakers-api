@@ -32,6 +32,7 @@ import { CashRegisterModule } from './core/cash-register/infra/cash-register.mod
 import { ExpenseModule } from './core/expense/infra/expense.module';
 import { DashboardModule } from './core/dashboard/infra/dashboard.module';
 import { RecipeModule } from './core/recipe/infra/recipe.module';
+import { ReportModule } from './core/report/infra/report.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { RecipeModule } from './core/recipe/infra/recipe.module';
     ExpenseModule,
     DashboardModule,
     RecipeModule,
+    ReportModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

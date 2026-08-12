@@ -172,6 +172,6 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
       ],
     },
   ],
-  exports: [],
+  exports: [FindCashRegisterSessionDetailUseCase],
 })
 export class CashRegisterModule {}

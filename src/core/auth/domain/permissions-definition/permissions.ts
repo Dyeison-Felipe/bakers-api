@@ -9,6 +9,7 @@ import { PermissionCashRegister } from "./cash-register";
 import { PermissionExpense } from "./expense";
 import { PermissionRecipe } from "./recipe";
 import { PermissionCompany } from "./company";
+import { PermissionReport } from "./report";
 
 export type PermissionRef = (typeof Permissions)[keyof typeof Permissions];
 
@@ -30,4 +31,5 @@ export const Permissions = {
   ...PermissionExpense,
   ...PermissionRecipe,
   ...PermissionCompany,
+  ...PermissionReport,
 }

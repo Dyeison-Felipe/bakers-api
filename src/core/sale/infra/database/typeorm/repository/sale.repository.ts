@@ -1,6 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  DailyRevenueRow,
   FindAllSalesFilters,
   SaleRepository,
 } from '@/core/sale/domain/repositories/sale.repository';
@@ -128,6 +129,57 @@ export class SaleRepositoryImpl implements SaleRepository {
       .getRawOne<{ total: string }>();
 
     return Number(result?.total ?? 0);
+  }
+
+  async findDailyRevenueByCompanyAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<DailyRevenueRow[]> {
+    const rows = await this.saleRepository
+      .createQueryBuilder('sale')
+      .leftJoin('sale.company', 'company')
+      .select('DATE(sale.createdAt)', 'day')
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN sale.paymentMethod = :cash THEN sale.totalAmount ELSE 0 END), 0)',
+        'cash',
+      )
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN sale.paymentMethod = :pix THEN sale.totalAmount ELSE 0 END), 0)',
+        'pix',
+      )
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN sale.paymentMethod = :card THEN sale.totalAmount ELSE 0 END), 0)',
+        'card',
+      )
+      .addSelect('COALESCE(SUM(sale.totalAmount), 0)', 'total')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .setParameters({
+        cash: TypePaymentMethod.CASH,
+        pix: TypePaymentMethod.PIX,
+        card: TypePaymentMethod.CARD,
+      })
+      .groupBy('day')
+      .orderBy('day', 'ASC')
+      .getRawMany<{
+        day: string;
+        cash: string;
+        pix: string;
+        card: string;
+        total: string;
+      }>();
+
+    return rows.map((row) => ({
+      day: row.day,
+      cash: Number(row.cash),
+      pix: Number(row.pix),
+      card: Number(row.card),
+      total: Number(row.total),
+    }));
   }
 
   async update(entity: Sale): Promise<void> {

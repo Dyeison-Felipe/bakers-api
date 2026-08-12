@@ -10,6 +10,14 @@ export type FindAllSalesFilters = {
   cashRegisterSessionId?: string;
 };
 
+export type DailyRevenueRow = {
+  day: string;
+  cash: number;
+  pix: number;
+  card: number;
+  total: number;
+};
+
 export interface SaleRepository extends BaseRepository<Sale> {
   update(entity: Sale): Promise<void>;
 
@@ -32,4 +40,10 @@ export interface SaleRepository extends BaseRepository<Sale> {
     dateTo: Date,
     paymentMethod: TypePaymentMethod,
   ): Promise<number>;
+
+  findDailyRevenueByCompanyAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<DailyRevenueRow[]>;
 }

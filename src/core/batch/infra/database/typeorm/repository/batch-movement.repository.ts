@@ -1,6 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
+import {
+  BatchMovementRepository,
+  BatchMovementReportItem,
+} from '@/core/batch/domain/repositories/batch-movement.repository';
 import { BatchMovement } from '@/core/batch/domain/entities/batch-movement.entity';
 import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { BatchMovementSchema } from '../schema/batch-movement.schema';
@@ -68,6 +71,65 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
       .getRawOne<{ total: string }>();
 
     return Number(result?.total ?? 0);
+  }
+
+  async findAllByCompanyAndDateAndReason(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    reasons: TypeBatchMovementReason[],
+  ): Promise<BatchMovementReportItem[]> {
+    const rows = await this.batchMovementRepository
+      .createQueryBuilder('movement')
+      .leftJoin('movement.batch', 'batch')
+      .leftJoin('batch.company', 'company')
+      .leftJoin('batch.product', 'product')
+      .select('movement.id', 'id')
+      .addSelect('movement.createdAt', 'createdAt')
+      .addSelect('product.id', 'productId')
+      .addSelect('product.name', 'productName')
+      .addSelect('movement.quantity', 'quantity')
+      .addSelect('batch.unitOfMeasurement', 'unitOfMeasurement')
+      .addSelect('movement.unitCostSnapshot', 'unitCostSnapshot')
+      .addSelect(
+        'COALESCE(movement.quantity * movement.unitCostSnapshot, 0)',
+        'totalCost',
+      )
+      .addSelect('movement.reason', 'reason')
+      .addSelect('movement.reasonDescription', 'reasonDescription')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('movement.reason IN (:...reasons)', { reasons })
+      .andWhere('movement.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .orderBy('movement.createdAt', 'DESC')
+      .getRawMany<{
+        id: string;
+        createdAt: Date;
+        productId: string;
+        productName: string;
+        quantity: string;
+        unitOfMeasurement: BatchMovementReportItem['unitOfMeasurement'];
+        unitCostSnapshot: string | null;
+        totalCost: string;
+        reason: TypeBatchMovementReason;
+        reasonDescription: string | null;
+      }>();
+
+    return rows.map((row) => ({
+      id: row.id,
+      createdAt: row.createdAt,
+      productId: row.productId,
+      productName: row.productName,
+      quantity: Number(row.quantity),
+      unitOfMeasurement: row.unitOfMeasurement,
+      unitCostSnapshot:
+        row.unitCostSnapshot === null ? null : Number(row.unitCostSnapshot),
+      totalCost: Number(row.totalCost),
+      reason: row.reason,
+      reasonDescription: row.reasonDescription,
+    }));
   }
 
   async update(): Promise<void> {

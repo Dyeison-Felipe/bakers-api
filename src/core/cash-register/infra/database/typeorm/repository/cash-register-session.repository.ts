@@ -99,6 +99,25 @@ export class CashRegisterSessionRepositoryImpl
     };
   }
 
+  async findAllByCompanyIdAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<CashRegisterSession[]> {
+    const schemas = await this.cashRegisterSessionRepository
+      .createQueryBuilder('cashRegisterSession')
+      .leftJoinAndSelect('cashRegisterSession.company', 'company')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('cashRegisterSession.openedAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .orderBy('cashRegisterSession.openedAt', 'ASC')
+      .getMany();
+
+    return schemas.map((schema) => CashRegisterSessionMapper.toEntity(schema));
+  }
+
   async update(entity: CashRegisterSession): Promise<void> {
     const schema = CashRegisterSessionMapper.toSchema(entity);
     await this.cashRegisterSessionRepository.save(schema);

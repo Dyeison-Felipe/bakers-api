@@ -22,4 +22,10 @@ export interface CashRegisterSessionRepository
     companyId: string,
     pagination?: PaginationInput,
   ): Promise<Pagination<CashRegisterSession>>;
+
+  findAllByCompanyIdAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<CashRegisterSession[]>;
 }
