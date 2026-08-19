@@ -12,6 +12,7 @@ import { DailyProductionItemRepository } from '../domain/repositories/daily-prod
 import { DailyProductionController } from './controllers/daily-production.controller';
 import { CreateDailyProductionUseCase } from '../application/usecase/create-daily-production.usecase';
 import { AddDailyProductionItemUseCase } from '../application/usecase/add-daily-production-item.usecase';
+import { AddDailyProductionItemsUseCase } from '../application/usecase/add-daily-production-items.usecase';
 import { RemoveDailyProductionItemUseCase } from '../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../application/usecase/mark-item-as-produced.usecase';
 import { UpdateDailyProductionItemUseCase } from '../application/usecase/update-daily-production-item.usecase';
@@ -43,6 +44,27 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
         PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    {
+      provide: AddDailyProductionItemsUseCase,
+      useFactory: (
+        dailyProductionRepository: DailyProductionRepository,
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        loggedUserService: LoggedUserService,
+        addDailyProductionItemUseCase: AddDailyProductionItemUseCase,
+      ) =>
+        new AddDailyProductionItemsUseCase(
+          dailyProductionRepository,
+          dailyProductionItemRepository,
+          loggedUserService,
+          addDailyProductionItemUseCase,
+        ),
+      inject: [
+        PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+        AddDailyProductionItemUseCase,
       ],
     },
     {

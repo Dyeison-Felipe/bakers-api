@@ -24,14 +24,17 @@ import { DailyProductionPresenter } from '@/shared/infra/presenter/daily-product
 import { FindAllDailyProductionsPresenter } from '@/shared/infra/presenter/daily-production/find-all-daily-productions.presenter';
 import { CreateDailyProductionPresenter } from '@/shared/infra/presenter/daily-production/create-daily-production.presenter';
 import { AddDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/add-daily-production-item.presenter';
+import { AddDailyProductionItemsPresenter } from '@/shared/infra/presenter/daily-production/add-daily-production-items.presenter';
 import { RemoveDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/remove-daily-production-item.presenter';
 import { MarkItemAsProducedPresenter } from '@/shared/infra/presenter/daily-production/mark-item-as-produced.presenter';
 import { CreateDailyProductionDto } from '../dtos/create-daily-production.dto';
 import { AddDailyProductionItemDto } from '../dtos/add-daily-production-item.dto';
+import { AddDailyProductionItemsDto } from '../dtos/add-daily-production-items.dto';
 import { MarkItemProducedDto } from '../dtos/mark-item-produced.dto';
 import { UpdateDailyProductionItemDto } from '../dtos/update-daily-production-item.dto';
 import { CreateDailyProductionUseCase } from '../../application/usecase/create-daily-production.usecase';
 import { AddDailyProductionItemUseCase } from '../../application/usecase/add-daily-production-item.usecase';
+import { AddDailyProductionItemsUseCase } from '../../application/usecase/add-daily-production-items.usecase';
 import { RemoveDailyProductionItemUseCase } from '../../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../../application/usecase/mark-item-as-produced.usecase';
 import { UpdateDailyProductionItemUseCase } from '../../application/usecase/update-daily-production-item.usecase';
@@ -50,6 +53,7 @@ export class DailyProductionController {
   constructor(
     private readonly createDailyProductionUseCase: CreateDailyProductionUseCase,
     private readonly addDailyProductionItemUseCase: AddDailyProductionItemUseCase,
+    private readonly addDailyProductionItemsUseCase: AddDailyProductionItemsUseCase,
     private readonly removeDailyProductionItemUseCase: RemoveDailyProductionItemUseCase,
     private readonly markDailyProductionItemAsProducedUseCase: MarkDailyProductionItemAsProducedUseCase,
     private readonly findDailyProductionByIdUseCase: FindDailyProductionByIdUseCase,
@@ -121,6 +125,25 @@ export class DailyProductionController {
       productId: dto.productId,
       plannedQuantity: dto.plannedQuantity,
       recipeMultiplier: dto.recipeMultiplier,
+    });
+  }
+
+  @Post(':id/items/batch')
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_UPDATE)
+  @ApiOperation({
+    summary: 'Adiciona vários itens à produção diária de uma vez',
+    description:
+      'Para produtos que já têm um item aguardando produção nessa produção diária, soma a quantidade/multiplicador em vez de criar uma linha duplicada.',
+  })
+  @ApiParam({ name: 'id', description: 'Id da produção diária' })
+  @ApiOkResponse({ type: AddDailyProductionItemsPresenter })
+  async addItems(
+    @Param('id') id: string,
+    @Body() dto: AddDailyProductionItemsDto,
+  ): Promise<AddDailyProductionItemsPresenter> {
+    return await this.addDailyProductionItemsUseCase.execute({
+      dailyProductionId: id,
+      items: dto.items,
     });
   }
 
