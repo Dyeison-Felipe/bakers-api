@@ -9,6 +9,10 @@
       {
         "include": "**/*.hbs",
         "watchAssets": true
+      },
+      {
+        "include": "shared/infra/assets/**/*",
+        "watchAssets": true
       }
     ]
   }
