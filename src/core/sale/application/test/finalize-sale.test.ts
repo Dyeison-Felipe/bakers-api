@@ -12,6 +12,7 @@ import type { SaleItemRepository } from '../../domain/repositories/sale-item.rep
 import type { StorageService } from '@/shared/application/storage/storage.service';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import type { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
+import type { CustomerRepository } from '@/core/customer/domain/repositories/customer.repository';
 
 jest.mock('../services/sale-receipt-pdf.service', () => ({
   SaleReceiptPdfService: { generate: jest.fn().mockResolvedValue(Buffer.from('pdf')) },
@@ -25,6 +26,9 @@ describe('FinalizeSaleUseCase', () => {
   let storageService: jest.Mocked<Pick<StorageService, 'saveSaleReceipt'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
   let writeOffBatchUseCase: jest.Mocked<Pick<WriteOffBatchUseCase, 'execute'>>;
+  let customerRepository: jest.Mocked<
+    Pick<CustomerRepository, 'findCustomerByIdAndCompanyId'>
+  >;
   let sut: FinalizeSaleUseCase;
 
   beforeEach(() => {
@@ -45,6 +49,9 @@ describe('FinalizeSaleUseCase', () => {
       setLoggedUser: jest.fn(),
     };
     writeOffBatchUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
+    customerRepository = {
+      findCustomerByIdAndCompanyId: jest.fn().mockResolvedValue(null),
+    };
 
     sut = new FinalizeSaleUseCase(
       productRepository as unknown as ProductRepository,
@@ -53,6 +60,7 @@ describe('FinalizeSaleUseCase', () => {
       saleItemRepository as unknown as SaleItemRepository,
       storageService as unknown as StorageService,
       loggedUserService,
+      customerRepository as unknown as CustomerRepository,
       writeOffBatchUseCase as unknown as WriteOffBatchUseCase,
     );
   });
@@ -175,6 +183,27 @@ describe('FinalizeSaleUseCase', () => {
 
     const savedSale = saleRepository.save.mock.calls[0][0];
     expect(savedSale.customerCpf).toBeNull();
+  });
+
+  it('should link the sale to a registered customer when customerId is informed', async () => {
+    const customerId = '11111111-1111-4111-8111-111111111111';
+    customerRepository.findCustomerByIdAndCompanyId.mockResolvedValue({
+      id: customerId,
+    } as never);
+
+    const output = await sut.execute({ ...oneUnitItem, customerId });
+
+    const savedSale = saleRepository.save.mock.calls[0][0];
+    expect(savedSale.customerId).toBe(customerId);
+    expect(output.id).toBeDefined();
+  });
+
+  it('should throw NotFoundError when customerId does not belong to the company', async () => {
+    customerRepository.findCustomerByIdAndCompanyId.mockResolvedValue(null);
+
+    await expect(
+      sut.execute({ ...oneUnitItem, customerId: 'missing-customer' }),
+    ).rejects.toThrow(NotFoundError);
   });
 
   it('should generate and attach the receipt to the sale', async () => {

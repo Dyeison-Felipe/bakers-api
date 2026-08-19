@@ -57,4 +57,11 @@ export class CreateSaleDto {
   @IsString()
   @Length(11, 11)
   customerCpf?: string;
+
+  @ApiPropertyOptional({
+    description: 'Id do cliente cadastrado, se selecionado na busca (opcional)',
+  })
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
 }

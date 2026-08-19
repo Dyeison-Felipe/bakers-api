@@ -8,6 +8,8 @@ import { BatchModule } from '@/core/batch/infra/batch.module';
 import { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
 import { CashRegisterPersistenceModule } from '@/core/cash-register/infra/cash-register-persistence.module';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
+import { CustomerPersistenceModule } from '@/core/customer/infra/customer-persistence.module';
+import { CustomerRepository } from '@/core/customer/domain/repositories/customer.repository';
 import { SalePersistenceModule } from './sale-persistence.module';
 import { SaleRepository } from '../domain/repositories/sale.repository';
 import { SaleItemRepository } from '../domain/repositories/sale-item.repository';
@@ -23,6 +25,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
     SalePersistenceModule,
     ProductPersistenceModule,
     CashRegisterPersistenceModule,
+    CustomerPersistenceModule,
     BatchModule,
   ],
   controllers: [SaleController],
@@ -45,6 +48,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
         saleItemRepository: SaleItemRepository,
         storageService: StorageService,
         loggedUserService: LoggedUserService,
+        customerRepository: CustomerRepository,
         writeOffBatchUseCase: WriteOffBatchUseCase,
       ) =>
         new FinalizeSaleUseCase(
@@ -54,6 +58,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
           saleItemRepository,
           storageService,
           loggedUserService,
+          customerRepository,
           writeOffBatchUseCase,
         ),
       inject: [
@@ -63,6 +68,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
         PROVIDERS.SALE_ITEM_REPOSITORY,
         PROVIDERS.STORAGE_SERVICE,
         PROVIDERS.LOGGED_USER_SERVICE,
+        PROVIDERS.CUSTOMER_REPOSITORY,
         WriteOffBatchUseCase,
       ],
     },

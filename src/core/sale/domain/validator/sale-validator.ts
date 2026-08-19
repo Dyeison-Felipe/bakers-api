@@ -9,6 +9,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Min,
 } from 'class-validator';
@@ -45,6 +46,10 @@ export class SaleRules {
   @IsString()
   @Length(11, 11)
   customerCpf: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  customerId: string | null;
 
   @IsOptional()
   @IsString()

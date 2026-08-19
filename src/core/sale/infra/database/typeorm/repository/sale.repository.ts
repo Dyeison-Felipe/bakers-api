@@ -73,7 +73,11 @@ export class SaleRepositoryImpl implements SaleRepository {
     }
 
     query
+      // Empate no createdAt deixa a ordem instável entre páginas no
+      // Postgres — o id como critério de desempate garante ordem
+      // determinística, sem duplicar/pular linhas ao paginar.
       .orderBy('sale.createdAt', direction)
+      .addOrderBy('sale.id', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

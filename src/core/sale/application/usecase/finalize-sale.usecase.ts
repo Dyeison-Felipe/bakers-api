@@ -15,6 +15,7 @@ import { Product } from '@/core/product/domain/entities/product.entity';
 import { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
+import { CustomerRepository } from '@/core/customer/domain/repositories/customer.repository';
 import { SaleRepository } from '../../domain/repositories/sale.repository';
 import { SaleItemRepository } from '../../domain/repositories/sale-item.repository';
 import { Sale } from '../../domain/entities/sale.entity';
@@ -32,6 +33,7 @@ type Input = {
   paymentMethod: TypePaymentMethod;
   amountReceived?: number;
   customerCpf?: string;
+  customerId?: string;
 };
 
 type Output = FinalizeSaleOutput;
@@ -63,6 +65,8 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
     private readonly storageService: StorageService,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
+    @Inject(PROVIDERS.CUSTOMER_REPOSITORY)
+    private readonly customerRepository: CustomerRepository,
     private readonly writeOffBatchUseCase: WriteOffBatchUseCase,
   ) {}
 
@@ -174,6 +178,21 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
         ? input.customerCpf
         : null;
 
+    let customerId: string | null = null;
+
+    if (input.customerId) {
+      const customer = await this.customerRepository.findCustomerByIdAndCompanyId(
+        input.customerId,
+        company.id,
+      );
+
+      if (!customer) {
+        throw new NotFoundError('Cliente não encontrado');
+      }
+
+      customerId = customer.id;
+    }
+
     const sale = Sale.create({
       company,
       cashRegisterSession: session,
@@ -182,6 +201,7 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
       amountReceived,
       changeAmount,
       customerCpf,
+      customerId,
       soldBy: loggedUser.id,
     });
 

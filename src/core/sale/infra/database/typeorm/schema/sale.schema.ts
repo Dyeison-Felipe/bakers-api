@@ -62,6 +62,9 @@ export class SaleSchema extends BaseSchema {
   @Column({ name: 'customer_cpf', type: 'varchar', length: 11, nullable: true })
   customerCpf: string | null;
 
+  @Column({ name: 'customer_id', type: 'uuid', nullable: true })
+  customerId: string | null;
+
   @Column({
     name: 'receipt_pdf_path',
     type: 'varchar',

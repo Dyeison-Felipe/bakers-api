@@ -33,6 +33,7 @@ import { ExpenseModule } from './core/expense/infra/expense.module';
 import { DashboardModule } from './core/dashboard/infra/dashboard.module';
 import { RecipeModule } from './core/recipe/infra/recipe.module';
 import { ReportModule } from './core/report/infra/report.module';
+import { CustomerModule } from './core/customer/infra/customer.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ReportModule } from './core/report/infra/report.module';
     DashboardModule,
     RecipeModule,
     ReportModule,
+    CustomerModule,
     StorageModule,
     ScheduleModule.forRoot(),
     SiscomexModule,

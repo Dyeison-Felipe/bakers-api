@@ -15,6 +15,7 @@ export type SaleProps = {
   amountReceived: number | null;
   changeAmount: number | null;
   customerCpf: string | null;
+  customerId: string | null;
   receiptPdfPath: string | null;
   soldBy: string;
   createdBy: string;
@@ -30,6 +31,7 @@ type CreateSaleProps = {
   amountReceived: number | null;
   changeAmount: number | null;
   customerCpf: string | null;
+  customerId: string | null;
   soldBy: string;
 };
 
@@ -57,6 +59,7 @@ export class Sale extends BaseEntity<SaleProps> {
       amountReceived: props.amountReceived,
       changeAmount: props.changeAmount,
       customerCpf: props.customerCpf,
+      customerId: props.customerId,
       receiptPdfPath: null,
       soldBy: props.soldBy,
       createdBy: props.soldBy,
