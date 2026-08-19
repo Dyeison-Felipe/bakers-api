@@ -21,6 +21,7 @@ import type { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.
 import type { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import type { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import type { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
 
 describe('CreateProductUseCase', () => {
   let productRepository: jest.Mocked<
@@ -41,6 +42,7 @@ describe('CreateProductUseCase', () => {
   let recipeItemRepository: jest.Mocked<Pick<RecipeItemRepository, 'findAllByRecipeIds'>>;
   let productRecipeLinkRepository: jest.Mocked<Pick<ProductRecipeLinkRepository, 'save'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
+  let createBatchUseCase: jest.Mocked<Pick<CreateBatchUseCase, 'execute'>>;
   let sut: CreateProductUseCase;
 
   const ownProductionInput = {
@@ -78,6 +80,7 @@ describe('CreateProductUseCase', () => {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
     };
+    createBatchUseCase = { execute: jest.fn().mockResolvedValue({ id: 'batch-1' }) };
 
     sut = new CreateProductUseCase(
       productRepository as unknown as ProductRepository,
@@ -90,6 +93,7 @@ describe('CreateProductUseCase', () => {
       recipeRepository as unknown as RecipeRepository,
       recipeItemRepository as unknown as RecipeItemRepository,
       productRecipeLinkRepository as unknown as ProductRecipeLinkRepository,
+      createBatchUseCase as unknown as CreateBatchUseCase,
     );
   });
 
@@ -208,6 +212,36 @@ describe('CreateProductUseCase', () => {
     const output = await sut.execute(ownProductionInput);
 
     expect(output).toEqual({ id: expect.any(String) });
+  });
+
+  it('should create an initial batch instead of writing currentStock directly when stock is informed', async () => {
+    await sut.execute({
+      ...ownProductionInput,
+      currentStock: 20,
+      unitOfMeasurement: TypeUnitOfMeasurement.UN,
+    });
+
+    const savedProduct = productRepository.save.mock.calls[0][0];
+    expect(savedProduct.currentStock).toBeNull();
+    expect(createBatchUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        quantity: 20,
+        unitOfMeasurement: TypeUnitOfMeasurement.UN,
+        dailyProductionItemId: null,
+      }),
+    );
+  });
+
+  it('should not create a batch when no initial stock is informed', async () => {
+    await sut.execute(ownProductionInput);
+
+    expect(createBatchUseCase.execute).not.toHaveBeenCalled();
+  });
+
+  it('should throw BadRequestError when initial stock is informed without a unit of measurement', async () => {
+    await expect(
+      sut.execute({ ...ownProductionInput, currentStock: 10 }),
+    ).rejects.toThrow(BadRequestError);
   });
 
   it('should force stockManagement to false for a kg product even when input requests true', async () => {

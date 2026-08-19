@@ -35,6 +35,7 @@ import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-i
 import { Recipe } from '@/core/recipe/domain/entities/recipe.entity';
 import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import { ProductRecipeLink } from '../../domain/entities/product-recipe-link.entity';
+import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
 
 type CostPriceProduct = {
   id: string;
@@ -109,6 +110,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     private readonly recipeItemRepository: RecipeItemRepository,
     @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
     private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
+    private readonly createBatchUseCase: CreateBatchUseCase,
   ) {}
 
   @Transactional()
@@ -123,6 +125,14 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     if (isOwnProduction && !input.expirationDateInDays) {
       throw new BadRequestError(
         'Informe a validade em dias para produtos de produção própria',
+      );
+    }
+
+    const initialStock = input.currentStock ?? 0;
+
+    if (input.stockManagement && initialStock > 0 && !input.unitOfMeasurement) {
+      throw new BadRequestError(
+        'Informe a unidade de medida para lançar o estoque inicial',
       );
     }
 
@@ -247,7 +257,11 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       profitPrice: requiresPricing ? (profitPrice ?? 1) : null,
       salePrice: requiresPricing ? salePrice : null,
       scaleReference: input.scaleReference ?? null,
-      stockAtual: input.currentStock ?? null,
+      // Nasce sem estoque: se houver estoque inicial, ele é lançado logo abaixo
+      // via `CreateBatchUseCase`, que cria o lote e incrementa `stockAtual` em
+      // conjunto — nunca setado direto aqui (senão fica sem lote por trás e a
+      // baixa por venda/produção falha por "estoque insuficiente").
+      stockAtual: null,
       stockMin: input.stockMin ?? null,
       stockManagement:
         input.unitOfMeasurement === TypeUnitOfMeasurement.KG
@@ -267,6 +281,16 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     });
 
     const saveProduct = await this.productRepository.save(newProduct);
+
+    if (input.stockManagement && initialStock > 0 && input.unitOfMeasurement) {
+      await this.createBatchUseCase.execute({
+        productId: saveProduct.id,
+        quantity: initialStock,
+        unitOfMeasurement: input.unitOfMeasurement,
+        productionDate: new Date(),
+        dailyProductionItemId: null,
+      });
+    }
 
     if (isOwnProduction && materialsUsage.length) {
       await this.saveRecipeItems(saveProduct, materialsUsage);

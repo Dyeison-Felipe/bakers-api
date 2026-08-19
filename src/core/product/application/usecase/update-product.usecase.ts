@@ -260,7 +260,11 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       pricePerKilogram: pricePerKilogram ?? input.pricePerKilogram,
       unitCostPrice: unitCostPrice ?? input.unitCostPrice,
       imagePath,
-      stockAtual: input.currentStock ?? product.currentStock,
+      // `currentStock` do request é ignorado de propósito: editar o produto não
+      // pode mais alterar o estoque diretamente (isso desincroniza de `batch`,
+      // que é quem a baixa por venda/produção realmente consulta). Ajustes de
+      // estoque passam a ser feitos só pela tela de Lotes.
+      stockAtual: product.currentStock,
       stockMin: input.stockMin ?? product.stockMin,
       active: input.active,
       description: input.description ?? product.description,

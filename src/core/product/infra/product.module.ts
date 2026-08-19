@@ -31,6 +31,8 @@ import { RecipeModule } from '@/core/recipe/infra/recipe.module';
 import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import { ProductRecipeLinkRepository } from '../domain/repositories/product-recipe-link.repository';
+import { BatchModule } from '@/core/batch/infra/batch.module';
+import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { ProductRecipeLinkRepository } from '../domain/repositories/product-reci
     CategoryPersistenceModule,
     AdditionalCostModule,
     RecipeModule,
+    BatchModule,
   ],
   controllers: [ProductController],
   providers: [
@@ -54,6 +57,7 @@ import { ProductRecipeLinkRepository } from '../domain/repositories/product-reci
         recipeRepository: RecipeRepository,
         recipeItemRepository: RecipeItemRepository,
         productRecipeLinkRepository: ProductRecipeLinkRepository,
+        createBatchUseCase: CreateBatchUseCase,
       ) => {
         return new CreateProductUseCase(
           productRepository,
@@ -66,6 +70,7 @@ import { ProductRecipeLinkRepository } from '../domain/repositories/product-reci
           recipeRepository,
           recipeItemRepository,
           productRecipeLinkRepository,
+          createBatchUseCase,
         );
       },
       inject: [
@@ -79,6 +84,7 @@ import { ProductRecipeLinkRepository } from '../domain/repositories/product-reci
         PROVIDERS.RECIPE_REPOSITORY,
         PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+        CreateBatchUseCase,
       ],
     },
     {
