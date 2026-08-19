@@ -71,6 +71,12 @@ export class BatchRepositoryImpl implements BatchRepository {
       });
     }
 
+    if (filters?.productName) {
+      query.andWhere('product.name ILIKE :productName', {
+        productName: `%${filters.productName}%`,
+      });
+    }
+
     if (filters?.onlyAvailable) {
       query.andWhere('batch.remainingQuantity > 0');
     }
@@ -82,7 +88,11 @@ export class BatchRepositoryImpl implements BatchRepository {
     }
 
     query
+      // Empate no createdAt deixa a ordem instável entre páginas no
+      // Postgres — o id como critério de desempate garante ordem
+      // determinística, sem duplicar/pular linhas ao paginar.
       .orderBy('batch.createdAt', direction)
+      .addOrderBy('batch.id', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 

@@ -24,11 +24,17 @@ describe('FindAllBatchesUseCase', () => {
   it('should scope the query by the logged user company id and forward filters/pagination', async () => {
     batchRepository.findAllByCompanyId.mockResolvedValue(makePagination([]));
 
-    await sut.execute({ productId: 'product-1', onlyAvailable: true, page: 2, limit: 5 });
+    await sut.execute({
+      productId: 'product-1',
+      productName: 'Pão',
+      onlyAvailable: true,
+      page: 2,
+      limit: 5,
+    });
 
     expect(batchRepository.findAllByCompanyId).toHaveBeenCalledWith(
       'company-1',
-      { productId: 'product-1', onlyAvailable: true },
+      { productId: 'product-1', productName: 'Pão', onlyAvailable: true },
       { page: 2, limit: 5 },
     );
   });

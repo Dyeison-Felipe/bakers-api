@@ -70,18 +70,25 @@ export class BatchController {
       'Retorna a lista paginada de lotes da empresa logada, podendo ser filtrada por produto.',
   })
   @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({
+    name: 'productName',
+    required: false,
+    description: 'Busca lotes cujo produto tenha nome contendo o texto informado.',
+  })
   @ApiQuery({ name: 'onlyAvailable', required: false, type: Boolean })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiOkResponse({ type: BatchPresenter, isArray: true })
   async findAll(
     @Query('productId') productId?: string,
+    @Query('productName') productName?: string,
     @Query('onlyAvailable') onlyAvailable?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ): Promise<Pagination<BatchPresenter>> {
     return await this.findAllBatchesUseCase.execute({
       productId,
+      productName,
       onlyAvailable: onlyAvailable === 'true',
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,

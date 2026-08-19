@@ -44,7 +44,11 @@ export class CategoryRepositoryImpl implements CategoryRepository {
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.parent', 'parent')
       .where('category.company = :companyId', { companyId })
+      // Empate no createdAt deixa a ordem instável entre páginas no
+      // Postgres — o id como critério de desempate garante ordem
+      // determinística, sem duplicar/pular linhas ao paginar.
       .orderBy('category.createdAt', direction)
+      .addOrderBy('category.id', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

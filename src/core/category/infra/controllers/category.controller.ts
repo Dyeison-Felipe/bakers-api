@@ -50,12 +50,16 @@ export class CategoryController {
     description: 'Erro ao listar categorias',
   })
   async findAll(
-    @Param('page') page: number = 1,
-    @Param('direction') direction: 'ASC' | 'DESC' = 'ASC',
-    @Param('limit') limit = 100,
+    @Query('page') page?: string,
+    @Query('direction') direction?: 'ASC' | 'DESC',
+    @Query('limit') limit?: string,
   ): Promise<Pagination<FindAllCategoryPresenter>> {
     return await this.findAllCategoriesByCompanyUseCase.execute({
-      pagination: { page, direction, limit },
+      pagination: {
+        page: page ? Number(page) : undefined,
+        direction,
+        limit: limit ? Number(limit) : undefined,
+      },
     });
   }
 

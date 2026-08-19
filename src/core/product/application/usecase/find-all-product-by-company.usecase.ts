@@ -13,6 +13,8 @@ type Input = {
   status?: ProductStatus;
   typeProduct?: TypeProduct;
   name?: string;
+  page?: number;
+  limit?: number;
 };
 
 type Output = PaginationOutput<FindAllProductOutput>;
@@ -25,7 +27,14 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ categoryId, status, typeProduct, name }: Input): Promise<Output> {
+  async execute({
+    categoryId,
+    status,
+    typeProduct,
+    name,
+    page,
+    limit,
+  }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
     const statusProduct =
@@ -40,7 +49,7 @@ export class FindAllProductByCompanyUseCase implements UseCase<Input, Output> {
       statusProduct,
       categoryId,
       typeProduct,
-      undefined,
+      { page, limit },
       name,
     );
 

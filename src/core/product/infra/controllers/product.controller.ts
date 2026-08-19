@@ -164,6 +164,8 @@ export class ProductController {
     required: false,
     description: 'Busca produtos cujo nome contenha o texto informado.',
   })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiOkResponse({
     description: 'Lista de produtos retornada com sucesso',
     type: FindAllProductPresenter,
@@ -177,12 +179,16 @@ export class ProductController {
     @Query('typeProduct') typeProduct?: TypeProduct,
     @Query('status') status?: ProductStatus,
     @Query('name') name?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ): Promise<Pagination<FindAllProductPresenter>> {
     return await this.findAllProductByCompanyUseCase.execute({
       categoryId,
       status,
       typeProduct,
       name,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
     });
   }
 

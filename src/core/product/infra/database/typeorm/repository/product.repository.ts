@@ -85,7 +85,11 @@ export class ProductRepositoryImpl implements ProductRepository {
     }
 
     query
+      // Empate no createdAt (ex: seed em massa) deixa a ordem instável entre
+      // páginas no Postgres — o id como critério de desempate garante uma
+      // ordem determinística, sem duplicar/pular linhas ao paginar.
       .orderBy('product.createdAt', direction)
+      .addOrderBy('product.id', 'ASC')
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -131,7 +135,7 @@ export class ProductRepositoryImpl implements ProductRepository {
 
     if (search) {
       query.andWhere(
-        '(product.name ILIKE :search OR product.barCode ILIKE :search)',
+        '(product.name ILIKE :search OR product.barCode ILIKE :search OR product.scaleReference ILIKE :search)',
         { search: `%${search}%` },
       );
     }

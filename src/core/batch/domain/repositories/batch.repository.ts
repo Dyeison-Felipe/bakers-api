@@ -7,6 +7,7 @@ import { Batch } from '../entities/batch.entity';
 
 export type FindAllBatchesFilters = {
   productId?: string;
+  productName?: string;
   onlyAvailable?: boolean;
   producedOn?: Date;
 };

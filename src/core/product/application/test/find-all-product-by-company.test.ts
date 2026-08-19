@@ -32,7 +32,7 @@ describe('FindAllProductByCompanyUseCase', () => {
       true,
       undefined,
       undefined,
-      undefined,
+      { page: undefined, limit: undefined },
       undefined,
     );
   });
@@ -45,7 +45,7 @@ describe('FindAllProductByCompanyUseCase', () => {
       false,
       undefined,
       undefined,
-      undefined,
+      { page: undefined, limit: undefined },
       undefined,
     );
   });
@@ -58,7 +58,7 @@ describe('FindAllProductByCompanyUseCase', () => {
       undefined,
       undefined,
       undefined,
-      undefined,
+      { page: undefined, limit: undefined },
       undefined,
     );
   });
@@ -71,7 +71,20 @@ describe('FindAllProductByCompanyUseCase', () => {
       true,
       undefined,
       undefined,
+      { page: undefined, limit: undefined },
       undefined,
+    );
+  });
+
+  it('should forward page and limit to the repository', async () => {
+    await sut.execute({ page: 2, limit: 50 });
+
+    expect(productRepository.findAllProductsByCompanyId).toHaveBeenCalledWith(
+      'company-1',
+      true,
+      undefined,
+      undefined,
+      { page: 2, limit: 50 },
       undefined,
     );
   });

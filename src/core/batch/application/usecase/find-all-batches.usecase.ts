@@ -8,6 +8,7 @@ import { BatchRepository } from '../../domain/repositories/batch.repository';
 
 type Input = {
   productId?: string;
+  productName?: string;
   onlyAvailable?: boolean;
   page?: number;
   limit?: number;
@@ -30,6 +31,7 @@ export class FindAllBatchesUseCase implements UseCase<Input, Output> {
       loggedUser.company.id,
       {
         productId: input.productId,
+        productName: input.productName,
         onlyAvailable: input.onlyAvailable,
       },
       {
