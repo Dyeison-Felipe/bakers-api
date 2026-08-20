@@ -10,7 +10,7 @@ export class CreateTableRecipe1786100000019 implements MigrationInterface {
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           { name: 'name', type: 'varchar', length: '255', isNullable: false },
           { name: 'company', type: 'uuid', isNullable: false },

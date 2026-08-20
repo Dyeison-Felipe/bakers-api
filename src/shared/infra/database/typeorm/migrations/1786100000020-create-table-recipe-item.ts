@@ -17,7 +17,7 @@ export class CreateTableRecipeItem1786100000020
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           { name: 'recipe', type: 'uuid', isNullable: false },
           { name: 'material', type: 'uuid', isNullable: false },

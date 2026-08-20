@@ -16,7 +16,7 @@ export class CreateTableSaleItem1786100000008 implements MigrationInterface {
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'sale_id',

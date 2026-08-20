@@ -16,7 +16,7 @@ export class CreateTableProductRecipeItem1785461989916 implements MigrationInter
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'product',

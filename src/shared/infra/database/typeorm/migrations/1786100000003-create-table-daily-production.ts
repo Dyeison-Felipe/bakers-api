@@ -13,7 +13,7 @@ export class CreateTableDailyProduction1786100000003
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'company_id',

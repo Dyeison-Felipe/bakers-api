@@ -22,7 +22,7 @@ export class CreateTableBatchMovement1786100000001
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'batch_id',

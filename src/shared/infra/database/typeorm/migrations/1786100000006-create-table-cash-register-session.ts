@@ -13,7 +13,7 @@ export class CreateTableCashRegisterSession1786100000006
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'company_id',

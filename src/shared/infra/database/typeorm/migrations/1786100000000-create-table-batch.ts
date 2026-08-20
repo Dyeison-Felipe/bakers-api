@@ -17,7 +17,7 @@ export class CreateTableBatch1786100000000 implements MigrationInterface {
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'product_id',

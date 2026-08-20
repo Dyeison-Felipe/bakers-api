@@ -12,7 +12,7 @@ export class CreateTableProductRecipeLink1786100000021
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           { name: 'product', type: 'uuid', isNullable: false },
           { name: 'recipe', type: 'uuid', isNullable: false },

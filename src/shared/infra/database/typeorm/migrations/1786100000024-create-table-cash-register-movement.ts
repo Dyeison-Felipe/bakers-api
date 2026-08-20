@@ -16,7 +16,7 @@ export class CreateTableCashRegisterMovement1786100000024
             name: 'id',
             type: 'uuid',
             isPrimary: true,
-            default: 'uuid_generate_v4()',
+            default: 'gen_random_uuid()',
           },
           {
             name: 'cash_register_session_id',
