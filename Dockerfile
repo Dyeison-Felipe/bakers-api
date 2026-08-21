@@ -2,6 +2,7 @@
 
 FROM node:22.8.0-slim AS base
 WORKDIR /app
+ENV COREPACK_INTEGRITY_KEYS=0
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
 FROM base AS deps
