@@ -1,0 +1,90 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+
+env:
+  VERSION: 1.0.0
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e push da imagem (versionada + latest)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/bakers-api:${{ env.VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/bakers-api:latest
+
+  cd:
+    needs: ci
+    runs-on: self-hosted
+    steps:
+      - name: Cria o .env.production a partir dos secrets do GitHub
+        run: |
+          cat << EOF > .env.production
+          PORT=${{ secrets.PORT }}
+          NODE_ENV=${{ secrets.NODE_ENV }}
+          ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_SCHEMA=${{ secrets.DB_SCHEMA }}
+          TZ=${{ secrets.TZ }}
+          PGTZ=${{ secrets.PGTZ }}
+          SALTS=${{ secrets.SALTS }}
+          JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
+          COOKIE_SECURE=${{ secrets.COOKIE_SECURE }}
+          COOKIE_SAME_SITE=${{ secrets.COOKIE_SAME_SITE }}
+          COOKIE_SECRET=${{ secrets.COOKIE_SECRET }}
+          STORAGE_PATH=${{ secrets.STORAGE_PATH }}
+          EMAIL=${{ secrets.EMAIL }}
+          EMAIL_SEND_PASSWORD=${{ secrets.EMAIL_SEND_PASSWORD }}
+          JWT_SECRET_EMAIL_VERIFICATION=${{ secrets.JWT_SECRET_EMAIL_VERIFICATION }}
+          JWT_EXPIRES_IN_EMAIL_VERIFICATION=${{ secrets.JWT_EXPIRES_IN_EMAIL_VERIFICATION }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          EOF
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull da imagem da versão publicada
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/bakers-api:${{ env.VERSION }}
+
+      - name: Para e remove o container antigo (se existir)
+        run: |
+          docker stop bakers_api_container || true
+          docker rm bakers_api_container || true
+
+      - name: Sobe o novo container (sem publicar porta no host — o gateway cuida disso)
+        run: |
+          docker run -d \
+            --name bakers_api_container \
+            --network bakers-net \
+            --env-file "$(pwd)/.env.production" \
+            --restart unless-stopped \
+            ${{ secrets.DOCKERHUB_USERNAME }}/bakers-api:${{ env.VERSION }}
+
+      - name: Remove o .env.production do workspace do runner
+        if: always()
+        run: rm -f .env.production
