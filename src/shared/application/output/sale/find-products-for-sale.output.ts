@@ -6,6 +6,8 @@ export type ProductForSaleOutput = {
   barCode: string | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
   salePrice: number | null;
+  unitCostPrice: number;
+  pricePerKilogram: number | null;
   currentStock: number | null;
   stockManagement: boolean;
   imagePath: string | null;

@@ -37,6 +37,8 @@ export class FindProductsForSaleUseCase implements UseCase<Input, Output> {
         barCode: product.barCode,
         unitOfMeasurement: product.unitOfMeasurement,
         salePrice: product.salePrice,
+        unitCostPrice: product.unitCostPrice,
+        pricePerKilogram: product.pricePerKilogram,
         currentStock: product.currentStock,
         stockManagement: product.stockManagement,
         imagePath: product.imagePath,

@@ -31,6 +31,15 @@ export class SaleItemDto {
   @IsNumber()
   @Min(0.001)
   weightInKg?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Valor unitário praticado na venda (pode ser diferente do salePrice cadastrado, ex: venda com desconto). Se omitido, usa o salePrice do produto.',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  unitPrice?: number;
 }
 
 export class CreateSaleDto {

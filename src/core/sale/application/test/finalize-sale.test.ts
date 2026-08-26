@@ -150,6 +150,24 @@ describe('FinalizeSaleUseCase', () => {
     expect(output.receiptPdfUrl).toBe(`/v1/sale/${output.id}/receipt`);
   });
 
+  it('should use the client-supplied unitPrice instead of the registered salePrice', async () => {
+    const output = await sut.execute({
+      items: [{ productId: 'product-1', quantity: 2, unitPrice: 0.7 }],
+      paymentMethod: TypePaymentMethod.PIX,
+    });
+
+    expect(output.totalAmount).toBe(1.4);
+  });
+
+  it('should throw BadRequestError when the client-supplied unitPrice is below the product cost', async () => {
+    await expect(
+      sut.execute({
+        items: [{ productId: 'product-1', quantity: 2, unitPrice: 0.3 }],
+        paymentMethod: TypePaymentMethod.PIX,
+      }),
+    ).rejects.toThrow(BadRequestError);
+  });
+
   it('should not set amountReceived/changeAmount for a non-cash sale', async () => {
     const output = await sut.execute(oneUnitItem);
 

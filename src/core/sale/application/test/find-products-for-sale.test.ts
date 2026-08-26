@@ -41,6 +41,8 @@ describe('FindProductsForSaleUseCase', () => {
         barCode: null,
         unitOfMeasurement: 'un',
         salePrice: 1,
+        unitCostPrice: 0.5,
+        pricePerKilogram: 8,
         currentStock: 50,
         stockManagement: true,
         imagePath: null,

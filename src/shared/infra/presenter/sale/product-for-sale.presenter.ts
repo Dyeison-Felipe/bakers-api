@@ -17,6 +17,12 @@ export class ProductForSalePresenter {
   @ApiPropertyOptional({ description: 'Valor de venda (unitário ou por kg)' })
   readonly salePrice: number | null;
 
+  @ApiProperty({ description: 'Custo unitário do produto' })
+  readonly unitCostPrice: number;
+
+  @ApiPropertyOptional({ description: 'Custo por quilograma (produtos por peso)' })
+  readonly pricePerKilogram: number | null;
+
   @ApiPropertyOptional({ description: 'Estoque atual' })
   readonly currentStock: number | null;
 

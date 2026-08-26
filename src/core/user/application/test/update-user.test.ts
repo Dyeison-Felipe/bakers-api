@@ -1,6 +1,7 @@
 import { UpdateUserUseCase } from '../usecase/update-user.usecase';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { makeLoggedUser, makePermission, makeRole, makeUser, makeUserPermission } from './fixtures';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import type { HashService } from '@/shared/application/hash/hash.service';
@@ -132,6 +133,28 @@ describe('UpdateUserUseCase', () => {
 
     expect(hashService.hash).toHaveBeenCalledWith('new-password');
     expect(user.password).toBe('new-hashed-password');
+  });
+
+  it('should throw BadRequestError when a user tries to change their own role', async () => {
+    const user = makeUser({ id: 'admin-1', role: makeRole({ id: 'role-1' }) });
+    userRepository.findById.mockResolvedValue(user);
+    loggedUserService.getLoggedUser.mockReturnValue(makeLoggedUser({ id: 'admin-1' }));
+
+    await expect(
+      sut.execute({ ...baseInput, id: 'admin-1', role: 'role-2' }),
+    ).rejects.toThrow(BadRequestError);
+    expect(userRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('should allow a user to update their own data when the role is left unchanged', async () => {
+    const user = makeUser({ id: 'admin-1', role: makeRole({ id: 'role-1' }) });
+    userRepository.findById.mockResolvedValue(user);
+    loggedUserService.getLoggedUser.mockReturnValue(makeLoggedUser({ id: 'admin-1' }));
+
+    await expect(
+      sut.execute({ ...baseInput, id: 'admin-1', role: 'role-1', name: 'Novo Nome' }),
+    ).resolves.toBeDefined();
+    expect(user.name).toBe('Novo Nome');
   });
 
   it('should update username/name/email/role on the user entity', async () => {

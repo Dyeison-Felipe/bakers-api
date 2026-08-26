@@ -59,6 +59,12 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
       }
     }
 
+    if (loggedUser?.id === user.id && input.role !== user.role.id) {
+      throw new BadRequestError(
+        `Você não pode alterar o cargo do seu próprio usuário`,
+      );
+    }
+
     const role = await this.roleRepository.findById(input.role);
 
     if(!role) {

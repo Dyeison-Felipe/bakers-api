@@ -23,6 +23,7 @@ import { UpdateBatchPresenter } from '@/shared/infra/presenter/batch/update-batc
 import { WriteOffBatchPresenter } from '@/shared/infra/presenter/batch/write-off-batch.presenter';
 import { FindTodayLeftoverBatchesPresenter } from '@/shared/infra/presenter/batch/find-today-leftover-batches.presenter';
 import { DiscardBatchLeftoverPresenter } from '@/shared/infra/presenter/batch/discard-batch-leftover.presenter';
+import { FindWasteMovementsPresenter } from '@/shared/infra/presenter/batch/find-waste-movements.presenter';
 import { UpdateBatchDto } from '../dtos/update-batch.dto';
 import { WriteOffBatchDto } from '../dtos/write-off-batch.dto';
 import { DiscardBatchDto } from '../dtos/discard-batch.dto';
@@ -33,6 +34,7 @@ import { DeleteBatchUseCase } from '../../application/usecase/delete-batch.useca
 import { WriteOffBatchUseCase } from '../../application/usecase/write-off-batch.usecase';
 import { FindTodayLeftoverBatchesUseCase } from '../../application/usecase/find-today-leftover-batches.usecase';
 import { DiscardBatchLeftoverUseCase } from '../../application/usecase/discard-batch-leftover.usecase';
+import { FindWasteMovementsUseCase } from '../../application/usecase/find-waste-movements.usecase';
 import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
 
 @ApiTags('Batch')
@@ -46,6 +48,7 @@ export class BatchController {
     private readonly writeOffBatchUseCase: WriteOffBatchUseCase,
     private readonly findTodayLeftoverBatchesUseCase: FindTodayLeftoverBatchesUseCase,
     private readonly discardBatchLeftoverUseCase: DiscardBatchLeftoverUseCase,
+    private readonly findWasteMovementsUseCase: FindWasteMovementsUseCase,
   ) {}
 
   // Rota estática — precisa vir antes de ':id' pra não ser interpretada
@@ -60,6 +63,32 @@ export class BatchController {
   @ApiOkResponse({ type: FindTodayLeftoverBatchesPresenter })
   async todayLeftovers(): Promise<FindTodayLeftoverBatchesPresenter> {
     return await this.findTodayLeftoverBatchesUseCase.execute();
+  }
+
+  // Rota estática — mesmo motivo de 'today-leftovers': precisa vir antes de
+  // ':id' pra não ser interpretada como um id de lote.
+  @Get('waste')
+  @Permission(PermissionBatch.BATCH_READER)
+  @ApiOperation({
+    summary: 'Lista os movimentos de desperdício por período',
+    description:
+      'Retorna os lançamentos de desperdício (baixa manual com motivo de perda) da empresa logada no período informado, usado pela tela de Desperdício.',
+  })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  @ApiOkResponse({ type: FindWasteMovementsPresenter })
+  async waste(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+  ): Promise<FindWasteMovementsPresenter> {
+    const from = parseDateOnly(dateFrom);
+    const to = parseDateOnly(dateTo);
+    to.setHours(23, 59, 59, 999);
+
+    return await this.findWasteMovementsUseCase.execute({
+      dateFrom: from,
+      dateTo: to,
+    });
   }
 
   @Get()

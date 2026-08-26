@@ -26,6 +26,7 @@ type SaleItemInput = {
   productId: string;
   quantity?: number;
   weightInKg?: number;
+  unitPrice?: number;
 };
 
 type Input = {
@@ -123,10 +124,19 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
         );
       }
 
-      const subtotal = round2(product.salePrice * quantityForStock);
       const unitCost = isWeightBased
         ? (product.pricePerKilogram ?? 0)
         : product.unitCostPrice;
+
+      const unitPrice = item.unitPrice ?? product.salePrice;
+
+      if (unitPrice < unitCost) {
+        throw new BadRequestError(
+          `O valor de venda do produto "${product.name}" não pode ser menor que o custo (${unitCost})`,
+        );
+      }
+
+      const subtotal = round2(unitPrice * quantityForStock);
 
       preparedItems.push({
         product,
@@ -135,7 +145,7 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
         quantity: isWeightBased ? null : quantityForStock,
         weightInKg: isWeightBased ? quantityForStock : null,
         quantityForStock,
-        unitPrice: product.salePrice,
+        unitPrice,
         unitCost,
         subtotal,
       });
