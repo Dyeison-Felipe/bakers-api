@@ -228,7 +228,7 @@ export class ProductRepositoryImpl implements ProductRepository {
   async findById(id: string): Promise<Product | null> {
     const productSchema = await this.productRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: ['category', 'company'],
     });
 
     if (!productSchema) return null;

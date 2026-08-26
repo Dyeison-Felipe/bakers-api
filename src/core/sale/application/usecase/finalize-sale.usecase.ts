@@ -252,13 +252,15 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
       })),
     });
 
-    const filename = this.storageService.saveSaleReceipt(
+    const receiptKey = await this.storageService.uploadBuffer(
       company.id,
-      savedSale.id,
+      'sale',
+      `${savedSale.id}.pdf`,
       buffer,
+      'application/pdf',
     );
 
-    savedSale.attachReceipt(filename, loggedUser.id);
+    savedSale.attachReceipt(receiptKey, loggedUser.id);
     await this.saleRepository.update(savedSale);
     const receiptPdfUrl = `/v1/sale/${savedSale.id}/receipt`;
 

@@ -1,5 +1,4 @@
 import { Inject } from '@nestjs/common';
-import * as fs from 'fs';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
@@ -12,7 +11,7 @@ type Input = {
 };
 
 type Output = {
-  absolutePath: string;
+  buffer: Buffer;
 };
 
 export class GetSaleReceiptUseCase implements UseCase<Input, Output> {
@@ -41,15 +40,8 @@ export class GetSaleReceiptUseCase implements UseCase<Input, Output> {
       throw new NotFoundError('Esta venda não possui cupom gerado');
     }
 
-    const absolutePath = this.storageService.getSaleReceiptPath(
-      loggedUser.company.id,
-      sale.receiptPdfPath,
-    );
+    const buffer = await this.storageService.download(sale.receiptPdfPath);
 
-    if (!fs.existsSync(absolutePath)) {
-      throw new NotFoundError('Arquivo do cupom não encontrado no servidor');
-    }
-
-    return { absolutePath };
+    return { buffer };
   }
 }

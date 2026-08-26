@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
-import { createReadStream } from 'fs';
 import { FastifyReply } from 'fastify';
 import {
   ApiOkResponse,
@@ -99,12 +98,10 @@ export class SaleController {
   @ApiOperation({ summary: 'Baixa o cupom em PDF da venda, se gerado' })
   @ApiParam({ name: 'id', description: 'Id da venda' })
   async getReceipt(@Param('id') id: string, @Res() reply: FastifyReply) {
-    const { absolutePath } = await this.getSaleReceiptUseCase.execute({
+    const { buffer } = await this.getSaleReceiptUseCase.execute({
       saleId: id,
     });
 
-    return reply
-      .type('application/pdf')
-      .send(createReadStream(absolutePath));
+    return reply.type('application/pdf').send(buffer);
   }
 }

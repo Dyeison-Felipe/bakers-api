@@ -1,7 +1,8 @@
 // shared/infra/storage/storage.service.ts
 import { Inject, Injectable } from '@nestjs/common';
-import * as fs from 'fs';
 import * as path from 'path';
+import WebSocket from 'ws';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { EnvConfigService } from '@/shared/infra/env-config/env-config.service';
 import { MulterFile } from '@/shared/application/storage/multer-file.type';
 import { StorageService } from '@/shared/application/storage/storage.service';
@@ -9,56 +10,91 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 
 @Injectable()
 export class StorageServiceImpl implements StorageService {
-  private readonly pathStorage: string;
+  private readonly supabase: SupabaseClient;
+  private readonly bucket: string;
 
   constructor(
     @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
     private readonly envConfig: EnvConfigService,
   ) {
-    this.pathStorage = envConfig.getStoragePath();
+    this.supabase = createClient(
+      envConfig.getSupabaseUrl(),
+      envConfig.getSupabaseServiceKey(),
+      {
+        auth: { persistSession: false },
+        // Node < 22 não tem WebSocket nativo; o supabase-js inicializa um
+        // RealtimeClient internamente mesmo só usando Storage, e quebra sem
+        // essa implementação — não usamos Realtime, é só pra satisfazer o construtor.
+        realtime: { transport: WebSocket as unknown as never },
+      },
+    );
+    this.bucket = envConfig.getSupabaseStorageBucket();
   }
 
-  private getCompanyProductDir(companyId: string): string {
-    const dir = path.join(this.pathStorage, 'company', companyId, 'product');
-    fs.mkdirSync(dir, { recursive: true });
-    return dir;
+  private buildKey(companyId: string, folder: string, filename: string): string {
+    return `company/${companyId}/${folder}/${filename}`;
   }
 
-  private getCompanySaleDir(companyId: string): string {
-    const dir = path.join(this.pathStorage, 'company', companyId, 'sale');
-    fs.mkdirSync(dir, { recursive: true });
-    return dir;
-  }
-
-  saveProductImage(companyId: string, file: MulterFile): string {
-    const dir = this.getCompanyProductDir(companyId);
+  async upload(
+    companyId: string,
+    folder: string,
+    file: MulterFile,
+  ): Promise<string> {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const filename = `${uniqueSuffix}${path.extname(file.originalname)}`;
+    const key = this.buildKey(companyId, folder, filename);
 
-    fs.writeFileSync(path.join(dir, filename), file.buffer);
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .upload(key, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
 
-    return filename;
+    if (error) {
+      throw new Error(`Falha ao enviar arquivo para o storage: ${error.message}`);
+    }
+
+    return key;
   }
 
-  getProductImagePath(companyId: string, filename: string): string {
-    return path.join(this.getCompanyProductDir(companyId), filename);
+  async uploadBuffer(
+    companyId: string,
+    folder: string,
+    filename: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const key = this.buildKey(companyId, folder, filename);
+
+    const { error } = await this.supabase.storage
+      .from(this.bucket)
+      .upload(key, buffer, { contentType, upsert: true });
+
+    if (error) {
+      throw new Error(`Falha ao enviar arquivo para o storage: ${error.message}`);
+    }
+
+    return key;
   }
 
-  deleteProductImage(companyId: string, filename: string): void {
-    const fullPath = this.getProductImagePath(companyId, filename);
-    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+  async download(key: string): Promise<Buffer> {
+    const { data, error } = await this.supabase.storage
+      .from(this.bucket)
+      .download(key);
+
+    if (error || !data) {
+      throw new Error(`Arquivo não encontrado no storage: ${key}`);
+    }
+
+    return Buffer.from(await data.arrayBuffer());
   }
 
-  saveSaleReceipt(companyId: string, saleId: string, buffer: Buffer): string {
-    const dir = this.getCompanySaleDir(companyId);
-    const filename = `${saleId}.pdf`;
+  async delete(key: string): Promise<void> {
+    const { error } = await this.supabase.storage.from(this.bucket).remove([key]);
 
-    fs.writeFileSync(path.join(dir, filename), buffer);
-
-    return filename;
-  }
-
-  getSaleReceiptPath(companyId: string, filename: string): string {
-    return path.join(this.getCompanySaleDir(companyId), filename);
+    if (error) {
+      throw new Error(`Falha ao remover arquivo do storage: ${error.message}`);
+    }
   }
 }

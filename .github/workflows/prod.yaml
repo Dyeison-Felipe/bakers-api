@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  VERSION: 1.0.0
+  VERSION: 1.0.1
 
 jobs:
   ci:
@@ -60,6 +60,8 @@ jobs:
           JWT_SECRET_EMAIL_VERIFICATION=${{ secrets.JWT_SECRET_EMAIL_VERIFICATION }}
           JWT_EXPIRES_IN_EMAIL_VERIFICATION=${{ secrets.JWT_EXPIRES_IN_EMAIL_VERIFICATION }}
           FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          SUPABASE_URL=${{ secrets.SUPABASE_URL}}
+          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY}}
           EOF
 
       - name: Docker Login

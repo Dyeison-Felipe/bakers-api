@@ -6,8 +6,14 @@ import { Injectable } from '@nestjs/common';
 export class EnvConfigService implements EnvConfig {
   constructor(private readonly envConfigService: ConfigService) {}
 
-  getStoragePath(): string {
-    return this.envConfigService.get<string>('STORAGE_PATH') as string;
+  getSupabaseUrl(): string {
+    return this.envConfigService.get<string>('SUPABASE_URL') as string;
+  }
+  getSupabaseServiceKey(): string {
+    return this.envConfigService.get<string>('SUPABASE_SERVICE_KEY') as string;
+  }
+  getSupabaseStorageBucket(): string {
+    return this.envConfigService.get<string>('SUPABASE_STORAGE_BUCKET') as string;
   }
 
   getExpiresInSecondsForgotPassword(): number {

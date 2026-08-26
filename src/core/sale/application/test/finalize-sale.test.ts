@@ -23,7 +23,7 @@ describe('FinalizeSaleUseCase', () => {
   let cashRegisterSessionRepository: jest.Mocked<Pick<CashRegisterSessionRepository, 'findOpenByCompanyId'>>;
   let saleRepository: jest.Mocked<Pick<SaleRepository, 'save' | 'update'>>;
   let saleItemRepository: jest.Mocked<Pick<SaleItemRepository, 'saveMany'>>;
-  let storageService: jest.Mocked<Pick<StorageService, 'saveSaleReceipt'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'uploadBuffer'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
   let writeOffBatchUseCase: jest.Mocked<Pick<WriteOffBatchUseCase, 'execute'>>;
   let customerRepository: jest.Mocked<
@@ -43,7 +43,7 @@ describe('FinalizeSaleUseCase', () => {
       update: jest.fn().mockResolvedValue(undefined),
     };
     saleItemRepository = { saveMany: jest.fn().mockResolvedValue([]) };
-    storageService = { saveSaleReceipt: jest.fn().mockReturnValue('receipt.pdf') };
+    storageService = { uploadBuffer: jest.fn().mockResolvedValue('receipt.pdf') };
     loggedUserService = {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
@@ -209,10 +209,12 @@ describe('FinalizeSaleUseCase', () => {
   it('should generate and attach the receipt to the sale', async () => {
     const output = await sut.execute(oneUnitItem);
 
-    expect(storageService.saveSaleReceipt).toHaveBeenCalledWith(
+    expect(storageService.uploadBuffer).toHaveBeenCalledWith(
       'company-1',
-      output.id,
+      'sale',
+      `${output.id}.pdf`,
       expect.any(Buffer),
+      'application/pdf',
     );
     expect(saleRepository.update).toHaveBeenCalled();
   });

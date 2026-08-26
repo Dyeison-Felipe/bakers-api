@@ -34,7 +34,7 @@ describe('CreateProductUseCase', () => {
     >
   >;
   let categoryRepository: jest.Mocked<Pick<CategoryRepository, 'findCategoryByIdAndCompanyId'>>;
-  let storageService: jest.Mocked<Pick<StorageService, 'saveProductImage'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'upload'>>;
   let productRecipeItemRepository: jest.Mocked<Pick<ProductRecipeItemRepository, 'save'>>;
   let productAdditionalCostRepository: jest.Mocked<Pick<ProductAdditionalCostRepository, 'save'>>;
   let additionalCostRepository: jest.Mocked<Pick<AdditionalCostRepository, 'findAllByIdsAndCompanyId'>>;
@@ -69,7 +69,7 @@ describe('CreateProductUseCase', () => {
     categoryRepository = {
       findCategoryByIdAndCompanyId: jest.fn().mockResolvedValue(makeCategory()),
     };
-    storageService = { saveProductImage: jest.fn() };
+    storageService = { upload: jest.fn() };
     productRecipeItemRepository = { save: jest.fn().mockResolvedValue(undefined) };
     productAdditionalCostRepository = { save: jest.fn().mockResolvedValue(undefined) };
     additionalCostRepository = { findAllByIdsAndCompanyId: jest.fn().mockResolvedValue([]) };

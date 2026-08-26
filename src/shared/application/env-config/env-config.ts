@@ -1,5 +1,7 @@
 export interface EnvConfig {
-  getStoragePath(): string;
+  getSupabaseUrl(): string;
+  getSupabaseServiceKey(): string;
+  getSupabaseStorageBucket(): string;
   getExpiresInSecondsForgotPassword(): number;
   getJwtSecretForgotPassword(): string;
   getExpiresInSecondsEmailVerification(): number;

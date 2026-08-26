@@ -35,7 +35,7 @@ describe('UpdateProductUseCase', () => {
     >
   >;
   let categoryRepository: jest.Mocked<Pick<CategoryRepository, 'findCategoryByIdAndCompanyId'>>;
-  let storageService: jest.Mocked<Pick<StorageService, 'saveProductImage' | 'deleteProductImage'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'upload' | 'delete'>>;
   let productRecipeItemRepository: jest.Mocked<
     Pick<ProductRecipeItemRepository, 'findAllByProductId' | 'deleteById' | 'save'>
   >;
@@ -77,7 +77,7 @@ describe('UpdateProductUseCase', () => {
     categoryRepository = {
       findCategoryByIdAndCompanyId: jest.fn().mockResolvedValue(makeCategory()),
     };
-    storageService = { saveProductImage: jest.fn(), deleteProductImage: jest.fn() };
+    storageService = { upload: jest.fn(), delete: jest.fn() };
     productRecipeItemRepository = {
       findAllByProductId: jest.fn().mockResolvedValue([]),
       deleteById: jest.fn().mockResolvedValue(undefined),
@@ -252,15 +252,15 @@ describe('UpdateProductUseCase', () => {
     productRepository.findProductByIdAndCompanyId.mockResolvedValue(
       makeProduct({ id: 'product-1', imagePath: 'old.png' }),
     );
-    storageService.saveProductImage.mockReturnValue('new.png');
+    storageService.upload.mockResolvedValue('company/company-1/product/new.png');
 
     await sut.execute({
       ...baseInput,
       image: { buffer: Buffer.from('x') } as never,
     });
 
-    expect(storageService.deleteProductImage).toHaveBeenCalledWith('company-1', 'old.png');
-    expect(storageService.saveProductImage).toHaveBeenCalled();
+    expect(storageService.delete).toHaveBeenCalledWith('old.png');
+    expect(storageService.upload).toHaveBeenCalled();
   });
 
   it('should force stockManagement to false for a kg product even when input requests true', async () => {

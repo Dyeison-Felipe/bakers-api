@@ -5,7 +5,6 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { ProductRepository } from '../../domain/repositories/product.repository';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { StorageService } from '@/shared/application/storage/storage.service';
-import * as fs from 'fs';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 type Input = {
@@ -13,7 +12,7 @@ type Input = {
 };
 
 type Output = {
-  absolutePath: string;
+  buffer: Buffer;
   mimetype: string;
 };
 
@@ -30,7 +29,7 @@ export class GetProductImageUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser()
     const product = await this.productRepository.findById(productId);
 
-    if (!product) {
+    if (!product || product.company?.id !== loggedUser.company?.id) {
       throw new NotFoundError('Produto não encontrado');
     }
 
@@ -38,18 +37,10 @@ export class GetProductImageUseCase implements UseCase<Input, Output> {
       throw new NotFoundError('Produto não possui imagem');
     }
 
-    const absolutePath = this.storageService.getProductImagePath(
-      loggedUser.company?.id,
-      product.imagePath,
-    );
-
-    if (!fs.existsSync(absolutePath)) {
-      throw new NotFoundError('Arquivo de imagem não encontrado no servidor');
-    }
-
+    const buffer = await this.storageService.download(product.imagePath);
     const mimetype = this.getMimeType(product.imagePath);
 
-    return { absolutePath, mimetype };
+    return { buffer, mimetype };
   }
 
   private getMimeType(filename: string): string {

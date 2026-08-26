@@ -1,11 +1,14 @@
 import { MulterFile } from './multer-file.type';
 
 export interface StorageService {
-  // getCompanyProductDir(companyId: string): string;
-  saveProductImage(companyId: string, file: MulterFile): string;
-  getProductImagePath(companyId: string, filename: string): string;
-  deleteProductImage(companyId: string, filename: string): void;
-
-  saveSaleReceipt(companyId: string, saleId: string, buffer: Buffer): string;
-  getSaleReceiptPath(companyId: string, filename: string): string;
+  upload(companyId: string, folder: string, file: MulterFile): Promise<string>;
+  uploadBuffer(
+    companyId: string,
+    folder: string,
+    filename: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<string>;
+  download(key: string): Promise<Buffer>;
+  delete(key: string): Promise<void>;
 }

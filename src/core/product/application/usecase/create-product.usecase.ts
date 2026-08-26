@@ -240,7 +240,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     }
 
     const imagePath = input.image?.buffer
-      ? this.storageService.saveProductImage(company.id, input.image)
+      ? await this.storageService.upload(company.id, 'product', input.image)
       : null;
 
     const newProduct = Product.create({

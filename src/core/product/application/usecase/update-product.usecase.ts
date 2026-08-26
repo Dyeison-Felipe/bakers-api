@@ -234,9 +234,13 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
     let imagePath = product.imagePath;
     if (input.image?.buffer) {
       if (product.imagePath) {
-        this.storageService.deleteProductImage(company.id, product.imagePath);
+        await this.storageService.delete(product.imagePath);
       }
-      imagePath = this.storageService.saveProductImage(company.id, input.image);
+      imagePath = await this.storageService.upload(
+        company.id,
+        'product',
+        input.image,
+      );
     }
 
     product.update({

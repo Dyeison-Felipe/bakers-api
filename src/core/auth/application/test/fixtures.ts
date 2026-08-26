@@ -56,7 +56,9 @@ export const makeEnvConfig = (
   overrides: Partial<Record<keyof EnvConfig, unknown>> = {},
 ): jest.Mocked<EnvConfig> => {
   return {
-    getStoragePath: jest.fn().mockReturnValue('/storage'),
+    getSupabaseUrl: jest.fn().mockReturnValue('https://project.supabase.co'),
+    getSupabaseServiceKey: jest.fn().mockReturnValue('service-key'),
+    getSupabaseStorageBucket: jest.fn().mockReturnValue('bakers-bill'),
     getExpiresInSecondsForgotPassword: jest.fn().mockReturnValue(3600),
     getJwtSecretForgotPassword: jest.fn().mockReturnValue('forgot-secret'),
     getExpiresInSecondsEmailVerification: jest.fn().mockReturnValue(3600),

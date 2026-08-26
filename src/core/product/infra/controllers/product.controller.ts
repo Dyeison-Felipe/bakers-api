@@ -48,7 +48,6 @@ import { MulterFile } from '@/shared/application/storage/multer-file.type';
 import { Multipart } from '@/shared/infra/decorators/multipart.decorator';
 import { FastifyReply } from 'fastify';
 import { GetProductImageUseCase } from '../../application/usecase/get-image.usecase';
-import { createReadStream } from 'fs';
 import { CalculateRecipeCostUseCase } from '../../application/usecase/calculate-recipe-cost.usecase';
 import { CalculateUnitCostUseCase } from '../../application/usecase/calculate-unit-cost.usecase';
 import { CalculateRecipeCostPresenter } from '@/shared/infra/presenter/product/calculate-recipe-cost.presenter';
@@ -261,12 +260,11 @@ export class ProductController {
 
   @Get(':id/image')
   async getImage(@Param('id') id: string, @Res() reply: FastifyReply) {
-    const { absolutePath, mimetype } =
-      await this.getProductImageUseCase.execute({
-        productId: id,
-      });
+    const { buffer, mimetype } = await this.getProductImageUseCase.execute({
+      productId: id,
+    });
 
-    return reply.type(mimetype).send(createReadStream(absolutePath));
+    return reply.type(mimetype).send(buffer);
   }
 
   @Post('calculate-recipe-cost')
