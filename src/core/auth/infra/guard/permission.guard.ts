@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FastifyRequest } from 'fastify';
+import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { UserRepository } from '@/core/user/domain/repositories/user.repository';
@@ -46,7 +47,7 @@ export class PermissionGuard implements CanActivate {
 
     // 2. Valida o token
     const request = context.switchToHttp().getRequest<FastifyRequest>();
-    const token = request.cookies?.developmentAuthToken;
+    const token = request.cookies?.[AuthConstants.tokenName];
 
     if (!token) throw new UnauthorizedError();
 
