@@ -9,15 +9,15 @@ export type PlanProps = {
   price: number;
   active: boolean;
   description: string;
-  duration: string;
-  permissions?: Permission[]; 
+  duration: number;
+  permissions?: Permission[];
 };
 
 type CreatePlanProps = {
   name: string;
   price: number;
   description: string;
-  duration: string;
+  duration: number;
 };
 
 type UpdatePlanProps = {
@@ -25,7 +25,7 @@ type UpdatePlanProps = {
   price: number;
   active: boolean;
   description: string;
-  duration: string;
+  duration: number;
 };
 
 export interface Plan extends PlanProps { }

@@ -62,7 +62,16 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
 
     const role = await this.roleRepository.findById(input.role);
 
-    if (!role) {
+    // Uma role só pode ser atribuída se pertencer à empresa do usuário logado
+    // — sem esse check, o id (fixo, conhecido) da role "Super Admin" poderia
+    // ser enviado diretamente na API para escalar privilégio. "Super Admin" é
+    // reservada ao administrador master do sistema e nunca é atribuível aqui,
+    // mesmo dentro da própria empresa dona dela.
+    if (
+      !role ||
+      role.company?.id !== loggedUser.company.id ||
+      role.name === 'Super Admin'
+    ) {
       throw new NotFoundError(`Cargo não encontrado`);
     }
 

@@ -30,7 +30,7 @@ describe('FindAllPlanUseCase', () => {
         price: 100,
         active: true,
         description: 'Plano básico',
-        duration: 'MONTHLY',
+        duration: 30,
       },
     ]);
   });

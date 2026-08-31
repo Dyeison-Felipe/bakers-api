@@ -6,6 +6,6 @@ export type CreatePlanOutput = {
   description: string,
   price: number,
   active: boolean,
-  duration: string;
+  duration: number;
   permissions: PermissionsOutput[]
 }

@@ -3,7 +3,7 @@ export class FindAllPlanPresenter {
   readonly name: string;
   readonly description: string;
   readonly price: number;
-  readonly duration: string;
+  readonly duration: number;
   readonly active: boolean
 
   constructor(props: FindAllPlanPresenter) {

@@ -2,48 +2,43 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
 import { CompanyRepository } from '../../domain/repositories/company.repository';
-import { AddressRepository } from '@/core/address/domain/repositories/address.repository';
-import { CityRepository } from '@/core/city/domain/repositories/city.repository';
+import { PlanRepository } from '@/core/plan/domain/repositories/plan.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
-import { CreateAddressInput } from '@/shared/application/input/address/create-address.input';
-import { CreateCompanyOutput } from '@/shared/application/output/company/create-company-output';
-import { Company } from '../../domain/entities/company.entity';
-import { Transactional } from '@/shared/infra/database/typeorm/decorators/transactional.decorator';
 import { ID_USER_DEFAULT } from '@/shared/application/constants/id-user-default';
+import { CompanyOutput } from '@/shared/application/output/company/company.output';
+import { Company } from '../../domain/entities/company.entity';
 
 type Input = {
+  id: string;
   fantasyName: string;
   socialReazon: string;
   cnpj: string;
-  stateRegistration: string;
   email: string;
   phoneNumber: string;
-  address: CreateAddressInput;
+  stateRegistration: string;
+  active: boolean;
+  planId?: string;
 };
 
-type Output = CreateCompanyOutput;
+type Output = CompanyOutput;
 
-export class UpdateCompanyUseCase implements UseCase<Input, Output> {
+export class SuperAdminUpdateCompanyUseCase implements UseCase<Input, Output> {
   constructor(
     @Inject(PROVIDERS.COMPANY_REPOSITORY)
     private readonly companyRepository: CompanyRepository,
-    @Inject(PROVIDERS.ADDRESS_REPOSITORY)
-    private readonly addressRepository: AddressRepository,
-    @Inject(PROVIDERS.CITY_REPOSITORY)
-    private readonly cityRepository: CityRepository,
+    @Inject(PROVIDERS.PLAN_REPOSITORY)
+    private readonly planRepository: PlanRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  @Transactional()
   async execute(input: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
+    const updatedBy = loggedUser?.id ?? ID_USER_DEFAULT;
 
-    const company = await this.companyRepository.findById(
-      loggedUser.company.id,
-    );
+    const company = await this.companyRepository.findById(input.id);
 
     if (!company) {
       throw new NotFoundError(`Empresa não encontrada`);
@@ -59,25 +54,6 @@ export class UpdateCompanyUseCase implements UseCase<Input, Output> {
       }
     }
 
-    if (company.address) {
-      const city = await this.cityRepository.findById(input.address.cityId);
-
-      if (!city) {
-        throw new NotFoundError(`Cidade não encontrada`);
-      }
-
-      company.address.cep = input.address.cep;
-      company.address.neighborhood = input.address.neighborhood;
-      company.address.street = input.address.street;
-      company.address.number = input.address.number;
-      company.address.complement = input.address.complement;
-      company.address.latitude = input.address.latitude ?? null;
-      company.address.longitude = input.address.longitude ?? null;
-      company.address.city = city;
-
-      await this.addressRepository.update(company.address);
-    }
-
     company.update({
       fantasyName: input.fantasyName,
       socialReazon: input.socialReazon,
@@ -87,8 +63,20 @@ export class UpdateCompanyUseCase implements UseCase<Input, Output> {
       stateRegistration: input.stateRegistration,
       plan: company.plan!,
       address: company.address ?? undefined,
-      updatedBy: loggedUser?.id ?? ID_USER_DEFAULT,
+      updatedBy,
     });
+
+    if (input.planId && input.planId !== company.plan?.id) {
+      const plan = await this.planRepository.findById(input.planId);
+
+      if (!plan) {
+        throw new NotFoundError(`Plano não encontrado`);
+      }
+
+      company.renewPlan(plan, updatedBy);
+    } else if (input.active !== company.active) {
+      company.setActive(input.active, updatedBy);
+    }
 
     await this.companyRepository.update(company);
 

@@ -18,7 +18,7 @@ type Input = {
   price: number;
   active: boolean;
   description: string;
-  duration: string;
+  duration: number;
   permissionIds: string[];
 }
 

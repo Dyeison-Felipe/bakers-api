@@ -13,7 +13,7 @@ export class FindPlanByIdPresenter {
   @ApiProperty({ description: 'Se o plano está ativo' })
   readonly active: boolean;
   @ApiProperty({ description: 'Duração do plano' })
-  readonly duration: string;
+  readonly duration: number;
   @ApiProperty({ description: 'Permissões do plano' })
   readonly permissions: PermissionPresenter[];
 

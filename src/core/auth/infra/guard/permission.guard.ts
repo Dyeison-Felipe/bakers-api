@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
   Inject,
   Injectable,
   Scope,
@@ -14,6 +15,7 @@ import { UserRepository } from '@/core/user/domain/repositories/user.repository'
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { ForbiddenError } from '@/shared/application/errors/forbidden-error';
+import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
 import { CaslAbilityService } from '../service/casl-ability.service';
 import {
   IS_PUBLIC_KEY,
@@ -69,21 +71,36 @@ export class PermissionGuard implements CanActivate {
       request.user = user;
       this.loggedUserService.setLoggedUser(user);
 
-      if (user.role.name === 'Super Admin') {
-        return true;
-      }
-
-      // 3.5. Recursos de plataforma (ex: gestão de planos) — restritos à role
-      // Super Admin, independente de qualquer permissão/plano de empresa.
+      // 3.5. Recursos de plataforma (ex: gestão de planos, empresas) — restritos
+      // à role Super Admin, independente de qualquer permissão/plano de empresa.
       const requiresSuperAdmin = this.reflector.getAllAndOverride<boolean>(
         SUPER_ADMIN_ONLY_KEY,
         [context.getHandler(), context.getClass()],
       );
 
+      if (user.role.name === 'Super Admin') {
+        // Super Admin só acessa rotas de plataforma (@SuperAdminOnly()) — não
+        // tem mais bypass total do sistema operacional das empresas.
+        if (requiresSuperAdmin) return true;
+        throw new ForbiddenError(
+          'Este recurso não está disponível para o Super Admin',
+        );
+      }
+
       if (requiresSuperAdmin) {
         throw new ForbiddenError(
           'Apenas o Super Admin pode acessar esse recurso',
         );
+      }
+
+      // 3.6. Bloqueia empresas com o plano vencido (ou já desativadas pelo job
+      // de expiração) — cobre tanto a checagem "em tempo real" (a data já
+      // passou mas o cron diário ainda não rodou) quanto o estado já persistido.
+      if (
+        !user.company.active ||
+        user.company.planExpiresAt.getTime() < Date.now()
+      ) {
+        throw new PlanExpiredError();
       }
 
       // 4. Verifica permissões com CASL
@@ -127,7 +144,10 @@ export class PermissionGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
+      // UnauthorizedError/ForbiddenError/PlanExpiredError (e qualquer outro
+      // HttpException lançado de propósito) devem propagar com seu próprio
+      // status/corpo — só falhas inesperadas viram um 401 genérico aqui.
+      if (error instanceof HttpException) {
         throw error;
       }
       throw new UnauthorizedError(`Not authorized: ${error}`);

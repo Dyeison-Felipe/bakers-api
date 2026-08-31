@@ -1,10 +1,12 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreatePlanDto {
@@ -20,9 +22,10 @@ export class CreatePlanDto {
   @IsNotEmpty()
   price: number;
 
-  @IsString()
+  @IsInt()
+  @Min(1)
   @IsNotEmpty()
-  duration: string;
+  duration: number;
 
   @IsArray()
   @IsUUID('4', { each: true })

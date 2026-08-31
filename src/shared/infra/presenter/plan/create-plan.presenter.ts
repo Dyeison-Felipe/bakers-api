@@ -11,7 +11,7 @@ export class CreatePlanPresenter {
   @ApiProperty({ description: 'Preço do plano' })
   readonly price: number;
   @ApiProperty({ description: 'Duração do plano' })
-  readonly duration: string;
+  readonly duration: number;
   @ApiProperty({ description: 'Permissões do plano' })
   readonly permissions: PermissionPresenter[];
 

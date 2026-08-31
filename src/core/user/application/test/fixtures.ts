@@ -12,7 +12,12 @@ export const makeCompany = (overrides: Partial<Company> = {}): Company => {
 };
 
 export const makeRole = (overrides: Partial<Role> = {}): Role => {
-  return { id: 'role-1', name: 'Funcionário', ...overrides } as unknown as Role;
+  return {
+    id: 'role-1',
+    name: 'Funcionário',
+    company: makeCompany(),
+    ...overrides,
+  } as unknown as Role;
 };
 
 export const makePermission = (overrides: Partial<Permission> = {}): Permission => {

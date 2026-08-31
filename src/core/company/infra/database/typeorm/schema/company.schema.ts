@@ -64,6 +64,20 @@ export class CompanySchema extends BaseSchema {
   active: boolean;
 
   @Column({
+    name: 'plan_started_at',
+    type: 'timestamp',
+    nullable: false,
+  })
+  planStartedAt: Date;
+
+  @Column({
+    name: 'plan_expires_at',
+    type: 'timestamp',
+    nullable: false,
+  })
+  planExpiresAt: Date;
+
+  @Column({
     name: 'state_registration',
     type: 'varchar',
     length: 14,

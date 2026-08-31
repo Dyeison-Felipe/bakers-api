@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsString, IsUUID } from "class-validator";
+import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsString, IsUUID, Min } from "class-validator";
 
 export class UpdatePlanDto {
 
@@ -22,9 +22,10 @@ export class UpdatePlanDto {
   @IsNotEmpty()
   active: boolean
 
-  @IsString()
+  @IsInt()
+  @Min(1)
   @IsNotEmpty()
-  duration: string;
+  duration: number;
 
   @IsArray()
   @IsUUID('4', { each: true })

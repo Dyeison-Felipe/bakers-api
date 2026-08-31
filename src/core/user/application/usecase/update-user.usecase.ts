@@ -67,7 +67,13 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
 
     const role = await this.roleRepository.findById(input.role);
 
-    if(!role) {
+    // Mesmo motivo do CreateUserUseCase: a role precisa pertencer à empresa
+    // do usuário logado, e "Super Admin" nunca pode ser atribuída por aqui.
+    if (
+      !role ||
+      role.company?.id !== user.company.id ||
+      role.name === 'Super Admin'
+    ) {
       throw new NotFoundError(`Cargo não encontrado`);
     }
 

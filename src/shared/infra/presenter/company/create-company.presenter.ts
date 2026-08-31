@@ -27,6 +27,12 @@ export class CreateCompanyPresenter {
   @ApiProperty({ description: 'Status da empresa', type: String })
   readonly active: boolean;
 
+  @ApiProperty({ description: 'Data de início da vigência do plano' })
+  readonly planStartedAt: Date;
+
+  @ApiProperty({ description: 'Data de expiração do plano' })
+  readonly planExpiresAt: Date;
+
   @ApiProperty({ description: 'Enderço da empresa', type: AddressPresenter })
   address: AddressPresenter;
 
@@ -44,5 +50,7 @@ export class CreateCompanyPresenter {
     this.phoneNumber = props.phoneNumber;
     this.address = props.address;
     this.plan = props.plan;
+    this.planStartedAt = props.planStartedAt;
+    this.planExpiresAt = props.planExpiresAt;
   }
 }

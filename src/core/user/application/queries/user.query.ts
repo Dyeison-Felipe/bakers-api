@@ -21,7 +21,7 @@ type Plan = {
   id: string;
   name: string;
   price: number;
-  duration: string;
+  duration: number;
   permissions: Permissions[];
 };
 
@@ -31,6 +31,8 @@ type Company = {
   stateRegistration: string;
   fantasyName: string;
   socialReazon: string;
+  active: boolean;
+  planExpiresAt: Date;
   plan?: Plan;
 };
 

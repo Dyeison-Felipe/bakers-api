@@ -45,6 +45,8 @@ export class FindCompanyUseCase implements UseCase<Input, Output> {
       stateRegistration: company.stateRegistration,
       plan: company.plan!,
       address: company.address!,
+      planStartedAt: company.planStartedAt,
+      planExpiresAt: company.planExpiresAt,
       createdBy: company.createdBy,
       updatedBy: company.updatedBy,
       deletedBy: company.deletedBy,

@@ -34,6 +34,8 @@ export class UserQueryImpl implements UserQuery {
         'company.stateRegistration',
         'company.fantasyName',
         'company.socialReazon',
+        'company.active',
+        'company.planExpiresAt',
         'plan.id',
         'plan.name',
         'plan.price',
@@ -67,6 +69,8 @@ export class UserQueryImpl implements UserQuery {
         stateRegistration: result.company.stateRegistration,
         fantasyName: result.company.fantasyName,
         socialReazon: result.company.socialReazon,
+        active: result.company.active,
+        planExpiresAt: result.company.planExpiresAt,
         plan: {
           id: result.company.plan.id,
           name: result.company.plan.name,
@@ -116,6 +120,8 @@ export class UserQueryImpl implements UserQuery {
         'company.socialReazon',
         'company.cnpj',
         'company.stateRegistration',
+        'company.active',
+        'company.planExpiresAt',
         'userPermissions.id',
         'permission.id',
         'permission.action',
@@ -149,6 +155,8 @@ export class UserQueryImpl implements UserQuery {
         stateRegistration: queryBuilder.company.stateRegistration,
         socialReazon: queryBuilder.company.socialReazon,
         fantasyName: queryBuilder.company.fantasyName,
+        active: queryBuilder.company.active,
+        planExpiresAt: queryBuilder.company.planExpiresAt,
         plan: queryBuilder.company.plan
           ? {
               id: queryBuilder.company.plan.id,

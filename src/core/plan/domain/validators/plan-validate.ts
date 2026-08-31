@@ -1,8 +1,10 @@
 import {
   IsBoolean,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
+  Min,
   MaxLength,
 } from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
@@ -27,9 +29,10 @@ export class PlanRules {
   @IsNotEmpty()
   active: boolean;
 
-  @IsString()
+  @IsInt()
+  @Min(1)
   @IsNotEmpty()
-  duration: string;
+  duration: number;
 
   constructor(data: PlanProps) {
     Object.assign(this, data);

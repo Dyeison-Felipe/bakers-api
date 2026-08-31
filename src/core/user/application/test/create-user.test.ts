@@ -1,7 +1,7 @@
 import { CreateUserUseCase } from '../usecase/create-user.usecase';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { makeLoggedUser, makePermission, makeRole, makeUser } from './fixtures';
+import { makeCompany, makeLoggedUser, makePermission, makeRole, makeUser } from './fixtures';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import type { HashService } from '@/shared/application/hash/hash.service';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
@@ -79,6 +79,24 @@ describe('CreateUserUseCase', () => {
     roleRepository.findById.mockResolvedValue(null);
 
     await expect(sut.execute(baseInput)).rejects.toThrow(NotFoundError);
+  });
+
+  it('should throw NotFoundError when the role belongs to a different company', async () => {
+    roleRepository.findById.mockResolvedValue(
+      makeRole({ company: makeCompany({ id: 'another-company' }) }),
+    );
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(NotFoundError);
+    expect(userRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundError when trying to assign the reserved Super Admin role, even within the same company', async () => {
+    roleRepository.findById.mockResolvedValue(
+      makeRole({ name: 'Super Admin', company: makeCompany({ id: 'company-1' }) }),
+    );
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(NotFoundError);
+    expect(userRepository.save).not.toHaveBeenCalled();
   });
 
   it('should throw NotFoundError when none of the requested permissions exist', async () => {

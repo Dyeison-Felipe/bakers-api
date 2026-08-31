@@ -16,7 +16,7 @@ describe('CreatePlanUseCase', () => {
     name: 'Plano Básico',
     price: 100,
     description: 'Plano básico',
-    duration: 'MONTHLY',
+    duration: 30,
     permissionIds: ['permission-1'],
   };
 
@@ -68,7 +68,7 @@ describe('CreatePlanUseCase', () => {
       price: 100,
       active: true,
       description: 'Plano básico',
-      duration: 'MONTHLY',
+      duration: 30,
       permissions: [
         { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
       ],

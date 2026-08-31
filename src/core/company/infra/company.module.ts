@@ -11,6 +11,9 @@ import { PlanModule } from '@/core/plan/infra/plan.module';
 import { CreateCompanyUseCase } from '../application/usecase/create-company.usecase';
 import { FindCompanyUseCase } from '../application/usecase/find-company.usecase';
 import { UpdateCompanyUseCase } from '../application/usecase/update-company.usecase';
+import { FindAllCompaniesUseCase } from '../application/usecase/find-all-companies.usecase';
+import { SuperAdminUpdateCompanyUseCase } from '../application/usecase/super-admin-update-company.usecase';
+import { PlanExpirationJob } from './jobs/plan-expiration.job';
 import { CompanyRepository } from '../domain/repositories/company.repository';
 import { PlanRepository } from '@/core/plan/domain/repositories/plan.repository';
 import { AddressRepository } from '@/core/address/domain/repositories/address.repository';
@@ -119,6 +122,33 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
+    {
+      provide: FindAllCompaniesUseCase,
+      useFactory: (companyRepository: CompanyRepository) => {
+        return new FindAllCompaniesUseCase(companyRepository);
+      },
+      inject: [PROVIDERS.COMPANY_REPOSITORY],
+    },
+    {
+      provide: SuperAdminUpdateCompanyUseCase,
+      useFactory: (
+        companyRepository: CompanyRepository,
+        planRepository: PlanRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new SuperAdminUpdateCompanyUseCase(
+          companyRepository,
+          planRepository,
+          loggedUserService,
+        );
+      },
+      inject: [
+        PROVIDERS.COMPANY_REPOSITORY,
+        PROVIDERS.PLAN_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
+    },
+    PlanExpirationJob,
   ],
   exports: [PROVIDERS.COMPANY_REPOSITORY],
 })

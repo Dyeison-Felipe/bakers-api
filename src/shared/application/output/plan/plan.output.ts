@@ -4,5 +4,5 @@ export type PlanOutput = {
   description: string,
   price: number,
   active: boolean,
-  duration: string;
+  duration: number;
 }

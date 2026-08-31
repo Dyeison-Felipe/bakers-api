@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsDate,
   IsEmail,
   IsInstance,
   IsNotEmpty,
@@ -57,6 +58,14 @@ export class CompanyRules {
   @IsOptional()
   @IsInstance(Plan)
   plan: PlanRules;
+
+  @IsDate()
+  @IsNotEmpty()
+  planStartedAt: Date;
+
+  @IsDate()
+  @IsNotEmpty()
+  planExpiresAt: Date;
 
   @IsString()
   @IsNotEmpty()

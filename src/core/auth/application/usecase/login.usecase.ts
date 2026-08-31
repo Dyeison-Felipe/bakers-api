@@ -5,6 +5,7 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { CookieOptions } from '@/shared/application/cookies/cookies';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
 import { HashService } from '@/shared/application/hash/hash.service';
 import { LoginInput } from '@/shared/application/input/auth/login.input';
 import { JwtService } from '@/shared/application/jwt/jwt.service';
@@ -41,6 +42,16 @@ export class LoginUseCase implements UseCase<Input, Output> {
       throw new UnauthorizedError(
         `Verifique seu e-mail antes de fazer login`,
       );
+    }
+
+    // Super Admin não está vinculado a um plano de verdade — nunca bloquear
+    // por expiração.
+    if (
+      user.role !== 'Super Admin' &&
+      (!user.company.active ||
+        user.company.planExpiresAt.getTime() < Date.now())
+    ) {
+      throw new PlanExpiredError();
     }
 
     const comparePassword = this.hashService.compareHash(

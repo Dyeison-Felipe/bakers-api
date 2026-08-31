@@ -17,8 +17,8 @@ export class PlanSchema extends BaseSchema {
   @Column({ name: 'active', type: 'boolean', nullable: false })
   active: boolean;
 
-  @Column({ name: 'duration', type: 'varchar', nullable: false })
-  duration: string;
+  @Column({ name: 'duration', type: 'int', nullable: false })
+  duration: number;
 
   @OneToMany(() => CompanySchema, (company) => company.plan)
   company: CompanySchema[]

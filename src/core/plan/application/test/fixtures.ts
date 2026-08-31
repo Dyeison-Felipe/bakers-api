@@ -9,10 +9,10 @@ export const makePlan = (overrides: Record<string, unknown> = {}): Plan => {
     price: 100,
     active: true,
     description: 'Plano básico',
-    duration: 'MONTHLY',
+    duration: 30,
     permissions: [] as Permission[],
     auditable: { createdAt: new Date(), updatedAt: new Date(), deletedAt: null as Date | null },
-    update(props: { name: string; price: number; active: boolean; description: string; duration: string }) {
+    update(props: { name: string; price: number; active: boolean; description: string; duration: number }) {
       this.name = props.name;
       this.price = props.price;
       this.description = props.description;

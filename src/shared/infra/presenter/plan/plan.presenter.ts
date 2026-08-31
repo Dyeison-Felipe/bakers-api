@@ -11,7 +11,7 @@ export class PlanPresenter {
   @ApiProperty({ description: 'Preço do plano' })
   readonly price: number;
   @ApiProperty({ description: 'Duração do plano' })
-  readonly duration: string;
+  readonly duration: number;
 
   constructor(props: PlanPresenter) {
     this.id = props.id;

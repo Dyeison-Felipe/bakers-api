@@ -12,6 +12,8 @@ export type CompanyOutput = {
   plan: PlanOutput;
   address: AddressOutput;
   active: boolean;
+  planStartedAt: Date;
+  planExpiresAt: Date;
   createdBy: string;
   updatedBy: string;
   deletedBy?: string | null;

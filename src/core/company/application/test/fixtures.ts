@@ -16,6 +16,8 @@ export const makeCompany = (overrides: Record<string, unknown> = {}): Company =>
     stateRegistration: '123456',
     address: null as Address | null,
     plan: null as Plan | null,
+    planStartedAt: new Date('2026-01-01T00:00:00.000Z'),
+    planExpiresAt: new Date('2026-12-31T00:00:00.000Z'),
     createdBy: 'user-0',
     updatedBy: 'user-0',
     deletedBy: null,
@@ -39,6 +41,20 @@ export const makeCompany = (overrides: Record<string, unknown> = {}): Company =>
       this.plan = props.plan;
       this.updatedBy = props.updatedBy;
     },
+    renewPlan(plan: Plan, updatedBy: string) {
+      const now = new Date();
+      this.plan = plan;
+      this.planStartedAt = now;
+      this.planExpiresAt = new Date(
+        now.getTime() + plan.duration * 24 * 60 * 60 * 1000,
+      );
+      this.active = true;
+      this.updatedBy = updatedBy;
+    },
+    setActive(active: boolean, updatedBy: string) {
+      this.active = active;
+      this.updatedBy = updatedBy;
+    },
     ...overrides,
   };
   Object.setPrototypeOf(company, Company.prototype);
@@ -55,7 +71,7 @@ export const makePlan = (overrides: Record<string, unknown> = {}): Plan => {
     price: 0,
     active: true,
     description: 'Plano básico',
-    duration: 'mensal',
+    duration: 30,
     permissions: [] as unknown[],
     ...overrides,
   };

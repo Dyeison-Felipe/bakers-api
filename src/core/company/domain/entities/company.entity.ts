@@ -17,6 +17,8 @@ export type CompanyProps = {
   stateRegistration: string;
   address?: Address | null;
   plan?: Plan | null;
+  planStartedAt: Date;
+  planExpiresAt: Date;
   createdBy: string;
   updatedBy: string;
   deletedBy?: string | null;
@@ -52,6 +54,8 @@ export interface Company extends CompanyProps { }
 @Data()
 export class Company extends BaseEntity<CompanyProps> {
   static create(props: CreateCompanyProps): Company {
+    const now = new Date();
+
     return new Company({
       id: crypto.randomUUID(),
       fantasyName: props.fantasyName,
@@ -63,9 +67,17 @@ export class Company extends BaseEntity<CompanyProps> {
       stateRegistration: props.stateRegistration,
       address: props.address,
       plan: props.plan,
+      planStartedAt: now,
+      planExpiresAt: Company.calculatePlanExpiresAt(now, props.plan),
       createdBy: props.createdBy ?? ID_USER_DEFAULT,
       updatedBy: props.updatedBy ?? ID_USER_DEFAULT,
     });
+  }
+
+  private static calculatePlanExpiresAt(startedAt: Date, plan: Plan): Date {
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+
+    return new Date(startedAt.getTime() + plan.duration * oneDayInMs);
   }
 
   update(props: UpdateCompanyProps): void {
@@ -77,6 +89,26 @@ export class Company extends BaseEntity<CompanyProps> {
     this.stateRegistration = props.stateRegistration;
     this.updatedBy = props.updatedBy;
     this.plan = props.plan;
+    this.updateTimestamp();
+  }
+
+  // Usado pelo Super Admin para atribuir/renovar o plano de uma empresa —
+  // reinicia a janela de vigência a partir de agora e reativa a empresa,
+  // diferente do update() de autoatendimento, que nunca mexe em plano/expiração.
+  renewPlan(plan: Plan, updatedBy: string): void {
+    const now = new Date();
+
+    this.plan = plan;
+    this.planStartedAt = now;
+    this.planExpiresAt = Company.calculatePlanExpiresAt(now, plan);
+    this.active = true;
+    this.updatedBy = updatedBy;
+    this.updateTimestamp();
+  }
+
+  setActive(active: boolean, updatedBy: string): void {
+    this.active = active;
+    this.updatedBy = updatedBy;
     this.updateTimestamp();
   }
 

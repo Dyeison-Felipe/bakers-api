@@ -20,6 +20,8 @@ export class CompanyRepositoryMapper {
         ? AddressRepositoryMapper.toEntity(schema.address)
         : null,
       plan: schema.plan ? PlanMapper.toEntity(schema.plan) : null,
+      planStartedAt: schema.planStartedAt,
+      planExpiresAt: schema.planExpiresAt,
       auditable: {
         createdAt: schema.createdAt,
         updatedAt: schema.updatedAt,
@@ -53,6 +55,8 @@ export class CompanyRepositoryMapper {
         ? AddressRepositoryMapper.toSchema(entity.address)
         : undefined,
       plan: entity.plan ? PlanMapper.toSchema(entity.plan) : undefined,
+      planStartedAt: entity.planStartedAt,
+      planExpiresAt: entity.planExpiresAt,
     });
 
     return schema;
