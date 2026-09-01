@@ -55,6 +55,7 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
       price: input.price,
       description: input.description,
       duration: input.duration,
+      userLimit: input.userLimit,
     });
 
     const savePlan = await this.planRepository.save(createPlan);
@@ -102,6 +103,7 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
       active: plan.active,
       description: plan.description,
       duration: plan.duration,
+      userLimit: plan.userLimit,
       permissions: permissions.map((permission) => ({
         id: permission.id,
         action: permission.action,

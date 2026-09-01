@@ -6,10 +6,12 @@ import { CookieOptions } from '@/shared/application/cookies/cookies';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
+import { SessionConflictError } from '@/shared/application/errors/session-conflict-error';
 import { HashService } from '@/shared/application/hash/hash.service';
 import { LoginInput } from '@/shared/application/input/auth/login.input';
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { LoginOutput } from '@/shared/application/output/auth/login.output';
+import { SessionNotifierService } from '@/shared/application/session/session-notifier.service';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
 
@@ -25,11 +27,16 @@ export class LoginUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.HASH_SERVICE) private readonly hashService: HashService,
     @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
     private readonly envConfigService: EnvConfig,
+    @Inject(PROVIDERS.USER_REPOSITORY)
+    private readonly userRepository: UserRepository,
+    @Inject(PROVIDERS.SESSION_NOTIFIER_SERVICE)
+    private readonly sessionNotifierService: SessionNotifierService,
   ) {}
 
   async execute({
     email,
     password,
+    force,
     setCookie,
   }: LoginInput): Promise<LoginOutput> {
     const user = await this.useQuery.findUserByEmail(email);
@@ -63,11 +70,24 @@ export class LoginUseCase implements UseCase<Input, Output> {
       throw new UnauthorizedError(`Usuário ou senha invalido`);
     }
 
+    // Uma conta só pode estar logada em um navegador por vez. Se já existe
+    // uma sessão ativa, exige confirmação explícita (force) antes de
+    // derrubá-la — o front pergunta pro usuário antes de reenviar o login.
+    if (user.activeSessionId && !force) {
+      throw new SessionConflictError();
+    }
+
+    const previousSessionId = user.activeSessionId;
+    const sessionId = crypto.randomUUID();
+
+    await this.userRepository.updateActiveSession(user.id, sessionId);
+
     const { token } = await this.jwtService.generateJwt({
       sub: user.id,
       email: user.email,
       role: user.role,
       username: user.username,
+      sessionId,
     });
 
     const jwtExpiresInSeconds = this.envConfigService.getJwtExpiresInSeconds();
@@ -82,6 +102,10 @@ export class LoginUseCase implements UseCase<Input, Output> {
     };
 
     setCookie(AuthConstants.tokenName, token, options);
+
+    if (previousSessionId) {
+      this.sessionNotifierService.invalidateOtherSessions(user.id, sessionId);
+    }
 
     const output: Output = {
       user: {

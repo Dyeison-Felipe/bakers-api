@@ -19,6 +19,7 @@ type Input = {
   active: boolean;
   description: string;
   duration: number;
+  userLimit: number | null;
   permissionIds: string[];
 }
 
@@ -35,7 +36,7 @@ export class UpdatePlanUseCase implements UseCase<Input, Output> {
   ) { }
 
   @Transactional()
-  async execute({ id, active, description, duration, name, price, permissionIds }: Input): Promise<Output> {
+  async execute({ id, active, description, duration, name, price, userLimit, permissionIds }: Input): Promise<Output> {
     const plan = await this.planRepository.findById(id);
 
     if (!plan) {
@@ -62,7 +63,8 @@ export class UpdatePlanUseCase implements UseCase<Input, Output> {
       name: name,
       price: price,
       description: description,
-      duration: duration
+      duration: duration,
+      userLimit: userLimit,
     })
 
     await this.planRepository.update(plan);
@@ -76,6 +78,7 @@ export class UpdatePlanUseCase implements UseCase<Input, Output> {
       active: plan.active,
       description: plan.description,
       duration: plan.duration,
+      userLimit: plan.userLimit,
       permissions: planPermissions.map((planPermission) => ({
         id: planPermission.permission.id,
         action: planPermission.permission.action,

@@ -10,6 +10,7 @@ export type PlanProps = {
   active: boolean;
   description: string;
   duration: number;
+  userLimit: number | null;
   permissions?: Permission[];
 };
 
@@ -18,6 +19,7 @@ type CreatePlanProps = {
   price: number;
   description: string;
   duration: number;
+  userLimit: number | null;
 };
 
 type UpdatePlanProps = {
@@ -26,6 +28,7 @@ type UpdatePlanProps = {
   active: boolean;
   description: string;
   duration: number;
+  userLimit: number | null;
 };
 
 export interface Plan extends PlanProps { }
@@ -38,6 +41,7 @@ export class Plan extends BaseEntity<PlanProps> {
       name: props.name,
       price: props.price,
       duration: props.duration,
+      userLimit: props.userLimit,
       active: true,
       description: props.description,
     });
@@ -48,6 +52,8 @@ export class Plan extends BaseEntity<PlanProps> {
     this.price = props.price;
     this.description = props.description;
     this.active = props.active;
+    this.duration = props.duration;
+    this.userLimit = props.userLimit;
   }
 
     deleted():void {

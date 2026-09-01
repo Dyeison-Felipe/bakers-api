@@ -12,6 +12,8 @@ export class PlanPresenter {
   readonly price: number;
   @ApiProperty({ description: 'Duração do plano' })
   readonly duration: number;
+  @ApiProperty({ description: 'Limite de usuários do plano (null = ilimitado)' })
+  readonly userLimit: number | null;
 
   constructor(props: PlanPresenter) {
     this.id = props.id;
@@ -19,5 +21,6 @@ export class PlanPresenter {
     this.description = props.description;
     this.price = props.price;
     this.duration = props.duration;
+    this.userLimit = props.userLimit;
   }
 }

@@ -16,8 +16,10 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { ForbiddenError } from '@/shared/application/errors/forbidden-error';
 import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
+import { SessionInvalidatedError } from '@/shared/application/errors/session-invalidated-error';
 import { CaslAbilityService } from '../service/casl-ability.service';
 import {
+  ALLOW_SUPER_ADMIN_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
   SUPER_ADMIN_ONLY_KEY,
@@ -68,6 +70,13 @@ export class PermissionGuard implements CanActivate {
       if (!user || !user.active || user.expiredAtCode)
         throw new UnauthorizedError();
 
+      // Sessão única por conta: se esse token não é mais a sessão ativa do
+      // usuário (um login em outro navegador a substituiu), derruba aqui —
+      // cobre o caso do WS de invalidação não ter alcançado esse navegador.
+      if (user.activeSessionId && user.activeSessionId !== payload.sessionId) {
+        throw new SessionInvalidatedError();
+      }
+
       request.user = user;
       this.loggedUserService.setLoggedUser(user);
 
@@ -78,10 +87,16 @@ export class PermissionGuard implements CanActivate {
         [context.getHandler(), context.getClass()],
       );
 
+      const allowsSuperAdmin = this.reflector.getAllAndOverride<boolean>(
+        ALLOW_SUPER_ADMIN_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
       if (user.role.name === 'Super Admin') {
-        // Super Admin só acessa rotas de plataforma (@SuperAdminOnly()) — não
-        // tem mais bypass total do sistema operacional das empresas.
-        if (requiresSuperAdmin) return true;
+        // Super Admin só acessa rotas de plataforma (@SuperAdminOnly()) ou
+        // marcadas como compartilhadas (@AllowSuperAdmin()) — não tem mais
+        // bypass total do sistema operacional das empresas.
+        if (requiresSuperAdmin || allowsSuperAdmin) return true;
         throw new ForbiddenError(
           'Este recurso não está disponível para o Super Admin',
         );

@@ -136,6 +136,19 @@ export class UserRepositoryImpl implements UserRepository {
     await this.userRepository.softDelete(id);
   }
 
+  async countActiveByCompany(companyId: string): Promise<number> {
+    return this.userRepository.count({
+      where: { company: { id: companyId }, active: true },
+    });
+  }
+
+  async updateActiveSession(
+    userId: string,
+    sessionId: string | null,
+  ): Promise<void> {
+    await this.userRepository.update(userId, { activeSessionId: sessionId });
+  }
+
   private getRelations(): FindOptionsRelations<UserSchema> {
     return {
       role: {

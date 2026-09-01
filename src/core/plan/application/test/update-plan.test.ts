@@ -20,6 +20,7 @@ describe('UpdatePlanUseCase', () => {
     active: true,
     description: 'Descrição nova',
     duration: 365,
+    userLimit: 10,
     permissionIds: ['permission-1'],
   };
 
@@ -71,6 +72,7 @@ describe('UpdatePlanUseCase', () => {
     expect(plan.name).toBe('Plano Atualizado');
     expect(plan.price).toBe(200);
     expect(plan.duration).toBe(365);
+    expect(plan.userLimit).toBe(10);
     expect(output.permissions).toEqual([
       { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
     ]);

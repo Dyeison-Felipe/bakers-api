@@ -1,10 +1,13 @@
 import { LoginUseCase } from '../usecase/login.usecase';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { SessionConflictError } from '@/shared/application/errors/session-conflict-error';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import { makeEnvConfig } from './fixtures';
 import type { UserQuery, UserByLogin } from '@/core/user/application/queries/user.query';
 import type { HashService } from '@/shared/application/hash/hash.service';
 import type { JwtService } from '@/shared/application/jwt/jwt.service';
+import type { UserRepository } from '@/core/user/domain/repositories/user.repository';
+import type { SessionNotifierService } from '@/shared/application/session/session-notifier.service';
 
 const makeUserByLogin = (overrides: Partial<UserByLogin> = {}): UserByLogin => ({
   id: 'user-1',
@@ -13,6 +16,7 @@ const makeUserByLogin = (overrides: Partial<UserByLogin> = {}): UserByLogin => (
   email: 'joana@example.com',
   active: true,
   emailVerified: true,
+  activeSessionId: null,
   company: {
     id: 'company-1',
     cnpj: '12345678000190',
@@ -33,6 +37,8 @@ describe('LoginUseCase', () => {
   let userQuery: jest.Mocked<UserQuery>;
   let hashService: jest.Mocked<HashService>;
   let envConfigService: jest.Mocked<ReturnType<typeof makeEnvConfig>>;
+  let userRepository: jest.Mocked<Pick<UserRepository, 'updateActiveSession'>>;
+  let sessionNotifierService: jest.Mocked<SessionNotifierService>;
   let setCookie: jest.Mock;
   let sut: LoginUseCase;
 
@@ -51,9 +57,22 @@ describe('LoginUseCase', () => {
       compareHash: jest.fn().mockReturnValue(true),
     };
     envConfigService = makeEnvConfig();
+    userRepository = {
+      updateActiveSession: jest.fn().mockResolvedValue(undefined),
+    };
+    sessionNotifierService = {
+      invalidateOtherSessions: jest.fn(),
+    };
     setCookie = jest.fn();
 
-    sut = new LoginUseCase(jwtService, userQuery, hashService, envConfigService);
+    sut = new LoginUseCase(
+      jwtService,
+      userQuery,
+      hashService,
+      envConfigService,
+      userRepository as unknown as UserRepository,
+      sessionNotifierService,
+    );
   });
 
   it('should throw UnauthorizedError when the user does not exist', async () => {
@@ -162,5 +181,52 @@ describe('LoginUseCase', () => {
     });
 
     expect(output.company.plan).toEqual({ id: '', name: '', permissions: [] });
+  });
+
+  it('should throw SessionConflictError when the account already has an active session and force is not set', async () => {
+    userQuery.findUserByEmail.mockResolvedValue(
+      makeUserByLogin({ activeSessionId: 'previous-session-id' }),
+    );
+
+    await expect(
+      sut.execute({ email: 'joana@example.com', password: '123', setCookie }),
+    ).rejects.toThrow(SessionConflictError);
+    expect(userRepository.updateActiveSession).not.toHaveBeenCalled();
+  });
+
+  it('should replace the active session and notify the previous one when force is set', async () => {
+    userQuery.findUserByEmail.mockResolvedValue(
+      makeUserByLogin({ activeSessionId: 'previous-session-id' }),
+    );
+
+    await sut.execute({
+      email: 'joana@example.com',
+      password: '123',
+      force: true,
+      setCookie,
+    });
+
+    expect(userRepository.updateActiveSession).toHaveBeenCalledWith(
+      'user-1',
+      expect.any(String),
+    );
+    expect(sessionNotifierService.invalidateOtherSessions).toHaveBeenCalledWith(
+      'user-1',
+      expect.any(String),
+    );
+  });
+
+  it('should not notify any previous session on a first-time login (no active session yet)', async () => {
+    userQuery.findUserByEmail.mockResolvedValue(
+      makeUserByLogin({ activeSessionId: null }),
+    );
+
+    await sut.execute({ email: 'joana@example.com', password: '123', setCookie });
+
+    expect(userRepository.updateActiveSession).toHaveBeenCalledWith(
+      'user-1',
+      expect.any(String),
+    );
+    expect(sessionNotifierService.invalidateOtherSessions).not.toHaveBeenCalled();
   });
 });

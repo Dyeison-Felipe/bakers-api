@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsString, IsUUID, Min } from "class-validator";
+import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from "class-validator";
 
 export class UpdatePlanDto {
 
@@ -26,6 +26,12 @@ export class UpdatePlanDto {
   @Min(1)
   @IsNotEmpty()
   duration: number;
+
+  // null = plano sem limite de usuários (ilimitado)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  userLimit: number | null;
 
   @IsArray()
   @IsUUID('4', { each: true })

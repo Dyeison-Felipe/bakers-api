@@ -31,6 +31,7 @@ describe('FindAllPlanUseCase', () => {
         active: true,
         description: 'Plano básico',
         duration: 30,
+        userLimit: null,
       },
     ]);
   });

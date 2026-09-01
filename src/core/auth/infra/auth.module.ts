@@ -18,8 +18,9 @@ import { VerifyCodeUseCase } from '../application/usecase/verify-code.usecase';
 import { UpdatePasswordUseCase } from '../application/usecase/update-password.usecase';
 import { UserQuery } from '@/core/user/application/queries/user.query';
 import { LogoutUseCase } from '../application/usecase/logout.usecase';
-import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase';
+import { SessionGateway } from './gateway/session.gateway';
+import { SessionNotifierService } from '@/shared/application/session/session-notifier.service';
 
 @Global()
 @Module({
@@ -27,6 +28,11 @@ import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase'
   controllers: [AuthController],
   providers: [
     PermissionGuard,
+    SessionGateway,
+    {
+      provide: PROVIDERS.SESSION_NOTIFIER_SERVICE,
+      useExisting: SessionGateway,
+    },
     { provide: PROVIDERS.CASL_ABILITY_SERVICE, useClass: CaslAbilityService },
     {
       provide: LoginUseCase,
@@ -35,12 +41,16 @@ import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase'
         userQuery: UserQuery,
         hasService: HashService,
         envConfigService: EnvConfig,
+        userRepository: UserRepository,
+        sessionNotifierService: SessionNotifierService,
       ) => {
         return new LoginUseCase(
           jwtService,
           userQuery,
           hasService,
           envConfigService,
+          userRepository,
+          sessionNotifierService,
         );
       },
       inject: [
@@ -48,6 +58,8 @@ import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase'
         PROVIDERS.USER_QUERY,
         PROVIDERS.HASH_SERVICE,
         PROVIDERS.ENV_CONFIG_SERVICE,
+        PROVIDERS.USER_REPOSITORY,
+        PROVIDERS.SESSION_NOTIFIER_SERVICE,
       ],
     },
     {
@@ -105,11 +117,16 @@ import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase'
       provide: LogoutUseCase,
       useFactory: (
         envConfig: EnvConfig,
-        loggedUserService: LoggedUserService,
+        jwtService: JwtService,
+        userRepository: UserRepository,
       ) => {
-        return new LogoutUseCase(envConfig, loggedUserService);
+        return new LogoutUseCase(envConfig, jwtService, userRepository);
       },
-      inject: [PROVIDERS.ENV_CONFIG_SERVICE, PROVIDERS.LOGGED_USER_SERVICE],
+      inject: [
+        PROVIDERS.ENV_CONFIG_SERVICE,
+        PROVIDERS.JWT_SERVICE,
+        PROVIDERS.USER_REPOSITORY,
+      ],
     },
     {
       provide: VerifyEmailUseCase,

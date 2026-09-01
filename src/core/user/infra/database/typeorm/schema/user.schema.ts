@@ -38,6 +38,9 @@ export class UserSchema extends BaseSchema {
   @Column({ name: 'expired_at_code', type: 'timestamp', nullable: true })
   expiredAtCode?: Date | null;
 
+  @Column({ name: 'active_session_id', type: 'uuid', nullable: true })
+  activeSessionId?: string | null;
+
   @Column({ name: 'created_by', type: 'uuid', nullable: false, })
   createdBy: string;
 

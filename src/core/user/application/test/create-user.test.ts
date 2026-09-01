@@ -11,7 +11,10 @@ import type { RoleRepository } from '@/core/role/domain/repositories/role.reposi
 
 describe('CreateUserUseCase', () => {
   let userRepository: jest.Mocked<
-    Pick<UserRepository, 'findByEmail' | 'findByUsernameAndCompany' | 'save'>
+    Pick<
+      UserRepository,
+      'findByEmail' | 'findByUsernameAndCompany' | 'save' | 'countActiveByCompany'
+    >
   >;
   let hashService: jest.Mocked<HashService>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
@@ -34,6 +37,7 @@ describe('CreateUserUseCase', () => {
       findByEmail: jest.fn().mockResolvedValue(null),
       findByUsernameAndCompany: jest.fn().mockResolvedValue(null),
       save: jest.fn().mockImplementation((user) => Promise.resolve(user)),
+      countActiveByCompany: jest.fn().mockResolvedValue(0),
     };
     hashService = {
       hash: jest.fn().mockResolvedValue('hashed-password'),
@@ -59,6 +63,34 @@ describe('CreateUserUseCase', () => {
       permissionRepository as unknown as PermissionRepository,
       roleRepository as unknown as RoleRepository,
     );
+  });
+
+  it('should throw ConflictError when the company already reached its plan user limit', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({ company: makeCompany({ plan: { userLimit: 2 } } as never) }),
+    );
+    userRepository.countActiveByCompany.mockResolvedValue(2);
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(ConflictError);
+    expect(userRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should allow creating a user when the plan has no user limit (unlimited)', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({ company: makeCompany({ plan: { userLimit: null } } as never) }),
+    );
+
+    await expect(sut.execute(baseInput)).resolves.toBeDefined();
+    expect(userRepository.countActiveByCompany).not.toHaveBeenCalled();
+  });
+
+  it('should allow creating a user when the company has not reached its plan user limit', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({ company: makeCompany({ plan: { userLimit: 5 } } as never) }),
+    );
+    userRepository.countActiveByCompany.mockResolvedValue(4);
+
+    await expect(sut.execute(baseInput)).resolves.toBeDefined();
   });
 
   it('should throw ConflictError when the email is already in use', async () => {

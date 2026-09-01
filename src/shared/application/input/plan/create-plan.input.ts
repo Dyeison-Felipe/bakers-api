@@ -3,5 +3,6 @@ export type CreatePlanInput= {
   description: string;
   price: number;
   duration: number;
+  userLimit: number | null;
   permissionIds: string[]
 }

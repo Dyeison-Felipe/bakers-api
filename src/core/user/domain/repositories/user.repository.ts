@@ -13,4 +13,6 @@ export interface UserRepository extends BaseRepository<UserEntity> {
   findByCode(code: string, email: string): Promise<UserEntity | null>
   findByUsernameAndCompany(username: string, companyId: string): Promise<UserEntity | null>;
   findAllByCompany(companyId: string, pagination?: PaginationInput): Promise<Pagination<UserEntity>>;
+  countActiveByCompany(companyId: string): Promise<number>;
+  updateActiveSession(userId: string, sessionId: string | null): Promise<void>;
 }

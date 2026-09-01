@@ -19,6 +19,7 @@ export class UserRepositoryMapper {
       emailVerifiedAt: schema.emailVerifiedAt,
       expiredAtCode: schema.expiredAtCode,
       passwordResetCode: schema.passwordResetCode,
+      activeSessionId: schema.activeSessionId,
       role: RoleRepositoryMapper.toEntity(schema.role),
       company: CompanyRepositoryMapper.toEntity(schema.company),
       auditable: {
@@ -46,6 +47,7 @@ export class UserRepositoryMapper {
       emailVerifiedAt: entity.emailVerifiedAt ?? null,
       expiredAtCode: entity.expiredAtCode,
       passwordResetCode: entity.passwordResetCode ?? null,
+      activeSessionId: entity.activeSessionId ?? null,
       role: RoleRepositoryMapper.toSchema(entity.role),
       company: CompanyRepositoryMapper.toSchema(entity.company),
       createdAt: entity.auditable?.createdAt,

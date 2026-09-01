@@ -20,6 +20,9 @@ export class PlanSchema extends BaseSchema {
   @Column({ name: 'duration', type: 'int', nullable: false })
   duration: number;
 
+  @Column({ name: 'user_limit', type: 'int', nullable: true })
+  userLimit: number | null;
+
   @OneToMany(() => CompanySchema, (company) => company.plan)
   company: CompanySchema[]
 

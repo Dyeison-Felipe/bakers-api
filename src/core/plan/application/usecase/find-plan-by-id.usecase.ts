@@ -31,6 +31,7 @@ export class FindPlanByIdUseCase implements UseCase<Input, Output> {
       active: plan.active,
       description: plan.description,
       duration: plan.duration,
+      userLimit: plan.userLimit,
       permissions: (plan.permissions ?? []).map((permission) => ({
         id: permission.id,
         action: permission.action,

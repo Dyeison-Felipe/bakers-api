@@ -3,8 +3,10 @@ import { PermissionGuard } from '../permission.guard';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { ForbiddenError } from '@/shared/application/errors/forbidden-error';
 import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
+import { SessionInvalidatedError } from '@/shared/application/errors/session-invalidated-error';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import {
+  ALLOW_SUPER_ADMIN_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
   SUPER_ADMIN_ONLY_KEY,
@@ -71,6 +73,7 @@ describe('PermissionGuard', () => {
     reflectorAnswers = {
       [IS_PUBLIC_KEY]: false,
       [SUPER_ADMIN_ONLY_KEY]: false,
+      [ALLOW_SUPER_ADMIN_KEY]: false,
       [PERMISSIONS_KEY]: undefined,
     };
     reflector = {
@@ -103,6 +106,46 @@ describe('PermissionGuard', () => {
     await expect(sut.canActivate(makeContext())).rejects.toThrow(UnauthorizedError);
   });
 
+  it('throws SessionInvalidatedError when the token session no longer matches the stored active session', async () => {
+    jwtService.verifyJwt.mockResolvedValue({
+      sub: 'user-1',
+      username: 'joana',
+      sessionId: 'stale-session',
+      iat: 0,
+      exp: 0,
+    });
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({ activeSessionId: 'newer-session' }),
+    );
+
+    await expect(sut.canActivate(makeContext())).rejects.toThrow(
+      SessionInvalidatedError,
+    );
+  });
+
+  it('allows the request when the token session matches the stored active session', async () => {
+    jwtService.verifyJwt.mockResolvedValue({
+      sub: 'user-1',
+      username: 'joana',
+      sessionId: 'session-1',
+      iat: 0,
+      exp: 0,
+    });
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({ activeSessionId: 'session-1' }),
+    );
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
+  });
+
+  it('allows the request when the user has no active session recorded yet (legacy token)', async () => {
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({ activeSessionId: null }),
+    );
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
+  });
+
   it('allows a Super Admin on a @SuperAdminOnly() route', async () => {
     reflectorAnswers[SUPER_ADMIN_ONLY_KEY] = true;
     userRepository.findByIdWithPermissions.mockResolvedValue(
@@ -124,6 +167,21 @@ describe('PermissionGuard', () => {
     reflectorAnswers[SUPER_ADMIN_ONLY_KEY] = true;
 
     await expect(sut.canActivate(makeContext())).rejects.toThrow(ForbiddenError);
+  });
+
+  it('allows a Super Admin on an @AllowSuperAdmin() route', async () => {
+    reflectorAnswers[ALLOW_SUPER_ADMIN_KEY] = true;
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({ role: { name: 'Super Admin' } }),
+    );
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
+  });
+
+  it('allows a regular user on an @AllowSuperAdmin() route', async () => {
+    reflectorAnswers[ALLOW_SUPER_ADMIN_KEY] = true;
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
   });
 
   it('throws PlanExpiredError when the company plan has expired', async () => {

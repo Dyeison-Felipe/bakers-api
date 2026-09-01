@@ -13,6 +13,7 @@ export class PlanMapper {
       description: schema.description,
       active: schema.active,
       duration: schema.duration,
+      userLimit: schema.userLimit,
       permissions: (schema.planPermission ?? []).map((pp) =>
         PermissionMappper.toEntity(pp.permission),
       ),
@@ -32,6 +33,7 @@ export class PlanMapper {
       description: entity.description,
       active: entity.active,
       duration: entity.duration,
+      userLimit: entity.userLimit,
       createdAt: entity.auditable?.createdAt,
       updatedAt: entity.auditable?.updatedAt,
       deletedAt: entity.auditable?.deletedAt,

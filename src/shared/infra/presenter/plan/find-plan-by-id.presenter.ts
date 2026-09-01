@@ -14,6 +14,8 @@ export class FindPlanByIdPresenter {
   readonly active: boolean;
   @ApiProperty({ description: 'Duração do plano' })
   readonly duration: number;
+  @ApiProperty({ description: 'Limite de usuários do plano (null = ilimitado)' })
+  readonly userLimit: number | null;
   @ApiProperty({ description: 'Permissões do plano' })
   readonly permissions: PermissionPresenter[];
 
@@ -24,6 +26,7 @@ export class FindPlanByIdPresenter {
     this.price = props.price;
     this.active = props.active;
     this.duration = props.duration;
+    this.userLimit = props.userLimit;
     this.permissions = props.permissions;
   }
 }

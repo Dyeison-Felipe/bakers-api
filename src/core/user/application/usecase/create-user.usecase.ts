@@ -43,7 +43,17 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
   async execute(input: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
-    
+    const planUserLimit = loggedUser.company.plan?.userLimit ?? null;
+
+    if (planUserLimit !== null) {
+      const activeUsers = await this.userRepository.countActiveByCompany(
+        loggedUser.company.id,
+      );
+
+      if (activeUsers >= planUserLimit) {
+        throw new ConflictError(`Limite de usuários do plano atingido`);
+      }
+    }
 
     const existUser = await this.userRepository.findByEmail(input.email);
 

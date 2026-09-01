@@ -7,5 +7,6 @@ export type FindPlanByIdOutput = {
   price: number,
   active: boolean,
   duration: number;
+  userLimit: number | null;
   permissions: PermissionsOutput[]
 }

@@ -114,6 +114,7 @@ export class UserQueryImpl implements UserQuery {
         'user.username',
         'user.active',
         'user.emailVerified',
+        'user.activeSessionId',
         'role.name',
         'company.id',
         'company.fantasyName',
@@ -148,6 +149,7 @@ export class UserQueryImpl implements UserQuery {
       password: queryBuilder.password,
       active: queryBuilder.active,
       emailVerified: queryBuilder.emailVerified,
+      activeSessionId: queryBuilder.activeSessionId ?? null,
       role: queryBuilder.role.name,
       company: {
         id: queryBuilder.company.id,

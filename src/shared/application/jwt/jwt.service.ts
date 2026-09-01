@@ -4,6 +4,9 @@ export type UserGenerateToken = {
   username: string;
   email: string;
   role: string;
+  // Só o login preenche isto — verificação de e-mail e reset de senha geram
+  // tokens de uso único que não participam do controle de sessão única.
+  sessionId?: string;
 };
 
 export type GenerateJwtToken = {
@@ -19,6 +22,7 @@ export type Payload = {
   sub: string;
   username: string;
   email?: string;
+  sessionId?: string;
   iat: number;
   exp: number;
 };

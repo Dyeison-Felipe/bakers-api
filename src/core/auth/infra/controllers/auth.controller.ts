@@ -125,7 +125,7 @@ export class AuthController {
   ): Promise<void> {
     return await this.logoutUseCase.execute({
       clearCookie: reply.clearCookie.bind(reply),
-      // token: request.cookies[AuthConstants.tokenName],
+      token: request.cookies[AuthConstants.tokenName],
     });
   }
 }

@@ -72,6 +72,7 @@ export const makePlan = (overrides: Record<string, unknown> = {}): Plan => {
     active: true,
     description: 'Plano básico',
     duration: 30,
+    userLimit: null as number | null,
     permissions: [] as unknown[],
     ...overrides,
   };

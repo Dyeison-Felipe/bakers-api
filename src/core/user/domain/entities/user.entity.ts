@@ -17,6 +17,7 @@ export type UserProps = {
   email: string;
   emailVerified: boolean;
   emailVerifiedAt?: Date | null;
+  activeSessionId?: string | null;
   role: Role;
   company: Company;
   createdBy: string;
@@ -64,6 +65,7 @@ export class UserEntity extends BaseEntity<UserProps> {
       emailVerified: false,
       emailVerifiedAt: null,
       expiredAtCode: null,
+      activeSessionId: null,
       role: props.role,
       company: props.company,
       createdBy: props.createdBy ?? ID_USER_DEFAULT,
@@ -101,6 +103,14 @@ export class UserEntity extends BaseEntity<UserProps> {
   verifyEmail(): void {
     this.emailVerified = true;
     this.emailVerifiedAt = new Date();
+  }
+
+  setActiveSession(sessionId: string): void {
+    this.activeSessionId = sessionId;
+  }
+
+  clearActiveSession(): void {
+    this.activeSessionId = null;
   }
 
   updateResetPasswordCode(code?: string): void {

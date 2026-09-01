@@ -7,5 +7,6 @@ export type UpdatePlanOutput = {
   price: number,
   active: boolean,
   duration: number,
+  userLimit: number | null,
   permissions: PermissionsOutput[]
 }

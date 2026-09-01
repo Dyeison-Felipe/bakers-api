@@ -27,6 +27,7 @@ export class FindAllPlanUseCase implements UseCase<Input, Output> {
       active: plan.active,
       description: plan.description,
       duration: plan.duration,
+      userLimit: plan.userLimit,
     }))
 
     return output;

@@ -56,6 +56,7 @@ export class FindAllPlanAndPermissionsUseCase implements UseCase<Input, Output> 
             price: pp.plan.price,
             active: pp.plan.active,
             duration: pp.plan.duration,
+            userLimit: pp.plan.userLimit,
           },
           permissions: [], // começa vazio, vai sendo preenchido abaixo
         });

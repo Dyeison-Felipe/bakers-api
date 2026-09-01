@@ -5,6 +5,7 @@ export class FindAllPlanPresenter {
   readonly price: number;
   readonly duration: number;
   readonly active: boolean
+  readonly userLimit: number | null;
 
   constructor(props: FindAllPlanPresenter) {
     this.id = props.id;
@@ -13,5 +14,6 @@ export class FindAllPlanPresenter {
     this.price = props.price;
     this.duration = props.duration;
     this.active = props.active;
+    this.userLimit = props.userLimit;
   }
 }
