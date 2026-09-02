@@ -23,8 +23,9 @@ export class UpdateAdditionalCostUseCase implements UseCase<Input, Output> {
 
   async execute(input: Input): Promise<Output> {
     const loggedUser = this.loggesUserService.getLoggedUser();
-    const additionalCost = await this.additionalCostRepository.findById(
+    const additionalCost = await this.additionalCostRepository.findByIdAndCompanyId(
       input.id,
+      loggedUser.company.id,
     );
     if (!additionalCost) {
       throw new NotFoundError('Additional cost not found');

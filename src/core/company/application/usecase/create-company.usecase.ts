@@ -25,6 +25,10 @@ import { UserPermissionEntity } from '@/core/user-permission/domain/entities/use
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { MailService } from '@/shared/application/mail/mail.service';
+import { MercadoPagoService } from '@/shared/application/mercado-pago/mercado-pago.service';
+import { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
+import { CompanySubscription } from '@/core/subscription/domain/entities/company-subscription.entity';
+import { daysToMercadoPagoFrequency } from '@/core/subscription/application/helpers/frequency.helper';
 
 type UserInput = {
   username: string;
@@ -43,6 +47,10 @@ type Input = {
   address: CreateAddressInput;
   plan: string;
   user: UserInput;
+  // Token do cartão gerado no navegador (Mercado Pago SDK.js) — obrigatório
+  // só quando o plano escolhido tem preço > 0. Nunca recebemos dados de
+  // cartão em texto puro aqui.
+  cardTokenId?: string;
 };
 
 type Output = CreateCompanyOutput;
@@ -68,6 +76,10 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
     private readonly envConfigService: EnvConfig,
     @Inject(PROVIDERS.MAIL_SERVICE) private readonly mailService: MailService,
+    @Inject(PROVIDERS.MERCADO_PAGO_SERVICE)
+    private readonly mercadoPagoService: MercadoPagoService,
+    @Inject(PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY)
+    private readonly companySubscriptionRepository: CompanySubscriptionRepository,
   ) {}
 
   private readonly logger = new Logger(CreateCompanyUseCase.name);
@@ -84,6 +96,14 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
     if (!plan) {
       throw new NotFoundError(`Plano não encontrado`);
+    }
+
+    const requiresPayment = plan.price > 0;
+
+    if (requiresPayment && !input.cardTokenId) {
+      throw new BadRequestError(
+        `Este plano exige informar os dados do cartão de crédito`,
+      );
     }
 
     const city = await this.cityRepository.findById(input.address.cityId);
@@ -107,6 +127,32 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
     const savedAddress = await this.addressRepository.save(address);
 
+    // Autoriza a cobrança ANTES de criar qualquer registro — se o Mercado
+    // Pago recusar o cartão aqui, nada é persistido (aborta o método antes
+    // do primeiro save). Assinaturas novas só confirmam a 1ª cobrança de
+    // forma assíncrona, então isto só autoriza o mandato; a confirmação de
+    // verdade chega depois via webhook (ConfirmSubscriptionPaymentUseCase).
+    let mercadoPagoSubscriptionId: string | null = null;
+
+    if (requiresPayment) {
+      const { frequency, frequencyType } = daysToMercadoPagoFrequency(
+        plan.duration,
+      );
+
+      const subscription = await this.mercadoPagoService.createSubscription({
+        cardTokenId: input.cardTokenId as string,
+        payerEmail: input.user.email,
+        transactionAmount: plan.price,
+        frequency,
+        frequencyType,
+        externalReference: crypto.randomUUID(),
+        reason: `Assinatura ${plan.name} - Baker's Bill`,
+        backUrl: `${this.envConfigService.getFrontendUrl()}/access?mode=login`,
+      });
+
+      mercadoPagoSubscriptionId = subscription.id;
+    }
+
     const company = Company.create({
       fantasyName: input.fantasyName,
       socialReazon: input.socialReazon,
@@ -116,24 +162,44 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       stateRegistration: input.stateRegistration,
       address: savedAddress,
       plan,
+      // Plano pago: nasce bloqueada até o webhook do Mercado Pago confirmar
+      // a 1ª cobrança. Plano gratuito: segue liberada como sempre.
+      active: !requiresPayment,
       createdBy: ID_USER_DEFAULT,
       updatedBy: ID_USER_DEFAULT,
     });
 
     const savedCompany = await this.companyRepository.save(company);
 
-    const role = await this.createRole(company, 'Admin');
+    // company.repository's save/toEntity round-trip não carrega
+    // plan.permissions (PlanMapper.toSchema não inclui planPermission) —
+    // reatribui o plan já carregado com permissões, buscado no início deste
+    // método, pra createUser conseguir montar as UserPermissionEntity.
+    savedCompany.plan = plan;
+
+    const role = await this.createRole(savedCompany, 'Admin');
     // Cargo base pra funcionários — os packs de permissão da tela de Usuários só
     // têm efeito prático em um usuário que não seja Admin (Admin ignora as
     // permissões individuais e usa tudo que o plano da empresa permitir).
-    await this.createRole(company, 'Funcionário');
+    await this.createRole(savedCompany, 'Funcionário');
 
-    await this.createUser(input.user, company, role);
+    await this.createUser(input.user, savedCompany, role, requiresPayment);
 
-    return this.output(savedCompany);
+    if (requiresPayment && mercadoPagoSubscriptionId) {
+      const companySubscription = CompanySubscription.create({
+        company: savedCompany,
+        plan,
+        mercadoPagoSubscriptionId,
+        payerEmail: input.user.email,
+      });
+
+      await this.companySubscriptionRepository.save(companySubscription);
+    }
+
+    return this.output(savedCompany, requiresPayment);
   }
 
-  private output(company: Company): Output {
+  private output(company: Company, paymentPending: boolean): Output {
     const output: Output = {
       id: company.id,
       fantasyName: company.fantasyName,
@@ -150,6 +216,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       createdBy: company.createdBy,
       updatedBy: company.updatedBy,
       deletedBy: company.deletedBy,
+      paymentPending,
     };
 
     return output;
@@ -180,6 +247,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     userInput: UserInput,
     company: Company,
     role: Role,
+    requiresPaymentConfirmation: boolean,
   ): Promise<void> {
     try {
       const passwordHased = await this.hashService.hash(userInput.password);
@@ -215,7 +283,14 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
       await this.userPermissionRepository.saveMany(userPermissions);
 
-      await this.sendVerificationEmail(saveUser, role);
+      // Cadastro com pagamento pendente: o login do usuário fica bloqueado
+      // (emailVerified=false, igual ao fluxo de hoje até o clique no link)
+      // até a confirmação da cobrança liberar via
+      // ConfirmSubscriptionPaymentUseCase — não manda o e-mail de
+      // verificação de hoje, que seria redundante/confuso nesse fluxo.
+      if (!requiresPaymentConfirmation) {
+        await this.sendVerificationEmail(saveUser, role);
+      }
     } catch (error) {
       this.logger.error(
         'Ocorreu um erro ao criar o usuário da empresa',

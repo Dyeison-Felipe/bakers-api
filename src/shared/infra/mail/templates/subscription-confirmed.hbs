@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pagamento confirmado</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #0d0f14; font-family: 'Sora', sans-serif; color: #e2e8f0; padding: 40px 16px; }
+    .wrapper { max-width: 560px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .logo-text { font-size: 18px; font-weight: 700; color: #f1f5f9; }
+    .card { background: #161a24; border: 1px solid #1e2535; border-radius: 20px; overflow: hidden; }
+    .card-banner { background: linear-gradient(135deg, #1a3323 0%, #0f172a 50%, #1a3323 100%); padding: 48px 40px 36px; text-align: center; }
+    .mail-icon { width: 64px; height: 64px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0; font-size: 28px; }
+    .card-banner h1 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 8px; }
+    .card-banner p { font-size: 14px; color: #94a3b8; font-weight: 300; line-height: 1.6; }
+    .card-banner strong { color: #86efac; font-weight: 600; }
+    .card-body { padding: 36px 40px 40px; }
+    .notice { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 10px; padding: 16px 18px; margin-bottom: 24px; }
+    .notice p { font-size: 13.5px; color: #cbd5e1; line-height: 1.7; }
+    .notice strong { color: #86efac; }
+    .instruction { font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 24px; text-align: center; }
+    .divider { height: 1px; background: linear-gradient(to right, transparent, #1e2535, transparent); margin: 28px 0; }
+    .footer { text-align: center; margin-top: 28px; }
+    .footer p { font-size: 11.5px; color: #334155; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">Baker's Bill</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-banner">
+        <div class="mail-icon">✓</div>
+        <h1>Pagamento confirmado</h1>
+        <p>Olá, <strong>{{fantasyName}}</strong>! Sua assinatura foi<br/>confirmada e o acesso já está liberado.</p>
+      </div>
+
+      <div class="card-body">
+        <div class="notice">
+          <p>
+            <strong>Cobrança aprovada com sucesso.</strong> Sua conta e o
+            usuário administrador já podem ser usados normalmente no sistema.
+          </p>
+        </div>
+
+        <p class="instruction">
+          Já pode fazer login com o e-mail e a senha cadastrados. A cobrança
+          seguinte será feita automaticamente no próximo ciclo do plano
+          contratado.
+        </p>
+
+        <div class="divider"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>&copy; {{year}} Baker's Bill. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

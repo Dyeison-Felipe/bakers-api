@@ -9,6 +9,7 @@ import {
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { WsAdapter } from '@nestjs/platform-ws';
 import { globalConfig } from './global-config';
+import { validateRequiredEnvVars } from './shared/infra/env-config/validate-required-env-vars';
 
 async function bootstrap() {
   initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
@@ -21,10 +22,15 @@ async function bootstrap() {
 
   const envConfig = app.get(PROVIDERS.ENV_CONFIG_SERVICE);
 
+  validateRequiredEnvVars(envConfig);
+
   globalConfig(app, envConfig);
 
   console.log(`Server is running in port ${envConfig.getPort()}`)
 
   await app.listen(envConfig.getPort(), '0.0.0.0');
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('BOOTSTRAP_FAILED:', err);
+  process.exitCode = 1;
+});

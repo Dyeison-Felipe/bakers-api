@@ -5,6 +5,7 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { CashRegisterMovementOutput } from '@/shared/application/output/cash-register/cash-register-movement.output';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 type Input = {
   cashRegisterSessionId: string;
@@ -20,11 +21,16 @@ export class FindCashRegisterMovementsUseCase
     private readonly cashRegisterSessionRepository: CashRegisterSessionRepository,
     @Inject(PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY)
     private readonly cashRegisterMovementRepository: CashRegisterMovementRepository,
+    @Inject(PROVIDERS.LOGGED_USER_SERVICE)
+    private readonly loggedUserService: LoggedUserService,
   ) {}
 
   async execute({ cashRegisterSessionId }: Input): Promise<Output> {
-    const session = await this.cashRegisterSessionRepository.findById(
+    const loggedUser = this.loggedUserService.getLoggedUser();
+
+    const session = await this.cashRegisterSessionRepository.findByIdAndCompanyId(
       cashRegisterSessionId,
+      loggedUser.company.id,
     );
 
     if (!session) {

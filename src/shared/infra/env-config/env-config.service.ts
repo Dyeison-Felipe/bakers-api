@@ -82,4 +82,11 @@ export class EnvConfigService implements EnvConfig {
   getPort(): number {
     return +(this.envConfigService.get<string>('PORT') as string);
   }
+
+  getMercadoPagoAccessToken(): string {
+    return this.envConfigService.get<string>('MERCADO_PAGO_ACCESS_TOKEN') as string;
+  }
+  getMercadoPagoWebhookSecret(): string {
+    return this.envConfigService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET') as string;
+  }
 }

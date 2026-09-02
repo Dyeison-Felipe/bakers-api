@@ -71,6 +71,15 @@ describe('UpdateUserUseCase', () => {
     await expect(sut.execute(baseInput)).rejects.toThrow(NotFoundError);
   });
 
+  it('should throw NotFoundError when the user belongs to another company (tenant isolation)', async () => {
+    userRepository.findById.mockResolvedValue(
+      makeUser({ company: makeCompany({ id: 'another-company' }) }),
+    );
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(NotFoundError);
+    expect(userRepository.update).not.toHaveBeenCalled();
+  });
+
   it('should throw NotFoundError when the role does not exist', async () => {
     roleRepository.findById.mockResolvedValue(null);
 

@@ -33,6 +33,9 @@ type CreateCompanyProps = {
   stateRegistration: string;
   address: Address;
   plan: Plan;
+  // false quando o cadastro depende de confirmação de pagamento (assinatura
+  // paga no Mercado Pago) — a empresa nasce bloqueada até o webhook confirmar.
+  active?: boolean;
   createdBy: string;
   updatedBy: string;
 };
@@ -62,7 +65,7 @@ export class Company extends BaseEntity<CompanyProps> {
       socialReazon: props.socialReazon,
       cnpj: props.cnpj,
       email: props.email,
-      active: true,
+      active: props.active ?? true,
       phoneNumber: props.phoneNumber,
       stateRegistration: props.stateRegistration,
       address: props.address,

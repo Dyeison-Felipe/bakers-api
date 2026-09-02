@@ -20,6 +20,17 @@ export class AdditionalCostRepositoryImpl implements AdditionalCostRepository {
     return schema ? AdditionalCostMapper.toEntity(schema) : null;
   }
 
+  async findByIdAndCompanyId(
+    id: string,
+    companyId: string,
+  ): Promise<AdditionalCost | null> {
+    const schema = await this.additionalCostRepsoitory.findOne({
+      where: { id, company: { id: companyId } },
+      relations: this.getRelations(),
+    });
+    return schema ? AdditionalCostMapper.toEntity(schema) : null;
+  }
+
   async findAllByCompanyId(companyId: string): Promise<AdditionalCost[]> {
     const schemas = await this.additionalCostRepsoitory.find({
       where: { company: { id: companyId } },

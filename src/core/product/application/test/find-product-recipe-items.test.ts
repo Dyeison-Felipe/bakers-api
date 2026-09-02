@@ -1,5 +1,7 @@
 import { FindProductRecipeUseCase } from '../usecase/find-product-recipe-items.usecase';
+import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import {
+  makeLoggedUser,
   makeProductAdditionalCost,
   makeProductRecipeItem,
   makeProductRecipeLink,
@@ -9,12 +11,17 @@ import type { ProductRecipeItemRepository } from '../../domain/repositories/prod
 import type { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import type { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import type { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
+import type { ProductRepository } from '../../domain/repositories/product.repository';
+import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import type { Product } from '../../domain/entities/product.entity';
 
 describe('FindProductRecipeUseCase', () => {
   let productRecipeItemRepository: jest.Mocked<Pick<ProductRecipeItemRepository, 'findAllByProductId'>>;
   let productAdditionalCostRepository: jest.Mocked<Pick<ProductAdditionalCostRepository, 'findAllByProductId'>>;
   let productRecipeLinkRepository: jest.Mocked<Pick<ProductRecipeLinkRepository, 'findAllByProductId'>>;
   let recipeItemRepository: jest.Mocked<Pick<RecipeItemRepository, 'findAllByRecipeId'>>;
+  let productRepository: jest.Mocked<Pick<ProductRepository, 'findProductByIdAndCompanyId'>>;
+  let loggedUserService: jest.Mocked<LoggedUserService>;
   let sut: FindProductRecipeUseCase;
 
   beforeEach(() => {
@@ -22,12 +29,21 @@ describe('FindProductRecipeUseCase', () => {
     productAdditionalCostRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
     productRecipeLinkRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
     recipeItemRepository = { findAllByRecipeId: jest.fn().mockResolvedValue([]) };
+    productRepository = {
+      findProductByIdAndCompanyId: jest.fn().mockResolvedValue({ id: 'product-1' } as Product),
+    };
+    loggedUserService = {
+      getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
+      setLoggedUser: jest.fn(),
+    };
 
     sut = new FindProductRecipeUseCase(
       productRecipeItemRepository as unknown as ProductRecipeItemRepository,
       productAdditionalCostRepository as unknown as ProductAdditionalCostRepository,
       productRecipeLinkRepository as unknown as ProductRecipeLinkRepository,
       recipeItemRepository as unknown as RecipeItemRepository,
+      productRepository as unknown as ProductRepository,
+      loggedUserService,
     );
   });
 
@@ -35,6 +51,21 @@ describe('FindProductRecipeUseCase', () => {
     const output = await sut.execute({ productId: 'product-1' });
 
     expect(output).toEqual({ recipeItems: [], additionalCost: [], recipeLinks: [] });
+  });
+
+  it('should throw NotFoundError when the product does not belong to the logged company', async () => {
+    productRepository.findProductByIdAndCompanyId.mockResolvedValue(null);
+
+    await expect(sut.execute({ productId: 'product-1' })).rejects.toThrow(NotFoundError);
+  });
+
+  it('should scope the product lookup to the logged company (tenant isolation)', async () => {
+    await sut.execute({ productId: 'product-1' });
+
+    expect(productRepository.findProductByIdAndCompanyId).toHaveBeenCalledWith(
+      'product-1',
+      'company-1',
+    );
   });
 
   it('should map recipe items and additional costs to the output shape', async () => {

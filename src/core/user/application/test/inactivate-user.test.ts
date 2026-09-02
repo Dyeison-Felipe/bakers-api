@@ -1,6 +1,6 @@
 import { InactivateUserUseCase } from '../usecase/inactivate-user.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { makeLoggedUser, makeUser } from './fixtures';
+import { makeCompany, makeLoggedUser, makeUser } from './fixtures';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
@@ -29,6 +29,14 @@ describe('InactivateUserUseCase', () => {
     userRepository.findById.mockResolvedValue(null);
 
     await expect(sut.execute({ id: 'user-1' })).rejects.toThrow(NotFoundError);
+    expect(userRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundError when the user belongs to another company (tenant isolation)', async () => {
+    const user = makeUser({ company: makeCompany({ id: 'another-company' }) });
+    userRepository.findById.mockResolvedValue(user);
+
+    await expect(sut.execute({ id: user.id })).rejects.toThrow(NotFoundError);
     expect(userRepository.update).not.toHaveBeenCalled();
   });
 

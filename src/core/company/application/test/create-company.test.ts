@@ -14,6 +14,8 @@ import type { UserPermissionRepository } from '@/core/user-permission/domain/rep
 import type { JwtService } from '@/shared/application/jwt/jwt.service';
 import type { EnvConfig } from '@/shared/application/env-config/env-config';
 import type { MailService } from '@/shared/application/mail/mail.service';
+import type { MercadoPagoService } from '@/shared/application/mercado-pago/mercado-pago.service';
+import type { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
 
 describe('CreateCompanyUseCase', () => {
   let companyRepository: jest.Mocked<Pick<CompanyRepository, 'findByCnpj' | 'save'>>;
@@ -27,6 +29,8 @@ describe('CreateCompanyUseCase', () => {
   let jwtService: jest.Mocked<JwtService>;
   let envConfigService: jest.Mocked<Pick<EnvConfig, 'getJwtSecretEmailVerification' | 'getExpiresInSecondsEmailVerification' | 'getFrontendUrl'>>;
   let mailService: jest.Mocked<MailService>;
+  let mercadoPagoService: jest.Mocked<Pick<MercadoPagoService, 'createSubscription'>>;
+  let companySubscriptionRepository: jest.Mocked<Pick<CompanySubscriptionRepository, 'save'>>;
   let sut: CreateCompanyUseCase;
 
   const baseInput = {
@@ -90,6 +94,14 @@ describe('CreateCompanyUseCase', () => {
       getFrontendUrl: jest.fn().mockReturnValue('http://localhost:5173'),
     };
     mailService = { sendMail: jest.fn().mockResolvedValue(undefined) };
+    mercadoPagoService = {
+      createSubscription: jest
+        .fn()
+        .mockResolvedValue({ id: 'mp-subscription-1', status: 'authorized' }),
+    };
+    companySubscriptionRepository = {
+      save: jest.fn().mockImplementation((s) => Promise.resolve(s)),
+    };
 
     sut = new CreateCompanyUseCase(
       companyRepository as unknown as CompanyRepository,
@@ -103,6 +115,8 @@ describe('CreateCompanyUseCase', () => {
       jwtService,
       envConfigService as unknown as EnvConfig,
       mailService,
+      mercadoPagoService as unknown as MercadoPagoService,
+      companySubscriptionRepository as unknown as CompanySubscriptionRepository,
     );
   });
 
@@ -185,7 +199,73 @@ describe('CreateCompanyUseCase', () => {
       fantasyName: 'Padaria X',
       cnpj: '12345678000190',
       active: true,
+      paymentPending: false,
     });
     expect(output.id).toEqual(expect.any(String));
+  });
+
+  describe('when the plan has a price (requires payment)', () => {
+    const paidInput = { ...baseInput, cardTokenId: 'card-token-123' };
+
+    beforeEach(() => {
+      planRepository.findById.mockResolvedValue(
+        makePlan({
+          price: 100,
+          duration: 30,
+          permissions: [{ id: 'perm-1', action: 'reader', subject: 'sale' }],
+        }),
+      );
+    });
+
+    it('should throw BadRequestError when no card token is provided', async () => {
+      await expect(sut.execute(baseInput)).rejects.toThrow(BadRequestError);
+      expect(companyRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should create a Mercado Pago subscription with the amount/duration from the plan (never from input)', async () => {
+      await sut.execute(paidInput);
+
+      expect(mercadoPagoService.createSubscription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cardTokenId: 'card-token-123',
+          transactionAmount: 100,
+          frequency: 1,
+          frequencyType: 'months',
+          payerEmail: 'admin@padaria.com',
+        }),
+      );
+    });
+
+    it('should create the company inactive and pending confirmation', async () => {
+      const output = await sut.execute(paidInput);
+
+      expect(output.active).toBe(false);
+      expect(output.paymentPending).toBe(true);
+    });
+
+    it('should not send the verification email (confirmation happens via webhook instead)', async () => {
+      await sut.execute(paidInput);
+
+      expect(mailService.sendMail).not.toHaveBeenCalled();
+    });
+
+    it('should persist a pending CompanySubscription with the id returned by Mercado Pago', async () => {
+      await sut.execute(paidInput);
+
+      expect(companySubscriptionRepository.save).toHaveBeenCalledTimes(1);
+      const saved = companySubscriptionRepository.save.mock.calls[0][0];
+      expect(saved.mercadoPagoSubscriptionId).toBe('mp-subscription-1');
+      expect(saved.status).toBe('pending');
+      expect(saved.payerEmail).toBe('admin@padaria.com');
+    });
+
+    it('should not create anything when Mercado Pago rejects the subscription', async () => {
+      mercadoPagoService.createSubscription.mockRejectedValue(
+        new Error('cc_rejected_insufficient_amount'),
+      );
+
+      await expect(sut.execute(paidInput)).rejects.toThrow();
+      expect(companyRepository.save).not.toHaveBeenCalled();
+    });
   });
 });

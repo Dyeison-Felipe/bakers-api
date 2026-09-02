@@ -6,6 +6,9 @@ import { ProductAdditionalCostRepository } from '../../domain/repositories/produ
 import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import { ProductRecipeCostCalculator } from '../services/product-recipe-cost-calculator.service';
+import { ProductRepository } from '../../domain/repositories/product.repository';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import { NotFoundError } from '@/shared/application/errors/not-found-error';
 
 type Input = {
   productId: string;
@@ -59,9 +62,24 @@ export class FindProductRecipeUseCase implements UseCase<Input, Output> {
     private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
     @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
     private readonly recipeItemRepository: RecipeItemRepository,
+    @Inject(PROVIDERS.PRODUCT_REPOSITORY)
+    private readonly productRepository: ProductRepository,
+    @Inject(PROVIDERS.LOGGED_USER_SERVICE)
+    private readonly loggedUserService: LoggedUserService,
   ) {}
 
   async execute({ productId }: Input): Promise<Output> {
+    const loggedUser = this.loggedUserService.getLoggedUser();
+
+    const product = await this.productRepository.findProductByIdAndCompanyId(
+      productId,
+      loggedUser.company.id,
+    );
+
+    if (!product) {
+      throw new NotFoundError('Produto não encontrado');
+    }
+
     const [recipeItems, additionalCosts, recipeLinks] = await Promise.all([
       this.productRecipeItemRepository.findAllByProductId(productId),
       this.productAdditionalCostRepository.findAllByProductId(productId),

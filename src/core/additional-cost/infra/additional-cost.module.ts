@@ -54,15 +54,30 @@ import { AdditionalCostController } from './controller/additional-cost.controlle
     },
     {
       provide: DeleteAdditionalCostUseCase,
-      useFactory: (additionalCostRepository: AdditionalCostRepository) => {
-        return new DeleteAdditionalCostUseCase(additionalCostRepository);
+      useFactory: (
+        additionalCostRepository: AdditionalCostRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new DeleteAdditionalCostUseCase(
+          additionalCostRepository,
+          loggedUserService,
+        );
       },
-      inject: [PROVIDERS.ADDITIONAL_COST_REPOSITORY],
+      inject: [
+        PROVIDERS.ADDITIONAL_COST_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
     },
     {
       provide: FindAdditionalCostByIdUseCase,
-      useFactory: (additionalCostRepository: AdditionalCostRepository) => {
-        return new FindAdditionalCostByIdUseCase(additionalCostRepository);
+      useFactory: (
+        additionalCostRepository: AdditionalCostRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindAdditionalCostByIdUseCase(
+          additionalCostRepository,
+          loggedUserService,
+        );
       },
       inject: [
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,

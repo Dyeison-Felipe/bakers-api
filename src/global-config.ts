@@ -19,24 +19,27 @@ export async function globalConfig(
   // PREFIX
   app.setGlobalPrefix('api');
 
-  // SWAGGER
-  const config = new DocumentBuilder()
-    .setTitle(`Baker's Bill`)
-    .setDescription(`Api Baker's Bill`)
-    .setVersion('1.0')
-    .addTag(`Panificação, Padaria, Panificadora, Metricas, Baker's Bill`)
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, documentFactory, {
-    customCss: `
-    .required {
-      color: red;
-    }
-    .star {
-      color: red;
-    }
-  `,
-  });
+  // SWAGGER — só exposto fora de produção, para não vazar a superfície da API
+  // (rotas/DTOs/schemas) para qualquer visitante não autenticado.
+  if (envConfig.getNodeEnv() !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle(`Baker's Bill`)
+      .setDescription(`Api Baker's Bill`)
+      .setVersion('1.0')
+      .addTag(`Panificação, Padaria, Panificadora, Metricas, Baker's Bill`)
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, documentFactory, {
+      customCss: `
+      .required {
+        color: red;
+      }
+      .star {
+        color: red;
+      }
+    `,
+    });
+  }
 
   //  CORS
   const origins = envConfig.getAllowedOrigins();

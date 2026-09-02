@@ -50,6 +50,8 @@ jobs:
           SALTS=${{ secrets.SALTS }}
           JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN_FORGOT_PASSWORD=${{ secrets.JWT_EXPIRES_IN_FORGOT_PASSWORD }}
+          JWT_SECRET_FORGOT_PASSWORD=${{ secrets.JWT_SECRET_FORGOT_PASSWORD }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
           COOKIE_SECURE=${{ secrets.COOKIE_SECURE }}
           COOKIE_SAME_SITE=${{ secrets.COOKIE_SAME_SITE }}

@@ -4,6 +4,7 @@ import { CreateUserCompanyDto } from './create-user-company.dto';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -96,5 +97,13 @@ export class CreateCompanyDto {
   @ValidateNested()
   @Type(() => CreateUserCompanyDto)
   user: CreateUserCompanyDto;
-  
+
+  @ApiProperty({
+    description:
+      'Token do cartão de crédito gerado no navegador (Mercado Pago SDK.js). Obrigatório apenas para planos com preço maior que zero.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  cardTokenId?: string;
 }

@@ -68,17 +68,20 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         recipeRepository: RecipeRepository,
         recipeItemRepository: RecipeItemRepository,
         productRecipeLinkRepository: ProductRecipeLinkRepository,
+        loggedUserService: LoggedUserService,
       ) => {
         return new DeleteRecipeUseCase(
           recipeRepository,
           recipeItemRepository,
           productRecipeLinkRepository,
+          loggedUserService,
         );
       },
       inject: [
         PROVIDERS.RECIPE_REPOSITORY,
         PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
     {
@@ -86,10 +89,19 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
       useFactory: (
         recipeRepository: RecipeRepository,
         recipeItemRepository: RecipeItemRepository,
+        loggedUserService: LoggedUserService,
       ) => {
-        return new FindRecipeByIdUseCase(recipeRepository, recipeItemRepository);
+        return new FindRecipeByIdUseCase(
+          recipeRepository,
+          recipeItemRepository,
+          loggedUserService,
+        );
       },
-      inject: [PROVIDERS.RECIPE_REPOSITORY, PROVIDERS.RECIPE_ITEM_REPOSITORY],
+      inject: [
+        PROVIDERS.RECIPE_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
     },
     {
       provide: FindAllRecipesByCompanyUseCase,

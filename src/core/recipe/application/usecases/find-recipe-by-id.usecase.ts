@@ -6,6 +6,7 @@ import { RecipeItemRepository } from '../../domain/repositories/recipe-item.repo
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { ProductRecipeCostCalculator } from '@/core/product/application/services/product-recipe-cost-calculator.service';
 import { RecipeDetailOutput } from '@/shared/application/output/recipe/recipe.output';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 type Input = {
   id: string;
@@ -19,10 +20,17 @@ export class FindRecipeByIdUseCase implements UseCase<Input, Output> {
     private readonly recipeRepository: RecipeRepository,
     @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
     private readonly recipeItemRepository: RecipeItemRepository,
+    @Inject(PROVIDERS.LOGGED_USER_SERVICE)
+    private readonly loggedUserService: LoggedUserService,
   ) {}
 
   async execute({ id }: Input): Promise<Output> {
-    const recipe = await this.recipeRepository.findById(id);
+    const loggedUser = this.loggedUserService.getLoggedUser();
+
+    const recipe = await this.recipeRepository.findByIdAndCompanyId(
+      id,
+      loggedUser.company.id,
+    );
     if (!recipe) {
       throw new NotFoundError('Receita não encontrada');
     }

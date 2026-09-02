@@ -29,6 +29,9 @@ import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { MailService } from '@/shared/application/mail/mail.service';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import { MercadoPagoService } from '@/shared/application/mercado-pago/mercado-pago.service';
+import { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
+import { SubscriptionPersistenceModule } from '@/core/subscription/infra/subscription-persistence.module';
 
 @Module({
   imports: [
@@ -40,6 +43,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
     PlanModule,
     CityModule,
     UserPermissionModule,
+    SubscriptionPersistenceModule,
   ],
   controllers: [CompanyController],
   providers: [
@@ -61,6 +65,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         jwtService: JwtService,
         envConfigService: EnvConfig,
         mailService: MailService,
+        mercadoPagoService: MercadoPagoService,
+        companySubscriptionRepository: CompanySubscriptionRepository,
       ) => {
         return new CreateCompanyUseCase(
           companyRepository,
@@ -74,6 +80,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
           jwtService,
           envConfigService,
           mailService,
+          mercadoPagoService,
+          companySubscriptionRepository,
         );
       },
       inject: [
@@ -88,6 +96,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         PROVIDERS.JWT_SERVICE,
         PROVIDERS.ENV_CONFIG_SERVICE,
         PROVIDERS.MAIL_SERVICE,
+        PROVIDERS.MERCADO_PAGO_SERVICE,
+        PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY,
       ],
     },
     {

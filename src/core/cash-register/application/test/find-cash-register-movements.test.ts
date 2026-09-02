@@ -1,38 +1,57 @@
 import { FindCashRegisterMovementsUseCase } from '../usecase/find-cash-register-movements.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { TypeCashRegisterMovement, TypeCashRegisterMovementReason } from '@/shared/infra/enums/cash-register';
-import { makeSession } from './fixtures';
+import { makeLoggedUser, makeSession } from './fixtures';
 import type { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import type { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
+import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 describe('FindCashRegisterMovementsUseCase', () => {
-  let cashRegisterSessionRepository: jest.Mocked<Pick<CashRegisterSessionRepository, 'findById'>>;
+  let cashRegisterSessionRepository: jest.Mocked<Pick<CashRegisterSessionRepository, 'findByIdAndCompanyId'>>;
   let cashRegisterMovementRepository: jest.Mocked<
     Pick<CashRegisterMovementRepository, 'findAllByCashRegisterSessionId'>
   >;
+  let loggedUserService: jest.Mocked<LoggedUserService>;
   let sut: FindCashRegisterMovementsUseCase;
 
   beforeEach(() => {
-    cashRegisterSessionRepository = { findById: jest.fn() };
+    cashRegisterSessionRepository = { findByIdAndCompanyId: jest.fn() };
     cashRegisterMovementRepository = { findAllByCashRegisterSessionId: jest.fn() };
+    loggedUserService = {
+      getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
+      setLoggedUser: jest.fn(),
+    };
 
     sut = new FindCashRegisterMovementsUseCase(
       cashRegisterSessionRepository as unknown as CashRegisterSessionRepository,
       cashRegisterMovementRepository as unknown as CashRegisterMovementRepository,
+      loggedUserService,
     );
   });
 
-  it('should throw NotFoundError when the session does not exist', async () => {
-    cashRegisterSessionRepository.findById.mockResolvedValue(null);
+  it('should throw NotFoundError when the session does not exist for the logged company', async () => {
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(null);
 
     await expect(
       sut.execute({ cashRegisterSessionId: 'session-1' }),
     ).rejects.toThrow(NotFoundError);
   });
 
+  it('should scope the session lookup to the logged company (tenant isolation)', async () => {
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(makeSession());
+    cashRegisterMovementRepository.findAllByCashRegisterSessionId.mockResolvedValue([]);
+
+    await sut.execute({ cashRegisterSessionId: 'session-1' });
+
+    expect(cashRegisterSessionRepository.findByIdAndCompanyId).toHaveBeenCalledWith(
+      'session-1',
+      'company-1',
+    );
+  });
+
   it('should map movements to the output shape', async () => {
     const session = makeSession();
-    cashRegisterSessionRepository.findById.mockResolvedValue(session);
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
     cashRegisterMovementRepository.findAllByCashRegisterSessionId.mockResolvedValue([
       {
         id: 'movement-1',
@@ -63,7 +82,7 @@ describe('FindCashRegisterMovementsUseCase', () => {
   });
 
   it('should return an empty array when there are no movements', async () => {
-    cashRegisterSessionRepository.findById.mockResolvedValue(makeSession());
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(makeSession());
     cashRegisterMovementRepository.findAllByCashRegisterSessionId.mockResolvedValue([]);
 
     const output = await sut.execute({ cashRegisterSessionId: 'session-1' });

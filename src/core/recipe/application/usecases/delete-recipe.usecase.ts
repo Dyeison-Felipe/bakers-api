@@ -7,6 +7,7 @@ import { ProductRecipeLinkRepository } from '@/core/product/domain/repositories/
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { Transactional } from 'typeorm-transactional';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 type Input = {
   id: string;
@@ -22,11 +23,18 @@ export class DeleteRecipeUseCase implements UseCase<Input, Output> {
     private readonly recipeItemRepository: RecipeItemRepository,
     @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
     private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
+    @Inject(PROVIDERS.LOGGED_USER_SERVICE)
+    private readonly loggedUserService: LoggedUserService,
   ) {}
 
   @Transactional()
   async execute({ id }: Input): Promise<Output> {
-    const recipe = await this.recipeRepository.findById(id);
+    const loggedUser = this.loggedUserService.getLoggedUser();
+
+    const recipe = await this.recipeRepository.findByIdAndCompanyId(
+      id,
+      loggedUser.company.id,
+    );
     if (!recipe) {
       throw new NotFoundError('Receita não encontrada');
     }

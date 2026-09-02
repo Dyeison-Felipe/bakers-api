@@ -225,12 +225,16 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         productRecipeLinkRepository: ProductRecipeLinkRepository,
         recipeItemRepository: RecipeItemRepository,
+        productRepository: ProductRepository,
+        loggedUserService: LoggedUserService,
       ) => {
         return new FindProductRecipeUseCase(
           productRecipeItemRepository,
           productAdditionalCostRepository,
           productRecipeLinkRepository,
           recipeItemRepository,
+          productRepository,
+          loggedUserService,
         );
       },
       inject: [
@@ -238,6 +242,8 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
         PROVIDERS.RECIPE_ITEM_REPOSITORY,
+        PROVIDERS.PRODUCT_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
     {

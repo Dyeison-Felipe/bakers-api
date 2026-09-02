@@ -161,14 +161,17 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
       useFactory: (
         cashRegisterSessionRepository: CashRegisterSessionRepository,
         cashRegisterMovementRepository: CashRegisterMovementRepository,
+        loggedUserService: LoggedUserService,
       ) =>
         new FindCashRegisterMovementsUseCase(
           cashRegisterSessionRepository,
           cashRegisterMovementRepository,
+          loggedUserService,
         ),
       inject: [
         PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
         PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
   ],

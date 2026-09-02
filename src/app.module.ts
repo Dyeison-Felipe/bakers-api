@@ -34,6 +34,8 @@ import { DashboardModule } from './core/dashboard/infra/dashboard.module';
 import { RecipeModule } from './core/recipe/infra/recipe.module';
 import { ReportModule } from './core/report/infra/report.module';
 import { CustomerModule } from './core/customer/infra/customer.module';
+import { MercadoPagoModule } from './shared/infra/mercado-pago/mercado-pago.module';
+import { SubscriptionModule } from './core/subscription/infra/subscription.module';
 
 @Module({
   imports: [
@@ -68,7 +70,9 @@ import { CustomerModule } from './core/customer/infra/customer.module';
     PermissionModule,
     UserPermissionModule,
     MailModule,
+    MercadoPagoModule,
     CompanyModule,
+    SubscriptionModule,
     PlanModule,
     RoleModule,
   ],

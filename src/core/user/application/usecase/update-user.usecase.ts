@@ -44,7 +44,7 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
 
     const user = await this.userRepository.findById(input.id);
 
-    if (!user) {
+    if (!user || user.company.id !== loggedUser?.company?.id) {
       throw new NotFoundError(`Usuário não encontrado`);
     }
 

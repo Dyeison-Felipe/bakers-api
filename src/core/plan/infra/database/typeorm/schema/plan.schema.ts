@@ -1,6 +1,7 @@
 import { CompanySchema } from '@/core/company/infra/database/typeorm/schema/company.schema';
 import { PlanPermissionSchema } from '@/core/plan-permission/infra/database/typeorm/schema/plan-permission.schema';
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
+import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
 import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity('plan')
@@ -11,7 +12,14 @@ export class PlanSchema extends BaseSchema {
   @Column({ name: 'description', type: 'varchar', nullable: false })
   description: string;
 
-  @Column({ name: 'price', type: 'int', nullable: false })
+  @Column({
+    name: 'price',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: false,
+    transformer: new DecimalColumnTransformer(),
+  })
   price: number;
 
   @Column({ name: 'active', type: 'boolean', nullable: false })
