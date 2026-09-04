@@ -39,13 +39,6 @@ export class CreateCompanyPresenter {
   @ApiProperty({ description: 'Plano da empresa', type: PlanPresenter })
   plan: PlanPresenter;
 
-  @ApiProperty({
-    description: 'Se o cadastro depende de confirmação de pagamento',
-    type: Boolean,
-    required: false,
-  })
-  readonly paymentPending?: boolean;
-
   constructor(props: CreateCompanyPresenter) {
     this.id = props.id;
     this.active = props.active;
@@ -59,6 +52,5 @@ export class CreateCompanyPresenter {
     this.plan = props.plan;
     this.planStartedAt = props.planStartedAt;
     this.planExpiresAt = props.planExpiresAt;
-    this.paymentPending = props.paymentPending ?? false;
   }
 }

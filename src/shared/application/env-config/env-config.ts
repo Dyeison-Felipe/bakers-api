@@ -23,6 +23,4 @@ export interface EnvConfig {
   getAllowedOrigins(): string;
   getSalts(): number;
   getSchema(): string;
-  getMercadoPagoAccessToken(): string;
-  getMercadoPagoWebhookSecret(): string;
 }
