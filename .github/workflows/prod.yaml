@@ -65,6 +65,8 @@ jobs:
           SUPABASE_URL=${{ secrets.SUPABASE_URL}}
           SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY}}
           SUPABASE_STORAGE_BUCKET=${{ secrets.SUPABASE_STORAGE_BUCKET}}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY}}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET}}
           EOF
 
       - name: Docker Login

@@ -25,6 +25,9 @@ import { UserPermissionEntity } from '@/core/user-permission/domain/entities/use
 import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { MailService } from '@/shared/application/mail/mail.service';
+import { StripeService } from '@/shared/application/stripe/stripe.service';
+import { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
+import { CompanySubscription } from '@/core/subscription/domain/entities/company-subscription.entity';
 
 type UserInput = {
   username: string;
@@ -43,6 +46,10 @@ type Input = {
   address: CreateAddressInput;
   plan: string;
   user: UserInput;
+  // Id do PaymentMethod já confirmado no navegador (Stripe Payment Element
+  // + SetupIntent) — obrigatório só quando o plano escolhido tem preço
+  // maior que zero. Nunca recebemos dados de cartão em texto puro aqui.
+  stripePaymentMethodId?: string;
 };
 
 type Output = CreateCompanyOutput;
@@ -68,6 +75,10 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.ENV_CONFIG_SERVICE)
     private readonly envConfigService: EnvConfig,
     @Inject(PROVIDERS.MAIL_SERVICE) private readonly mailService: MailService,
+    @Inject(PROVIDERS.STRIPE_SERVICE)
+    private readonly stripeService: StripeService,
+    @Inject(PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY)
+    private readonly companySubscriptionRepository: CompanySubscriptionRepository,
   ) {}
 
   private readonly logger = new Logger(CreateCompanyUseCase.name);
@@ -84,6 +95,23 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
     if (!plan) {
       throw new NotFoundError(`Plano não encontrado`);
+    }
+
+    const requiresPayment = plan.price > 0;
+
+    if (requiresPayment && !input.stripePaymentMethodId) {
+      throw new BadRequestError(
+        `Este plano exige informar os dados do cartão de crédito`,
+      );
+    }
+
+    if (requiresPayment && !plan.stripePriceId) {
+      this.logger.error(
+        `Plano "${plan.name}" (${plan.id}) é pago mas não tem stripePriceId configurado`,
+      );
+      throw new BadRequestError(
+        `Este plano está indisponível para contratação no momento`,
+      );
     }
 
     const city = await this.cityRepository.findById(input.address.cityId);
@@ -107,6 +135,43 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
     const savedAddress = await this.addressRepository.save(address);
 
+    // Cria o customer/subscription no Stripe ANTES de criar qualquer
+    // registro — se o Stripe recusar aqui, nada é persistido (aborta o
+    // método antes do primeiro save). A confirmação real da 1ª cobrança
+    // chega depois, de forma assíncrona, via webhook
+    // (ConfirmSubscriptionPaymentUseCase) — não confiamos no retorno
+    // síncrono desta chamada pra ativar a empresa.
+    let stripeSubscriptionId: string | null = null;
+    let stripeCustomerId: string | null = null;
+    let cardLastFourDigits: string | null = null;
+    let cardBrand: string | null = null;
+
+    if (requiresPayment) {
+      stripeCustomerId = await this.stripeService.createCustomer(
+        input.email,
+        input.fantasyName,
+      );
+
+      await this.stripeService.attachPaymentMethod(
+        stripeCustomerId,
+        input.stripePaymentMethodId as string,
+      );
+
+      const cardDetails = await this.stripeService.retrievePaymentMethodCardDetails(
+        input.stripePaymentMethodId as string,
+      );
+      cardLastFourDigits = cardDetails.last4;
+      cardBrand = cardDetails.brand;
+
+      const subscription = await this.stripeService.createSubscription({
+        customerId: stripeCustomerId,
+        priceId: plan.stripePriceId as string,
+        paymentMethodId: input.stripePaymentMethodId as string,
+      });
+
+      stripeSubscriptionId = subscription.subscriptionId;
+    }
+
     const company = Company.create({
       fantasyName: input.fantasyName,
       socialReazon: input.socialReazon,
@@ -116,6 +181,9 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       stateRegistration: input.stateRegistration,
       address: savedAddress,
       plan,
+      // Plano pago: nasce bloqueada até o webhook do Stripe confirmar a 1ª
+      // cobrança. Plano gratuito: segue liberada como sempre.
+      active: !requiresPayment,
       createdBy: ID_USER_DEFAULT,
       updatedBy: ID_USER_DEFAULT,
     });
@@ -134,12 +202,26 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     // permissões individuais e usa tudo que o plano da empresa permitir).
     await this.createRole(savedCompany, 'Funcionário');
 
-    await this.createUser(input.user, savedCompany, role);
+    await this.createUser(input.user, savedCompany, role, requiresPayment);
 
-    return this.output(savedCompany);
+    if (requiresPayment && stripeSubscriptionId && stripeCustomerId) {
+      const companySubscription = CompanySubscription.create({
+        company: savedCompany,
+        plan,
+        stripeSubscriptionId,
+        stripeCustomerId,
+        payerEmail: input.user.email,
+        cardLastFourDigits,
+        cardBrand,
+      });
+
+      await this.companySubscriptionRepository.save(companySubscription);
+    }
+
+    return this.output(savedCompany, requiresPayment);
   }
 
-  private output(company: Company): Output {
+  private output(company: Company, paymentPending: boolean): Output {
     const output: Output = {
       id: company.id,
       fantasyName: company.fantasyName,
@@ -156,6 +238,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       createdBy: company.createdBy,
       updatedBy: company.updatedBy,
       deletedBy: company.deletedBy,
+      paymentPending,
     };
 
     return output;
@@ -186,6 +269,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     userInput: UserInput,
     company: Company,
     role: Role,
+    requiresPaymentConfirmation: boolean,
   ): Promise<void> {
     try {
       const passwordHased = await this.hashService.hash(userInput.password);
@@ -221,7 +305,14 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
 
       await this.userPermissionRepository.saveMany(userPermissions);
 
-      await this.sendVerificationEmail(saveUser, role);
+      // Cadastro com pagamento pendente: o login do usuário fica bloqueado
+      // (emailVerified=false, igual ao fluxo de hoje até o clique no link)
+      // até a confirmação da cobrança liberar via
+      // ConfirmSubscriptionPaymentUseCase — não manda o e-mail de
+      // verificação de hoje, que seria redundante/confuso nesse fluxo.
+      if (!requiresPaymentConfirmation) {
+        await this.sendVerificationEmail(saveUser, role);
+      }
     } catch (error) {
       this.logger.error(
         'Ocorreu um erro ao criar o usuário da empresa',

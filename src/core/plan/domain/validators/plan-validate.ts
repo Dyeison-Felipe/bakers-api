@@ -41,6 +41,15 @@ export class PlanRules {
   @Min(1)
   userLimit: number | null;
 
+  // null = plano gratuito, sem Product/Price correspondente no Stripe
+  @IsOptional()
+  @IsString()
+  stripeProductId: string | null;
+
+  @IsOptional()
+  @IsString()
+  stripePriceId: string | null;
+
   constructor(data: PlanProps) {
     Object.assign(this, data);
   }

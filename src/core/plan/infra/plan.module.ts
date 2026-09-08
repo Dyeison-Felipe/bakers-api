@@ -14,6 +14,7 @@ import { PermissionRepository } from '@/core/permission/domain/repositories/perm
 import { PlanPermissionRepository } from '@/core/plan-permission/domain/repositories/plan-permission.repository';
 import { PlanPermissionModule } from '@/core/plan-permission/infra/plan-permission.module';
 import { PermissionModule } from '@/core/permission/infra/permission.module';
+import { StripeService } from '@/shared/application/stripe/stripe.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PlanSchema]), PermissionModule, PlanPermissionModule],
@@ -29,17 +30,20 @@ import { PermissionModule } from '@/core/permission/infra/permission.module';
         planRepository: PlanRepository,
         permissionRepository: PermissionRepository,
         planPermissionRepository: PlanPermissionRepository,
+        stripeService: StripeService,
       ) => {
         return new CreatePlanUseCase(
           planRepository,
           permissionRepository,
           planPermissionRepository,
+          stripeService,
         );
       },
       inject: [
         PROVIDERS.PLAN_REPOSITORY,
         PROVIDERS.PERMISSION_REPOSITORY,
         PROVIDERS.PLAN_PERMISSION_REPOSITORY,
+        PROVIDERS.STRIPE_SERVICE,
       ],
     },
     {
@@ -48,17 +52,20 @@ import { PermissionModule } from '@/core/permission/infra/permission.module';
         planRepository: PlanRepository,
         permissionRepository: PermissionRepository,
         planPermissionRepository: PlanPermissionRepository,
+        stripeService: StripeService,
       ) => {
         return new UpdatePlanUseCase(
           planRepository,
           permissionRepository,
           planPermissionRepository,
+          stripeService,
         );
       },
       inject: [
         PROVIDERS.PLAN_REPOSITORY,
         PROVIDERS.PERMISSION_REPOSITORY,
         PROVIDERS.PLAN_PERMISSION_REPOSITORY,
+        PROVIDERS.STRIPE_SERVICE,
       ],
     },
     {

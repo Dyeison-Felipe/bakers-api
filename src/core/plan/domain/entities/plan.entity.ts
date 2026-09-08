@@ -11,6 +11,8 @@ export type PlanProps = {
   description: string;
   duration: number;
   userLimit: number | null;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
   permissions?: Permission[];
 };
 
@@ -44,7 +46,18 @@ export class Plan extends BaseEntity<PlanProps> {
       userLimit: props.userLimit,
       active: true,
       description: props.description,
+      stripeProductId: null,
+      stripePriceId: null,
     });
+  }
+
+  // Chamado pelo use case depois de criar/atualizar o Product+Price
+  // correspondente no Stripe (ou de arquivar, quando o plano deixa de ser
+  // pago) — não faz parte de create()/update() porque depende de uma
+  // chamada assíncrona à API do Stripe, feita fora da entidade.
+  assignStripeIds(stripeProductId: string | null, stripePriceId: string | null): void {
+    this.stripeProductId = stripeProductId;
+    this.stripePriceId = stripePriceId;
   }
 
   update(props: UpdatePlanProps): void {

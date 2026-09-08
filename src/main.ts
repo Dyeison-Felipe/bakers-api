@@ -14,7 +14,16 @@ import { validateRequiredEnvVars } from './shared/infra/env-config/validate-requ
 async function bootstrap() {
   initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
 
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  // rawBody: true — o Nest passa a popular request.rawBody (Buffer) em toda
+  // requisição, sem precisar registrar um content-type parser manual (que
+  // colide com o parser JSON padrão que o próprio Nest registra depois, em
+  // app.init()). Necessário pro webhook do Stripe validar a assinatura
+  // contra os bytes exatos do corpo (stripe.webhooks.constructEvent).
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+    { rawBody: true },
+  );
 
   // Sessão única por conta: SessionGateway usa WS puro (não socket.io) pra
   // avisar em tempo real quando uma sessão é derrubada por um novo login.
@@ -24,7 +33,7 @@ async function bootstrap() {
 
   validateRequiredEnvVars(envConfig);
 
-  globalConfig(app, envConfig);
+  await globalConfig(app, envConfig);
 
   console.log(`Server is running in port ${envConfig.getPort()}`)
 

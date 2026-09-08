@@ -82,4 +82,11 @@ export class EnvConfigService implements EnvConfig {
   getPort(): number {
     return +(this.envConfigService.get<string>('PORT') as string);
   }
+
+  getStripeSecretKey(): string {
+    return this.envConfigService.get<string>('STRIPE_SECRET_KEY') as string;
+  }
+  getStripeWebhookSecret(): string {
+    return this.envConfigService.get<string>('STRIPE_WEBHOOK_SECRET') as string;
+  }
 }

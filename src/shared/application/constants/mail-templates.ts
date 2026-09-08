@@ -3,4 +3,5 @@ export const TEMPLATES = {
   'welcome': 'welcome',
   'email-verification': 'email-verification',
   'plan-expired': 'plan-expired',
+  'subscription-confirmed': 'subscription-confirmed',
 } as const;

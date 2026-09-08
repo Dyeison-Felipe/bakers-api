@@ -24,6 +24,8 @@ import { NcmModule } from './core/ncm/infra/ncm.module';
 import { SiscomexModule } from './shared/infra/siscomex/siscomex.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { StorageModule } from './shared/infra/storage/storage.module';
+import { StripeModule } from './shared/infra/stripe/stripe.module';
+import { SubscriptionModule } from './core/subscription/infra/subscription.module';
 import { AdditionalCostModule } from './core/additional-cost/infra/additional-cost.module';
 import { BatchModule } from './core/batch/infra/batch.module';
 import { DailyProductionModule } from './core/daily-production/infra/daily-production.module';
@@ -48,6 +50,7 @@ import { CustomerModule } from './core/customer/infra/customer.module';
     ReportModule,
     CustomerModule,
     StorageModule,
+    StripeModule,
     ScheduleModule.forRoot(),
     SiscomexModule,
     NcmModule,
@@ -69,6 +72,7 @@ import { CustomerModule } from './core/customer/infra/customer.module';
     UserPermissionModule,
     MailModule,
     CompanyModule,
+    SubscriptionModule,
     PlanModule,
     RoleModule,
   ],

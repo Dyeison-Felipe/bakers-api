@@ -14,6 +14,8 @@ export class PlanMapper {
       active: schema.active,
       duration: schema.duration,
       userLimit: schema.userLimit,
+      stripeProductId: schema.stripeProductId,
+      stripePriceId: schema.stripePriceId,
       permissions: (schema.planPermission ?? []).map((pp) =>
         PermissionMappper.toEntity(pp.permission),
       ),
@@ -34,6 +36,8 @@ export class PlanMapper {
       active: entity.active,
       duration: entity.duration,
       userLimit: entity.userLimit,
+      stripeProductId: entity.stripeProductId,
+      stripePriceId: entity.stripePriceId,
       createdAt: entity.auditable?.createdAt,
       updatedAt: entity.auditable?.updatedAt,
       deletedAt: entity.auditable?.deletedAt,

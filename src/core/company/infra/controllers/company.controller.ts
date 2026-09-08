@@ -1,13 +1,17 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
 import { CreateCompanyDto } from '../dtos/create-company.dto';
 import { UpdateCompanyDto } from '../dtos/update-company.dto';
 import { AdminUpdateCompanyDto } from '../dtos/admin-update-company.dto';
+import { CreateSetupIntentDto } from '../dtos/create-setup-intent.dto';
 import { CreateCompanyUseCase } from '../../application/usecase/create-company.usecase';
 import { FindCompanyUseCase } from '../../application/usecase/find-company.usecase';
 import { UpdateCompanyUseCase } from '../../application/usecase/update-company.usecase';
 import { FindAllCompaniesUseCase } from '../../application/usecase/find-all-companies.usecase';
 import { SuperAdminUpdateCompanyUseCase } from '../../application/usecase/super-admin-update-company.usecase';
+import { CreateSetupIntentUseCase } from '../../application/usecase/create-setup-intent.usecase';
+import { CancelSubscriptionUseCase } from '@/core/subscription/application/usecase/cancel-subscription.usecase';
 import { CreateCompanyPresenter } from '@/shared/infra/presenter/company/create-company.presenter';
+import { CreateSetupIntentPresenter } from '@/shared/infra/presenter/company/create-setup-intent.presenter';
 import { Permission, Public, SuperAdminOnly } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionCompany } from '@/core/auth/domain/permissions-definition/company';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -22,7 +26,24 @@ export class CompanyController {
     private readonly updateCompanyUseCase: UpdateCompanyUseCase,
     private readonly findAllCompaniesUseCase: FindAllCompaniesUseCase,
     private readonly superAdminUpdateCompanyUseCase: SuperAdminUpdateCompanyUseCase,
+    private readonly createSetupIntentUseCase: CreateSetupIntentUseCase,
+    private readonly cancelSubscriptionUseCase: CancelSubscriptionUseCase,
   ) {}
+
+  @Post('setup-intent')
+  @Public()
+  @ApiOperation({
+    summary: 'Criar SetupIntent do Stripe',
+    description:
+      'Cria um SetupIntent avulso (sem tocar nenhum registro) pra tokenizar o cartão no navegador antes do cadastro da empresa. Só é usado quando o plano escolhido é pago.',
+  })
+  @ApiBody({ type: CreateSetupIntentDto })
+  @ApiResponse({ status: 201, description: 'SetupIntent criado', type: CreateSetupIntentPresenter })
+  async createSetupIntent(
+    @Body() dto: CreateSetupIntentDto,
+  ): Promise<CreateSetupIntentPresenter> {
+    return await this.createSetupIntentUseCase.execute(dto);
+  }
 
   @Post()
   @Public()
@@ -119,5 +140,18 @@ export class CompanyController {
     @Body() dto: AdminUpdateCompanyDto,
   ): Promise<CreateCompanyPresenter> {
     return await this.superAdminUpdateCompanyUseCase.execute({ id, ...dto });
+  }
+
+  @Post('subscription/cancel')
+  @Permission(PermissionCompany.COMPANY_UPDATE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Cancelar assinatura',
+    description:
+      'Cancela a cobrança recorrente da assinatura da empresa do usuário logado. A empresa continua ativa até o fim do período já pago — não há cobrança nova depois disso.',
+  })
+  @ApiResponse({ status: 204, description: 'Assinatura cancelada' })
+  async cancelSubscription(): Promise<void> {
+    await this.cancelSubscriptionUseCase.execute();
   }
 }

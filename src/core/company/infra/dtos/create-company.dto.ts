@@ -4,6 +4,7 @@ import { CreateUserCompanyDto } from './create-user-company.dto';
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -96,5 +97,13 @@ export class CreateCompanyDto {
   @ValidateNested()
   @Type(() => CreateUserCompanyDto)
   user: CreateUserCompanyDto;
-  
+
+  @ApiProperty({
+    description:
+      'Id do PaymentMethod do Stripe, já confirmado no navegador (Payment Element + SetupIntent). Obrigatório apenas para planos com preço maior que zero.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  stripePaymentMethodId?: string;
 }

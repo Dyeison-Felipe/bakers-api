@@ -22,6 +22,8 @@ export function validateRequiredEnvVars(envConfig: EnvConfig): void {
   if (Number.isNaN(envConfig.getPort())) missing.push('PORT');
   if (!envConfig.getNodeEnv()) missing.push('NODE_ENV');
   if (!envConfig.getAllowedOrigins()) missing.push('ALLOWED_ORIGINS');
+  if (!envConfig.getStripeSecretKey()) missing.push('STRIPE_SECRET_KEY');
+  if (!envConfig.getStripeWebhookSecret()) missing.push('STRIPE_WEBHOOK_SECRET');
 
   if (missing.length) {
     throw new Error(

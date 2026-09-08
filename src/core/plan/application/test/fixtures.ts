@@ -11,6 +11,8 @@ export const makePlan = (overrides: Record<string, unknown> = {}): Plan => {
     description: 'Plano básico',
     duration: 30,
     userLimit: null as number | null,
+    stripeProductId: null as string | null,
+    stripePriceId: null as string | null,
     permissions: [] as Permission[],
     auditable: { createdAt: new Date(), updatedAt: new Date(), deletedAt: null as Date | null },
     update(props: { name: string; price: number; active: boolean; description: string; duration: number; userLimit: number | null }) {
@@ -20,6 +22,10 @@ export const makePlan = (overrides: Record<string, unknown> = {}): Plan => {
       this.active = props.active;
       this.duration = props.duration;
       this.userLimit = props.userLimit;
+    },
+    assignStripeIds(stripeProductId: string | null, stripePriceId: string | null) {
+      this.stripeProductId = stripeProductId;
+      this.stripePriceId = stripePriceId;
     },
     deleted() {
       this.active = false;

@@ -29,6 +29,11 @@ import { JwtService } from '@/shared/application/jwt/jwt.service';
 import { EnvConfig } from '@/shared/application/env-config/env-config';
 import { MailService } from '@/shared/application/mail/mail.service';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import { StripeService } from '@/shared/application/stripe/stripe.service';
+import { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
+import { SubscriptionPersistenceModule } from '@/core/subscription/infra/subscription-persistence.module';
+import { CreateSetupIntentUseCase } from '../application/usecase/create-setup-intent.usecase';
+import { CancelSubscriptionUseCase } from '@/core/subscription/application/usecase/cancel-subscription.usecase';
 
 @Module({
   imports: [
@@ -40,6 +45,7 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
     PlanModule,
     CityModule,
     UserPermissionModule,
+    SubscriptionPersistenceModule,
   ],
   controllers: [CompanyController],
   providers: [
@@ -61,6 +67,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         jwtService: JwtService,
         envConfigService: EnvConfig,
         mailService: MailService,
+        stripeService: StripeService,
+        companySubscriptionRepository: CompanySubscriptionRepository,
       ) => {
         return new CreateCompanyUseCase(
           companyRepository,
@@ -74,6 +82,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
           jwtService,
           envConfigService,
           mailService,
+          stripeService,
+          companySubscriptionRepository,
         );
       },
       inject: [
@@ -88,6 +98,34 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
         PROVIDERS.JWT_SERVICE,
         PROVIDERS.ENV_CONFIG_SERVICE,
         PROVIDERS.MAIL_SERVICE,
+        PROVIDERS.STRIPE_SERVICE,
+        PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY,
+      ],
+    },
+    {
+      provide: CreateSetupIntentUseCase,
+      useFactory: (planRepository: PlanRepository, stripeService: StripeService) => {
+        return new CreateSetupIntentUseCase(planRepository, stripeService);
+      },
+      inject: [PROVIDERS.PLAN_REPOSITORY, PROVIDERS.STRIPE_SERVICE],
+    },
+    {
+      provide: CancelSubscriptionUseCase,
+      useFactory: (
+        companySubscriptionRepository: CompanySubscriptionRepository,
+        stripeService: StripeService,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new CancelSubscriptionUseCase(
+          companySubscriptionRepository,
+          stripeService,
+          loggedUserService,
+        );
+      },
+      inject: [
+        PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY,
+        PROVIDERS.STRIPE_SERVICE,
+        PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
     {

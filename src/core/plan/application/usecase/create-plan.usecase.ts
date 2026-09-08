@@ -12,6 +12,11 @@ import { PlanPermissionRepository } from '@/core/plan-permission/domain/reposito
 import { Transactional } from '@/shared/infra/database/typeorm/decorators/transactional.decorator';
 import { PlanPermission } from '@/core/plan-permission/domain/entity/plan-permission.entity';
 import { Permission } from '@/core/permission/domain/entity/permission.entity';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { StripeService } from '@/shared/application/stripe/stripe.service';
+
+// Limite do Stripe pra cobrança recorrente com interval:'day'.
+const MAX_STRIPE_DAY_INTERVAL = 365;
 
 type Input = CreatePlanInput;
 
@@ -25,6 +30,8 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
     private readonly permissionRepository: PermissionRepository,
     @Inject(PROVIDERS.PLAN_PERMISSION_REPOSITORY)
     private readonly planPermissionRepository: PlanPermissionRepository,
+    @Inject(PROVIDERS.STRIPE_SERVICE)
+    private readonly stripeService: StripeService,
   ) {}
 
   @Transactional()
@@ -57,6 +64,23 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
       duration: input.duration,
       userLimit: input.userLimit,
     });
+
+    if (input.price > 0) {
+      if (input.duration > MAX_STRIPE_DAY_INTERVAL) {
+        throw new BadRequestError(
+          `Planos pagos só podem ter duração de até ${MAX_STRIPE_DAY_INTERVAL} dias (limite do Stripe para cobrança recorrente)`,
+        );
+      }
+
+      const stripeProductId = await this.stripeService.createProduct(input.name);
+      const stripePriceId = await this.stripeService.createPrice({
+        productId: stripeProductId,
+        unitAmountCents: Math.round(input.price * 100),
+        intervalDays: input.duration,
+      });
+
+      createPlan.assignStripeIds(stripeProductId, stripePriceId);
+    }
 
     const savePlan = await this.planRepository.save(createPlan);
 

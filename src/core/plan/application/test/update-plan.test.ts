@@ -4,12 +4,16 @@ import { makePermission, makePlan } from './fixtures';
 import type { PlanRepository } from '../../domain/repositories/plan.repository';
 import type { PermissionRepository } from '@/core/permission/domain/repositories/permission.repository';
 import type { PlanPermissionRepository } from '@/core/plan-permission/domain/repositories/plan-permission.repository';
+import type { StripeService } from '@/shared/application/stripe/stripe.service';
 
 describe('UpdatePlanUseCase', () => {
   let planRepository: jest.Mocked<Pick<PlanRepository, 'findById' | 'update'>>;
   let permissionRepository: jest.Mocked<Pick<PermissionRepository, 'findPermissionsById'>>;
   let planPermissionRepository: jest.Mocked<
     Pick<PlanPermissionRepository, 'deleteAllByPlanId' | 'saveMany'>
+  >;
+  let stripeService: jest.Mocked<
+    Pick<StripeService, 'createProduct' | 'updateProduct' | 'createPrice' | 'archivePrice'>
   >;
   let sut: UpdatePlanUseCase;
 
@@ -36,11 +40,18 @@ describe('UpdatePlanUseCase', () => {
       deleteAllByPlanId: jest.fn().mockResolvedValue(undefined),
       saveMany: jest.fn().mockImplementation(async (items) => items),
     };
+    stripeService = {
+      createProduct: jest.fn().mockResolvedValue('prod_123'),
+      updateProduct: jest.fn().mockResolvedValue(undefined),
+      createPrice: jest.fn().mockResolvedValue('price_123'),
+      archivePrice: jest.fn().mockResolvedValue(undefined),
+    };
 
     sut = new UpdatePlanUseCase(
       planRepository as unknown as PlanRepository,
       permissionRepository as unknown as PermissionRepository,
       planPermissionRepository as unknown as PlanPermissionRepository,
+      stripeService as unknown as StripeService,
     );
   });
 
@@ -76,5 +87,51 @@ describe('UpdatePlanUseCase', () => {
     expect(output.permissions).toEqual([
       { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
     ]);
+  });
+
+  it('should create a new Stripe Product+Price under the existing product when price/duration change', async () => {
+    const plan = makePlan({ stripeProductId: 'prod_existing', stripePriceId: 'price_old' });
+    planRepository.findById.mockResolvedValue(plan);
+
+    await sut.execute(input);
+
+    expect(stripeService.createProduct).not.toHaveBeenCalled();
+    expect(stripeService.archivePrice).toHaveBeenCalledWith('price_old');
+    expect(stripeService.createPrice).toHaveBeenCalledWith({
+      productId: 'prod_existing',
+      unitAmountCents: 20000,
+      intervalDays: 365,
+    });
+  });
+
+  it('should create a Stripe Product+Price for a plan that was already paid before Stripe existed (no price/duration change)', async () => {
+    const plan = makePlan({
+      price: input.price,
+      duration: input.duration,
+      stripeProductId: null,
+      stripePriceId: null,
+    });
+    planRepository.findById.mockResolvedValue(plan);
+
+    await sut.execute(input);
+
+    expect(stripeService.createProduct).toHaveBeenCalledWith(input.name);
+    expect(stripeService.createPrice).toHaveBeenCalledWith({
+      productId: 'prod_123',
+      unitAmountCents: input.price * 100,
+      intervalDays: input.duration,
+    });
+    expect(plan.stripePriceId).toBe('price_123');
+  });
+
+  it('should archive the price and clear the Stripe ids when the plan becomes free', async () => {
+    const plan = makePlan({ stripeProductId: 'prod_existing', stripePriceId: 'price_old' });
+    planRepository.findById.mockResolvedValue(plan);
+
+    await sut.execute({ ...input, price: 0 });
+
+    expect(stripeService.archivePrice).toHaveBeenCalledWith('price_old');
+    expect(plan.stripeProductId).toBeNull();
+    expect(plan.stripePriceId).toBeNull();
   });
 });

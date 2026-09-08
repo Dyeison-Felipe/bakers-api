@@ -5,11 +5,13 @@ import { makePermission, makePlan } from './fixtures';
 import type { PlanRepository } from '../../domain/repositories/plan.repository';
 import type { PermissionRepository } from '@/core/permission/domain/repositories/permission.repository';
 import type { PlanPermissionRepository } from '@/core/plan-permission/domain/repositories/plan-permission.repository';
+import type { StripeService } from '@/shared/application/stripe/stripe.service';
 
 describe('CreatePlanUseCase', () => {
   let planRepository: jest.Mocked<Pick<PlanRepository, 'findByName' | 'save'>>;
   let permissionRepository: jest.Mocked<Pick<PermissionRepository, 'findPermissionsById'>>;
   let planPermissionRepository: jest.Mocked<Pick<PlanPermissionRepository, 'saveMany'>>;
+  let stripeService: jest.Mocked<Pick<StripeService, 'createProduct' | 'createPrice'>>;
   let sut: CreatePlanUseCase;
 
   const input = {
@@ -32,11 +34,16 @@ describe('CreatePlanUseCase', () => {
     planPermissionRepository = {
       saveMany: jest.fn().mockImplementation(async (items) => items),
     };
+    stripeService = {
+      createProduct: jest.fn().mockResolvedValue('prod_123'),
+      createPrice: jest.fn().mockResolvedValue('price_123'),
+    };
 
     sut = new CreatePlanUseCase(
       planRepository as unknown as PlanRepository,
       permissionRepository as unknown as PermissionRepository,
       planPermissionRepository as unknown as PlanPermissionRepository,
+      stripeService as unknown as StripeService,
     );
   });
 
@@ -75,5 +82,23 @@ describe('CreatePlanUseCase', () => {
         { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
       ],
     });
+  });
+
+  it('should create a Stripe Product+Price when the plan is paid, using cents/days from the input', async () => {
+    await sut.execute(input);
+
+    expect(stripeService.createProduct).toHaveBeenCalledWith('Plano Básico');
+    expect(stripeService.createPrice).toHaveBeenCalledWith({
+      productId: 'prod_123',
+      unitAmountCents: 10000,
+      intervalDays: 30,
+    });
+  });
+
+  it('should not call Stripe when the plan is free', async () => {
+    await sut.execute({ ...input, price: 0 });
+
+    expect(stripeService.createProduct).not.toHaveBeenCalled();
+    expect(stripeService.createPrice).not.toHaveBeenCalled();
   });
 });
