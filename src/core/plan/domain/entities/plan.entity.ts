@@ -9,6 +9,7 @@ export type PlanProps = {
   price: number;
   active: boolean;
   description: string;
+  features: string[];
   duration: number;
   userLimit: number | null;
   stripeProductId: string | null;
@@ -20,6 +21,7 @@ type CreatePlanProps = {
   name: string;
   price: number;
   description: string;
+  features: string[];
   duration: number;
   userLimit: number | null;
 };
@@ -29,6 +31,7 @@ type UpdatePlanProps = {
   price: number;
   active: boolean;
   description: string;
+  features: string[];
   duration: number;
   userLimit: number | null;
 };
@@ -46,6 +49,7 @@ export class Plan extends BaseEntity<PlanProps> {
       userLimit: props.userLimit,
       active: true,
       description: props.description,
+      features: props.features,
       stripeProductId: null,
       stripePriceId: null,
     });
@@ -64,6 +68,7 @@ export class Plan extends BaseEntity<PlanProps> {
     this.name = props.name;
     this.price = props.price;
     this.description = props.description;
+    this.features = props.features;
     this.active = props.active;
     this.duration = props.duration;
     this.userLimit = props.userLimit;

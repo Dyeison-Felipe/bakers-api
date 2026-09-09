@@ -19,6 +19,10 @@ export class CreatePlanDto {
   @IsNotEmpty()
   description: string;
 
+  @IsArray()
+  @IsString({ each: true })
+  features: string[];
+
   @IsNumber()
   @IsNotEmpty()
   price: number;

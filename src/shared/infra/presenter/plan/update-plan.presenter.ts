@@ -2,6 +2,7 @@ export class UpdatePlanPresenter {
   readonly id: string;
   readonly name: string;
   readonly description: string;
+  readonly features: string[];
   readonly price: number;
   readonly duration: number;
   readonly active: boolean
@@ -11,6 +12,7 @@ export class UpdatePlanPresenter {
     this.id = props.id;
     this.name = props.name;
     this.description = props.description;
+    this.features = props.features;
     this.price = props.price;
     this.duration = props.duration;
     this.active = props.active;

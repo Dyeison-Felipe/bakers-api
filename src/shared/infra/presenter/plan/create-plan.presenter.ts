@@ -8,6 +8,8 @@ export class CreatePlanPresenter {
   readonly name: string;
   @ApiProperty({ description: 'Descrição do plano' })
   readonly description: string;
+  @ApiProperty({ description: 'Funcionalidades exibidas no cadastro do plano', type: [String] })
+  readonly features: string[];
   @ApiProperty({ description: 'Preço do plano' })
   readonly price: number;
   @ApiProperty({ description: 'Duração do plano' })
@@ -21,6 +23,7 @@ export class CreatePlanPresenter {
     this.id = props.id;
     this.name = props.name;
     this.description = props.description;
+    this.features = props.features;
     this.price = props.price;
     this.duration = props.duration;
     this.userLimit = props.userLimit;

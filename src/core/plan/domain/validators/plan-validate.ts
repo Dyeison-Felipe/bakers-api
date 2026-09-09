@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsInt,
   IsNotEmpty,
@@ -21,6 +22,10 @@ export class PlanRules {
   @IsString()
   @IsNotEmpty()
   description: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  features: string[];
 
   @IsNumber()
   @IsNotEmpty()

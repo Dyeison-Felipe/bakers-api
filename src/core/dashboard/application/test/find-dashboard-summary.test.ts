@@ -35,7 +35,12 @@ describe('FindDashboardSummaryUseCase', () => {
     };
     expenseRepository = { findAllByCompanyAndDate: jest.fn().mockResolvedValue([]) };
     loggedUserService = {
-      getLoggedUser: jest.fn().mockReturnValue({ company: { id: 'company-1' } }),
+      getLoggedUser: jest.fn().mockReturnValue({
+        company: {
+          id: 'company-1',
+          plan: { permissions: [{ subject: 'sale', action: 'reader' }] },
+        },
+      }),
       setLoggedUser: jest.fn(),
     } as unknown as jest.Mocked<LoggedUserService>;
 
@@ -118,5 +123,21 @@ describe('FindDashboardSummaryUseCase', () => {
       'company-1',
       expect.any(Date),
     );
+  });
+
+  it('should omit sales revenue fields when the company plan does not include PDV/Caixa', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue({
+      company: { id: 'company-1', plan: { permissions: [] } },
+    } as never);
+
+    const output = await sut.execute();
+
+    expect(output).toEqual({
+      productionCostToday: 0,
+      expensesToday: 0,
+    });
+    expect(
+      saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod,
+    ).not.toHaveBeenCalled();
   });
 });

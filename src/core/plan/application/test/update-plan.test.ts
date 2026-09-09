@@ -23,6 +23,7 @@ describe('UpdatePlanUseCase', () => {
     price: 200,
     active: true,
     description: 'Descrição nova',
+    features: ['Controle de estoque'],
     duration: 365,
     userLimit: 10,
     permissionIds: ['permission-1'],
@@ -84,6 +85,7 @@ describe('UpdatePlanUseCase', () => {
     expect(plan.price).toBe(200);
     expect(plan.duration).toBe(365);
     expect(plan.userLimit).toBe(10);
+    expect(plan.features).toEqual(['Controle de estoque']);
     expect(output.permissions).toEqual([
       { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
     ]);

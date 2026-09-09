@@ -55,7 +55,7 @@ export class ReportController {
   ) {}
 
   @Get('waste')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_WASTE_READER)
   @ApiOperation({ summary: 'Relatório de desperdício por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -70,7 +70,7 @@ export class ReportController {
   }
 
   @Get('waste/pdf')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_WASTE_READER)
   @ApiOperation({ summary: 'Exporta o relatório de desperdício em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -90,7 +90,7 @@ export class ReportController {
   }
 
   @Get('cash-register')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_CASH_REGISTER_READER)
   @ApiOperation({ summary: 'Relatório de detalhe de caixa por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -105,7 +105,7 @@ export class ReportController {
   }
 
   @Get('cash-register/pdf')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_CASH_REGISTER_READER)
   @ApiOperation({ summary: 'Exporta o relatório de caixa em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -125,7 +125,7 @@ export class ReportController {
   }
 
   @Get('production')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_PRODUCTION_READER)
   @ApiOperation({ summary: 'Relatório de custo de produção por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -140,7 +140,7 @@ export class ReportController {
   }
 
   @Get('production/pdf')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_PRODUCTION_READER)
   @ApiOperation({ summary: 'Exporta o relatório de produção em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -160,7 +160,7 @@ export class ReportController {
   }
 
   @Get('expense')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_EXPENSE_READER)
   @ApiOperation({ summary: 'Relatório de despesas por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
@@ -175,7 +175,7 @@ export class ReportController {
   }
 
   @Get('expense/pdf')
-  @Permission(PermissionReport.REPORT_READER)
+  @Permission(PermissionReport.REPORT_EXPENSE_READER)
   @ApiOperation({ summary: 'Exporta o relatório de despesas em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })

@@ -14,6 +14,10 @@ export class UpdatePlanDto {
   @IsNotEmpty()
   description: string;
 
+  @IsArray()
+  @IsString({ each: true })
+  features: string[];
+
   @IsNumber()
   @IsNotEmpty()
   price: number;

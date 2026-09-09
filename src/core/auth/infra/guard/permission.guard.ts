@@ -18,6 +18,7 @@ import { ForbiddenError } from '@/shared/application/errors/forbidden-error';
 import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
 import { SessionInvalidatedError } from '@/shared/application/errors/session-invalidated-error';
 import { CaslAbilityService } from '../service/casl-ability.service';
+import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
 import {
   ALLOW_SUPER_ADMIN_KEY,
   IS_PUBLIC_KEY,
@@ -129,10 +130,8 @@ export class PermissionGuard implements CanActivate {
       //5. Verifica se a permissão está inclusa no plano da empresa
       const planPermissions = user.company.plan?.permissions ?? [];
 
-      const allInPlan = policies.every(({ action, resource }) =>
-        planPermissions.some(
-          (p) => p.action === action && p.subject === resource,
-        ),
+      const allInPlan = policies.every((policy) =>
+        isPermissionInPlan(planPermissions, policy),
       );
 
       if (!allInPlan) {

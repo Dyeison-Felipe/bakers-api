@@ -61,6 +61,7 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
       name: input.name,
       price: input.price,
       description: input.description,
+      features: input.features,
       duration: input.duration,
       userLimit: input.userLimit,
     });
@@ -126,6 +127,7 @@ export class CreatePlanUseCase implements UseCase<Input, Output> {
       price: plan.price,
       active: plan.active,
       description: plan.description,
+      features: plan.features,
       duration: plan.duration,
       userLimit: plan.userLimit,
       permissions: permissions.map((permission) => ({

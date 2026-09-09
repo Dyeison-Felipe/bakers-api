@@ -30,6 +30,7 @@ describe('FindAllPlanUseCase', () => {
         price: 100,
         active: true,
         description: 'Plano básico',
+        features: [],
         duration: 30,
         userLimit: null,
       },

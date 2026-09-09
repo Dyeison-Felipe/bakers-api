@@ -6,7 +6,7 @@ describe('PlanValidator unit tests', () => {
 
     expect(validator.validate({} as any)).toBe(false);
     expect(Object.keys(validator.errors).sort()).toEqual(
-      ['name', 'description', 'price', 'active', 'duration'].sort(),
+      ['name', 'description', 'features', 'price', 'active', 'duration'].sort(),
     );
   });
 
@@ -15,6 +15,7 @@ describe('PlanValidator unit tests', () => {
     const validData = {
       name: 'Plano Básico',
       description: 'Plano para pequenas padarias',
+      features: ['Controle de estoque'],
       price: 49.9,
       active: true,
       duration: 30,

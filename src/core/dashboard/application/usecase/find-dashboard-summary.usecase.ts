@@ -8,6 +8,8 @@ import { DailyProductionRepository } from '@/core/daily-production/domain/reposi
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
+import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
+import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
 
 type Input = void;
 type Output = DashboardSummaryOutput;
@@ -48,6 +50,13 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
       999,
     );
 
+    // Empresa sem PDV/Caixa no plano não tem dado de venda pra mostrar —
+    // omite em vez de 403 (Dashboard nunca deve exibir erro de permissão).
+    const canReadSales = isPermissionInPlan(
+      loggedUser.company.plan?.permissions,
+      PermissionSale.SALE_READER,
+    );
+
     const [
       salesRevenueCashToday,
       salesRevenuePixToday,
@@ -55,24 +64,30 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
       dailyProductions,
       expenses,
     ] = await Promise.all([
-      this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
-        companyId,
-        startOfDay,
-        endOfDay,
-        TypePaymentMethod.CASH,
-      ),
-      this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
-        companyId,
-        startOfDay,
-        endOfDay,
-        TypePaymentMethod.PIX,
-      ),
-      this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
-        companyId,
-        startOfDay,
-        endOfDay,
-        TypePaymentMethod.CARD,
-      ),
+      canReadSales
+        ? this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
+            companyId,
+            startOfDay,
+            endOfDay,
+            TypePaymentMethod.CASH,
+          )
+        : Promise.resolve(0),
+      canReadSales
+        ? this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
+            companyId,
+            startOfDay,
+            endOfDay,
+            TypePaymentMethod.PIX,
+          )
+        : Promise.resolve(0),
+      canReadSales
+        ? this.saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod(
+            companyId,
+            startOfDay,
+            endOfDay,
+            TypePaymentMethod.CARD,
+          )
+        : Promise.resolve(0),
       this.dailyProductionRepository.findAllByCompanyId(companyId, {
         productionDate: startOfDay,
       }),
@@ -99,10 +114,14 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
 
     return {
       productionCostToday,
-      salesRevenueCashToday: round2(salesRevenueCashToday),
-      salesRevenuePixToday: round2(salesRevenuePixToday),
-      salesRevenueCardToday: round2(salesRevenueCardToday),
       expensesToday,
+      ...(canReadSales
+        ? {
+            salesRevenueCashToday: round2(salesRevenueCashToday),
+            salesRevenuePixToday: round2(salesRevenuePixToday),
+            salesRevenueCardToday: round2(salesRevenueCardToday),
+          }
+        : {}),
     };
   }
 }

@@ -4,6 +4,8 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { DailyRevenueSeriesOutput } from '@/shared/application/output/report/daily-revenue-series.output';
+import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
+import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
 
 type Input = {
   dateFrom: Date;
@@ -22,6 +24,16 @@ export class FindDailyRevenueSeriesUseCase implements UseCase<Input, Output> {
 
   async execute({ dateFrom, dateTo }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
+
+    // Empresa sem PDV/Caixa no plano não tem dado de venda pra mostrar —
+    // omite em vez de 403 (Dashboard nunca deve exibir erro de permissão).
+    const canReadSales = isPermissionInPlan(
+      loggedUser.company.plan?.permissions,
+      PermissionSale.SALE_READER,
+    );
+
+    if (!canReadSales) return [];
+
     const companyId = loggedUser.company.id;
 
     return this.saleRepository.findDailyRevenueByCompanyAndDateRange(

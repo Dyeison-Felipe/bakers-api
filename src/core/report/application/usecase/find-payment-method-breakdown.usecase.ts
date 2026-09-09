@@ -5,6 +5,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import { PaymentMethodBreakdownOutput } from '@/shared/application/output/report/payment-method-breakdown.output';
+import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
+import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
 
 type Input = {
   dateFrom: Date;
@@ -27,6 +29,16 @@ export class FindPaymentMethodBreakdownUseCase
 
   async execute({ dateFrom, dateTo }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
+
+    // Empresa sem PDV/Caixa no plano não tem dado de venda pra mostrar —
+    // omite em vez de 403 (Dashboard nunca deve exibir erro de permissão).
+    const canReadSales = isPermissionInPlan(
+      loggedUser.company.plan?.permissions,
+      PermissionSale.SALE_READER,
+    );
+
+    if (!canReadSales) return { cash: 0, pix: 0, card: 0 };
+
     const companyId = loggedUser.company.id;
 
     const [cash, pix, card] = await Promise.all([

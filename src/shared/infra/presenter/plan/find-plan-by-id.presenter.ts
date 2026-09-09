@@ -8,6 +8,8 @@ export class FindPlanByIdPresenter {
   readonly name: string;
   @ApiProperty({ description: 'Descrição do plano' })
   readonly description: string;
+  @ApiProperty({ description: 'Funcionalidades exibidas no cadastro do plano', type: [String] })
+  readonly features: string[];
   @ApiProperty({ description: 'Preço do plano' })
   readonly price: number;
   @ApiProperty({ description: 'Se o plano está ativo' })
@@ -23,6 +25,7 @@ export class FindPlanByIdPresenter {
     this.id = props.id;
     this.name = props.name;
     this.description = props.description;
+    this.features = props.features;
     this.price = props.price;
     this.active = props.active;
     this.duration = props.duration;

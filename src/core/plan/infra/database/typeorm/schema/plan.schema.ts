@@ -12,6 +12,9 @@ export class PlanSchema extends BaseSchema {
   @Column({ name: 'description', type: 'varchar', nullable: false })
   description: string;
 
+  @Column({ name: 'features', type: 'text', array: true, default: '{}' })
+  features: string[];
+
   @Column({
     name: 'price',
     type: 'decimal',

@@ -53,6 +53,7 @@ export class FindAllPlanAndPermissionsUseCase implements UseCase<Input, Output> 
             id: pp.plan.id,
             name: pp.plan.name,
             description: pp.plan.description,
+            features: pp.plan.features,
             price: pp.plan.price,
             active: pp.plan.active,
             duration: pp.plan.duration,

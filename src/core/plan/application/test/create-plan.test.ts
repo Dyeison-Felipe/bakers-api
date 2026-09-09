@@ -18,6 +18,7 @@ describe('CreatePlanUseCase', () => {
     name: 'Plano Básico',
     price: 100,
     description: 'Plano básico',
+    features: ['Controle de estoque'],
     duration: 30,
     userLimit: null,
     permissionIds: ['permission-1'],
@@ -76,6 +77,7 @@ describe('CreatePlanUseCase', () => {
       price: 100,
       active: true,
       description: 'Plano básico',
+      features: ['Controle de estoque'],
       duration: 30,
       userLimit: null,
       permissions: [
