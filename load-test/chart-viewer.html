@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Gráfico de CPU/Memória — teste de carga</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 0 16px;
+    color: #1a1a1a;
+  }
+  h1 {
+    font-size: 1.25rem;
+  }
+  p {
+    color: #555;
+  }
+  #drop-zone {
+    border: 2px dashed #999;
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    margin: 24px 0;
+    cursor: pointer;
+  }
+  #drop-zone.dragover {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+  #chart-container {
+    display: none;
+    margin-top: 32px;
+  }
+  #summary {
+    display: none;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: #333;
+  }
+  #summary table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  #summary td, #summary th {
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+  <h1>Gráfico de CPU / Memória durante o teste de carga</h1>
+  <p>
+    Carregue o CSV gerado pelo <code>monitor-docker-stats.sh</code>
+    (colunas: <code>timestamp,cpu_percent,mem_used_mb,mem_limit_mb</code>).
+    Tudo roda localmente no navegador — nenhum dado sai da sua máquina.
+  </p>
+
+  <div id="drop-zone">
+    <p>Clique para escolher o arquivo CSV, ou arraste ele aqui</p>
+    <input type="file" id="file-input" accept=".csv" />
+  </div>
+
+  <div id="summary"></div>
+  <div id="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const chartContainer = document.getElementById('chart-container');
+    const summaryEl = document.getElementById('summary');
+    let chartInstance = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => renderChart(parseCsv(e.target.result));
+      reader.readAsText(file);
+    }
+
+    function parseCsv(text) {
+      const lines = text.trim().split('\n');
+      const rows = lines.slice(1).map((line) => {
+        const [timestamp, cpuPercent, memUsedMb, memLimitMb] = line.split(',');
+        return {
+          timestamp,
+          cpuPercent: Number(cpuPercent),
+          memUsedMb: Number(memUsedMb),
+          memLimitMb: Number(memLimitMb),
+        };
+      });
+      return rows.filter((r) => r.timestamp && !Number.isNaN(r.cpuPercent));
+    }
+
+    function renderChart(rows) {
+      if (!rows.length) {
+        alert('Não achei linhas válidas nesse CSV.');
+        return;
+      }
+
+      const labels = rows.map((r) => r.timestamp.replace('T', ' '));
+      const cpuData = rows.map((r) => r.cpuPercent);
+      const memData = rows.map((r) => r.memUsedMb);
+
+      const avgCpu = (cpuData.reduce((a, b) => a + b, 0) / cpuData.length).toFixed(2);
+      const maxCpu = Math.max(...cpuData).toFixed(2);
+      const avgMem = (memData.reduce((a, b) => a + b, 0) / memData.length).toFixed(2);
+      const maxMem = Math.max(...memData).toFixed(2);
+
+      summaryEl.style.display = 'block';
+      summaryEl.innerHTML = `
+        <table>
+          <tr><th></th><th>Média</th><th>Pico</th></tr>
+          <tr><td>CPU (%)</td><td>${avgCpu}</td><td>${maxCpu}</td></tr>
+          <tr><td>Memória (MB)</td><td>${avgMem}</td><td>${maxMem}</td></tr>
+        </table>
+      `;
+
+      chartContainer.style.display = 'block';
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const ctx = document.getElementById('chart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'CPU (%)',
+              data: cpuData,
+              borderColor: '#2563eb',
+              backgroundColor: 'transparent',
+              yAxisID: 'y-cpu',
+              pointRadius: 0,
+              tension: 0.2,
+            },
+            {
+              label: 'Memória (MB)',
+              data: memData,
+              borderColor: '#dc2626',
+              backgroundColor: 'transparent',
+              yAxisID: 'y-mem',
+              pointRadius: 0,
+              tension: 0.2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: {
+              ticks: { maxRotation: 60, minRotation: 60, autoSkip: true, maxTicksLimit: 20 },
+            },
+            'y-cpu': {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'CPU (%)' },
+              beginAtZero: true,
+            },
+            'y-mem': {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'Memória (MB)' },
+              beginAtZero: true,
+              grid: { drawOnChartArea: false },
+            },
+          },
+        },
+      });
+    }
+  </script>
+</body>
+</html>

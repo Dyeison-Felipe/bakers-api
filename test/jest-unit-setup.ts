@@ -1,3 +1,8 @@
+// Sem isso, qualquer arquivo decorado com @Type() do class-transformer
+// (ex.: role-validators.ts, user-validator.ts) quebra com "Reflect.getMetadata
+// is not a function" ao ser importado isoladamente por um teste unitário.
+import 'reflect-metadata';
+
 // Testes unitários de usecase não sobem um DataSource real — sem isso,
 // qualquer usecase decorado com @Transactional() (typeorm-transactional)
 // lança "No data sources defined..." mesmo com os repositórios mockados.
