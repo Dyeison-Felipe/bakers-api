@@ -74,6 +74,7 @@ export class DiscardBatchLeftoverUseCase implements UseCase<Input, Output> {
     await this.batchMovementRepository.save(
       BatchMovement.create({
         batchId: batch.id,
+        productId: batch.product!.id,
         type: TypeBatchMovement.EXIT,
         quantity,
         reason: soldAtCost

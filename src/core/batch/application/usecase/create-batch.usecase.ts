@@ -75,6 +75,7 @@ export class CreateBatchUseCase implements UseCase<Input, Output> {
     await this.batchMovementRepository.save(
       BatchMovement.create({
         batchId: savedBatch.id,
+        productId: product.id,
         type: TypeBatchMovement.ENTRY,
         quantity: input.quantity,
         reason: TypeBatchMovementReason.PRODUCTION,

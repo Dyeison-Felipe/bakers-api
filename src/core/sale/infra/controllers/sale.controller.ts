@@ -73,14 +73,21 @@ export class SaleController {
   @ApiOperation({ summary: 'Lista o histórico de vendas' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'cashRegisterSessionId', required: false })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Busca livre por CPF do cliente ou código curto da venda',
+  })
   @ApiOkResponse({ type: FindAllSalesItemPresenter, isArray: true })
   async findAll(
     @Query('page') page?: string,
     @Query('cashRegisterSessionId') cashRegisterSessionId?: string,
+    @Query('search') search?: string,
   ): Promise<Pagination<FindAllSalesItemPresenter>> {
     return await this.findAllSalesUseCase.execute({
       page: page ? Number(page) : undefined,
       cashRegisterSessionId,
+      search,
     });
   }
 

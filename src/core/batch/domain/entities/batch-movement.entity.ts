@@ -8,7 +8,10 @@ import {
 import { BatchMovementValidatorFactory } from '../validator/batch-movement-validator';
 
 export type BatchMovementProps = {
-  batchId: string;
+  // Nulo quando o produto não tem controle de estoque (matéria-prima sem
+  // lote) — só registra o custo, sem consumir/precisar de lote.
+  batchId: string | null;
+  productId: string;
   type: TypeBatchMovement;
   quantity: number;
   reason: TypeBatchMovementReason;
@@ -34,6 +37,7 @@ export class BatchMovement extends BaseEntity<BatchMovementProps> {
     return new BatchMovement({
       id: crypto.randomUUID(),
       batchId: props.batchId,
+      productId: props.productId,
       type: props.type,
       quantity: props.quantity,
       reason: props.reason,

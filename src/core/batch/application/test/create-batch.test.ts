@@ -62,7 +62,7 @@ describe('CreateBatchUseCase', () => {
   });
 
   it('should create a batch, register an ENTRY movement and increase stock', async () => {
-    const product = makeProduct({ id: 'product-1' });
+    const product = makeProduct();
     productRepository.findProductByIdAndCompanyId.mockResolvedValue(product);
 
     const output = await sut.execute({

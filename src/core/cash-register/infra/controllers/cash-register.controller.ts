@@ -9,6 +9,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
+import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
 import { PermissionCashRegister } from '@/core/auth/domain/permissions-definition/cash-register';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { OpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/open-cash-register.presenter';
@@ -86,14 +87,25 @@ export class CashRegisterController {
   @ApiOperation({ summary: 'Lista o histórico de sessões de caixa' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'dateFrom', required: false, description: 'Filtra pela data de abertura (>=)' })
+  @ApiQuery({ name: 'dateTo', required: false, description: 'Filtra pela data de abertura (<=)' })
   @ApiOkResponse({ type: FindAllCashRegisterSessionsItemPresenter, isArray: true })
   async findAll(
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
   ): Promise<Pagination<FindAllCashRegisterSessionsItemPresenter>> {
+    // dateTo é data-only (meia-noite) — sem levar pro fim do dia, sessões
+    // abertas mais tarde nesse mesmo dia ficariam de fora do filtro.
+    const parsedDateTo = dateTo ? parseDateOnly(dateTo) : undefined;
+    parsedDateTo?.setHours(23, 59, 59, 999);
+
     return await this.findAllCashRegisterSessionsUseCase.execute({
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
+      dateFrom: dateFrom ? parseDateOnly(dateFrom) : undefined,
+      dateTo: parsedDateTo,
     });
   }
 

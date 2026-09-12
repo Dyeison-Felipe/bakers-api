@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TypePaymentMethod, TypeSaleStatus } from '@/shared/infra/enums/sale';
 
 export class FindAllSalesItemPresenter {
@@ -13,6 +13,9 @@ export class FindAllSalesItemPresenter {
 
   @ApiProperty({ description: 'Valor total da venda' })
   readonly totalAmount: number;
+
+  @ApiPropertyOptional({ description: 'CPF do cliente, se informado' })
+  readonly customerCpf: string | null;
 
   @ApiProperty({ description: 'Data/hora da venda' })
   readonly createdAt: Date;

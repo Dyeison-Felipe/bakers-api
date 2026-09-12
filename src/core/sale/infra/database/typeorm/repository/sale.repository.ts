@@ -72,6 +72,14 @@ export class SaleRepositoryImpl implements SaleRepository {
       });
     }
 
+    if (filters?.search) {
+      const term = filters.search.trim();
+      query.andWhere(
+        '(sale.customerCpf LIKE :cpfTerm OR UPPER(LEFT(CAST(sale.id AS TEXT), 8)) LIKE :codeTerm)',
+        { cpfTerm: `%${term}%`, codeTerm: `%${term.toUpperCase()}%` },
+      );
+    }
+
     query
       // Empate no createdAt deixa a ordem instável entre páginas no
       // Postgres — o id como critério de desempate garante ordem

@@ -8,6 +8,8 @@ import { Sale } from '../entities/sale.entity';
 
 export type FindAllSalesFilters = {
   cashRegisterSessionId?: string;
+  /** Busca livre — bate contra o CPF do cliente ou o código curto da venda (8 primeiros caracteres do id). */
+  search?: string;
 };
 
 export type DailyRevenueRow = {

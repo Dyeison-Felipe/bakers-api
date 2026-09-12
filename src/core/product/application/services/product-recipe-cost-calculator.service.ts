@@ -19,7 +19,10 @@ export class ProductRecipeCostCalculator {
     return costPerConsumerUnit * quantity;
   }
 
-  private static getCostPerConsumerUnit(material: Product): number {
+  // Público pra ser reaproveitado por qualquer outro fluxo que baixe
+  // quantidade de matéria-prima (ex: baixa de desperdício) — o custo por
+  // unidade de consumo (un/kg/ml) é o mesmo cálculo, não importa o motivo.
+  static getCostPerConsumerUnit(material: Product): number {
     // UN não tem segundo estágio de conversão — unitCostPrice já é o custo
     // final por unidade de consumo (ex: R$ por ovo).
     if (material.consumerUnit === TypeConsumptionUnit.UN) {

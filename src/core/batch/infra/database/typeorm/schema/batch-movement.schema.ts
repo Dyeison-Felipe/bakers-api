@@ -1,5 +1,6 @@
 import { BaseSchema } from '@/shared/infra/database/typeorm/schema/baseSchema/baseSchema';
 import { DecimalColumnTransformer } from '@/shared/infra/database/typeorm/transformers/decimal.transformer';
+import { ProductSchema } from '@/core/product/infra/database/typeorm/schema/product.schema';
 import {
   TypeBatchMovement,
   TypeBatchMovementReason,
@@ -9,11 +10,20 @@ import { BatchSchema } from './batch.schema';
 
 @Entity('batch_movement')
 export class BatchMovementSchema extends BaseSchema {
+  // Nulo pra baixas de produtos sem controle de estoque (matéria-prima sem
+  // lote) — só registra o custo, sem lote nenhum por trás.
   @ManyToOne(() => BatchSchema, (batch) => batch.movements, {
+    nullable: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'batch_id' })
-  batch: BatchSchema;
+  batch: BatchSchema | null;
+
+  // Sempre preenchido (vem do lote quando existe, ou direto quando não) —
+  // permite relatórios/consultas sem depender de `batch` estar presente.
+  @ManyToOne(() => ProductSchema, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'product_id' })
+  product: ProductSchema;
 
   @Column({ name: 'type', type: 'enum', enum: TypeBatchMovement })
   type: TypeBatchMovement;

@@ -32,6 +32,7 @@ describe('FindAllCashRegisterSessionsUseCase', () => {
 
     expect(cashRegisterSessionRepository.findAllByCompanyId).toHaveBeenCalledWith(
       'company-1',
+      { dateFrom: undefined, dateTo: undefined },
       { page: 3, limit: 20 },
     );
   });

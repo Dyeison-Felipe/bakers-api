@@ -5,6 +5,11 @@ import {
 } from '@/shared/domain/pagination/pagination';
 import { CashRegisterSession } from '../entities/cash-register-session.entity';
 
+export type FindAllCashRegisterSessionsFilters = {
+  dateFrom?: Date;
+  dateTo?: Date;
+};
+
 export interface CashRegisterSessionRepository
   extends BaseRepository<CashRegisterSession> {
   update(entity: CashRegisterSession): Promise<void>;
@@ -20,6 +25,7 @@ export interface CashRegisterSessionRepository
 
   findAllByCompanyId(
     companyId: string,
+    filters?: FindAllCashRegisterSessionsFilters,
     pagination?: PaginationInput,
   ): Promise<Pagination<CashRegisterSession>>;
 

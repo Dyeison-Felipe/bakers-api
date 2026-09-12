@@ -1,6 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
+import {
+  CashRegisterSessionRepository,
+  FindAllCashRegisterSessionsFilters,
+} from '@/core/cash-register/domain/repositories/cash-register-session.repository';
 import { CashRegisterSession } from '@/core/cash-register/domain/entities/cash-register-session.entity';
 import {
   Pagination,
@@ -67,6 +70,7 @@ export class CashRegisterSessionRepositoryImpl
 
   async findAllByCompanyId(
     companyId: string,
+    filters?: FindAllCashRegisterSessionsFilters,
     pagination?: PaginationInput,
   ): Promise<Pagination<CashRegisterSession>> {
     const page = pagination?.page ?? 1;
@@ -76,7 +80,21 @@ export class CashRegisterSessionRepositoryImpl
     const query = this.cashRegisterSessionRepository
       .createQueryBuilder('cashRegisterSession')
       .leftJoinAndSelect('cashRegisterSession.company', 'company')
-      .where('company.id = :companyId', { companyId })
+      .where('company.id = :companyId', { companyId });
+
+    if (filters?.dateFrom) {
+      query.andWhere('cashRegisterSession.openedAt >= :dateFrom', {
+        dateFrom: filters.dateFrom,
+      });
+    }
+
+    if (filters?.dateTo) {
+      query.andWhere('cashRegisterSession.openedAt <= :dateTo', {
+        dateTo: filters.dateTo,
+      });
+    }
+
+    query
       .orderBy('cashRegisterSession.openedAt', direction)
       .skip((page - 1) * limit)
       .take(limit);

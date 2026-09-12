@@ -77,6 +77,7 @@ export class UpdateBatchUseCase implements UseCase<Input, Output> {
       await this.batchMovementRepository.save(
         BatchMovement.create({
           batchId: batch.id,
+          productId: batch.product!.id,
           type: delta > 0 ? TypeBatchMovement.ENTRY : TypeBatchMovement.EXIT,
           quantity: Math.abs(delta),
           reason: TypeBatchMovementReason.CORRECTION,

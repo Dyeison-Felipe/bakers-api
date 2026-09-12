@@ -49,6 +49,7 @@ export class DeleteBatchUseCase implements UseCase<Input, Output> {
       await this.batchMovementRepository.save(
         BatchMovement.create({
           batchId: batch.id,
+          productId: batch.product!.id,
           type: TypeBatchMovement.EXIT,
           quantity: batch.remainingQuantity,
           reason: TypeBatchMovementReason.DELETION,

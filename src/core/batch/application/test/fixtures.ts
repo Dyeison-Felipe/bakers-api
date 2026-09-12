@@ -10,9 +10,12 @@ import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 // checagens @IsInstance(Product)/@IsInstance(Company) (class-validator usa
 // instanceof). Como são propriedades próprias, a leitura nunca passa pelos
 // getters da classe real — evita o problema de getter-only da BaseEntity.
+// id default parece um UUID de verdade pelo mesmo motivo do `makeBatch`
+// abaixo: BatchMovement agora valida `productId` com @IsUUID() (sempre
+// preenchido, com ou sem lote por trás).
 export const makeProduct = (overrides: Partial<Product> = {}): Product => {
   const product = {
-    id: 'product-1',
+    id: '22222222-2222-4222-8222-222222222222',
     name: 'Pão Francês',
     unitCostPrice: 2,
     pricePerKilogram: 8,

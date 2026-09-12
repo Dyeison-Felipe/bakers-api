@@ -9,6 +9,7 @@ import { SaleRepository } from '../../domain/repositories/sale.repository';
 type Input = {
   page?: number;
   cashRegisterSessionId?: string;
+  search?: string;
 };
 
 type Output = PaginationOutput<FindAllSalesItemOutput>;
@@ -21,12 +22,12 @@ export class FindAllSalesUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ page, cashRegisterSessionId }: Input): Promise<Output> {
+  async execute({ page, cashRegisterSessionId, search }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
 
     const sales = await this.saleRepository.findAllByCompanyId(
       loggedUser.company.id,
-      { cashRegisterSessionId },
+      { cashRegisterSessionId, search },
       { page },
     );
 
@@ -36,6 +37,7 @@ export class FindAllSalesUseCase implements UseCase<Input, Output> {
         status: sale.status,
         paymentMethod: sale.paymentMethod,
         totalAmount: sale.totalAmount,
+        customerCpf: sale.customerCpf,
         createdAt: sale.auditable?.createdAt ?? new Date(),
       })),
       meta: sales.meta,

@@ -33,5 +33,6 @@ export type FindAllSalesItemOutput = {
   status: TypeSaleStatus;
   paymentMethod: TypePaymentMethod;
   totalAmount: number;
+  customerCpf: string | null;
   createdAt: Date;
 };

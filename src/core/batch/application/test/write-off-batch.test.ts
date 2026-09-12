@@ -1,7 +1,12 @@
 import { WriteOffBatchUseCase } from '../usecase/write-off-batch.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
-import { TypeOperationStock, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import {
+  TypeConsumptionUnit,
+  TypeOperationStock,
+  TypeProduct,
+  TypeUnitOfMeasurement,
+} from '@/shared/infra/enums/product';
 import { TypeBatchMovement, TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { makeBatch, makeLoggedUser, makeProduct } from './fixtures';
 import type { BatchRepository } from '../../domain/repositories/batch.repository';
@@ -182,5 +187,60 @@ describe('WriteOffBatchUseCase', () => {
       (call) => call[0],
     );
     expect(movement.unitCostSnapshot).toBe(15);
+  });
+
+  it('should record a movement without touching batches/stock for a raw material without stock control', async () => {
+    const product = makeProduct({
+      typeProduct: TypeProduct.RAW_MATERIAL,
+      stockManagement: false,
+      consumerUnit: TypeConsumptionUnit.ML,
+      pricePerKilogram: 0.08, // preço por ml (nome do campo é herdado do caso kg)
+      unitCostPrice: 40, // preço da garrafa inteira — não deve ser usado aqui
+    } as never);
+    productRepository.findProductByIdAndCompanyId.mockResolvedValue(product);
+
+    const output = await sut.execute({
+      productId: product.id,
+      quantity: 60,
+      reason: TypeBatchMovementReason.WASTE,
+    });
+
+    expect(batchRepository.findAvailableByProductIdOrderByExpiration).not.toHaveBeenCalled();
+    expect(batchRepository.update).not.toHaveBeenCalled();
+    expect(updateStockProductUseCase.execute).not.toHaveBeenCalled();
+
+    expect(batchMovementRepository.save).toHaveBeenCalledTimes(1);
+    const [movement] = batchMovementRepository.save.mock.calls.map((call) => call[0]);
+    expect(movement.batchId).toBeNull();
+    expect(movement.productId).toBe(product.id);
+    expect(movement.quantity).toBe(60);
+    // 0.08/ml, não 40 (preço da garrafa) — essa é a regressão que motivou o teste.
+    expect(movement.unitCostSnapshot).toBe(0.08);
+
+    expect(output).toEqual({
+      productId: product.id,
+      totalWrittenOff: 60,
+      batchesAffected: 0,
+    });
+  });
+
+  it('should use unitCostPrice (not pricePerKilogram) for a raw material consumed by the unit', async () => {
+    const product = makeProduct({
+      typeProduct: TypeProduct.RAW_MATERIAL,
+      stockManagement: false,
+      consumerUnit: TypeConsumptionUnit.UN,
+      unitCostPrice: 0.5,
+      pricePerKilogram: null,
+    } as never);
+    productRepository.findProductByIdAndCompanyId.mockResolvedValue(product);
+
+    await sut.execute({
+      productId: product.id,
+      quantity: 3,
+      reason: TypeBatchMovementReason.WASTE,
+    });
+
+    const [movement] = batchMovementRepository.save.mock.calls.map((call) => call[0]);
+    expect(movement.unitCostSnapshot).toBe(0.5);
   });
 });

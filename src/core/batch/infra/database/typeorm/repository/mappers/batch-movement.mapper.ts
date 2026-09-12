@@ -1,4 +1,5 @@
 import { BatchMovement } from '@/core/batch/domain/entities/batch-movement.entity';
+import { ProductSchema } from '@/core/product/infra/database/typeorm/schema/product.schema';
 import { BatchSchema } from '../../schema/batch.schema';
 import { BatchMovementSchema } from '../../schema/batch-movement.schema';
 
@@ -6,7 +7,8 @@ export class BatchMovementMapper {
   static toEntity(schema: BatchMovementSchema): BatchMovement {
     return new BatchMovement({
       id: schema.id,
-      batchId: schema.batch.id,
+      batchId: schema.batch?.id ?? null,
+      productId: schema.product.id,
       type: schema.type,
       quantity: schema.quantity,
       reason: schema.reason,
@@ -24,7 +26,8 @@ export class BatchMovementMapper {
   static toSchema(entity: BatchMovement): BatchMovementSchema {
     return BatchMovementSchema.with({
       id: entity.id,
-      batch: { id: entity.batchId } as BatchSchema,
+      batch: entity.batchId ? ({ id: entity.batchId } as BatchSchema) : null,
+      product: { id: entity.productId } as ProductSchema,
       type: entity.type,
       quantity: entity.quantity,
       reason: entity.reason,

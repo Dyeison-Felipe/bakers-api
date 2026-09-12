@@ -4,11 +4,12 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { WriteOffBatchOutput } from '@/shared/application/output/batch/write-off-batch.output';
-import { TypeOperationStock, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeOperationStock, TypeProduct, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { TypeBatchMovement, TypeBatchMovementReason } from '@/shared/infra/enums/batch';
 import { Transactional } from 'typeorm-transactional';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { UpdateStockProductUseCase } from '@/core/product/application/usecase/increase-decrease-stock-product.usecase';
+import { ProductRecipeCostCalculator } from '@/core/product/application/services/product-recipe-cost-calculator.service';
 import { BatchRepository } from '../../domain/repositories/batch.repository';
 import { BatchMovementRepository } from '../../domain/repositories/batch-movement.repository';
 import { BatchMovement } from '../../domain/entities/batch-movement.entity';
@@ -50,6 +51,45 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
       throw new NotFoundError('Produto não encontrado');
     }
 
+    // Matéria-prima usa `consumerUnit` (un/kg/ml) pra decidir o custo, não
+    // `unitOfMeasurement` — esse campo é da unidade de VENDA e nunca é
+    // preenchido pra matéria-prima, então "un vs kg" aqui é só pra produção
+    // própria/revenda (mesma lógica já usada no custo de receita).
+    const isRawMaterial =
+      product.typeProduct === TypeProduct.RAW_MATERIAL ||
+      product.typeProduct === TypeProduct.RAW_MATERIAL_AND_RESALE;
+
+    const costBasis = isRawMaterial
+      ? ProductRecipeCostCalculator.getCostPerConsumerUnit(product)
+      : product.unitOfMeasurement === TypeUnitOfMeasurement.KG
+        ? (product.pricePerKilogram ?? 0)
+        : product.unitCostPrice;
+
+    // Sem controle de estoque (tipicamente matéria-prima), não existe lote
+    // nenhum pra alocar — a baixa só registra o custo, sem mexer em
+    // lote/estoque (produção própria é a única categoria que efetivamente
+    // rastreia estoque via lote).
+    if (!product.stockManagement) {
+      await this.batchMovementRepository.save(
+        BatchMovement.create({
+          batchId: null,
+          productId: product.id,
+          type: TypeBatchMovement.EXIT,
+          quantity: input.quantity,
+          reason: input.reason,
+          reasonDescription: input.reasonDescription ?? null,
+          unitCostSnapshot: costBasis,
+          createdBy: loggedUser.id,
+        }),
+      );
+
+      return {
+        productId: product.id,
+        totalWrittenOff: input.quantity,
+        batchesAffected: 0,
+      };
+    }
+
     const availableBatches =
       await this.batchRepository.findAvailableByProductIdOrderByExpiration(
         input.productId,
@@ -68,11 +108,6 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
       availableBatches.map((batch) => [batch.id, batch]),
     );
 
-    const isWeightBased = product.unitOfMeasurement === TypeUnitOfMeasurement.KG;
-    const costBasis = isWeightBased
-      ? (product.pricePerKilogram ?? 0)
-      : product.unitCostPrice;
-
     for (const allocation of allocations) {
       const batch = batchesById.get(allocation.batchId)!;
 
@@ -83,6 +118,7 @@ export class WriteOffBatchUseCase implements UseCase<Input, Output> {
       await this.batchMovementRepository.save(
         BatchMovement.create({
           batchId: batch.id,
+          productId: product.id,
           type: TypeBatchMovement.EXIT,
           quantity: allocation.quantityToTake,
           reason: input.reason,

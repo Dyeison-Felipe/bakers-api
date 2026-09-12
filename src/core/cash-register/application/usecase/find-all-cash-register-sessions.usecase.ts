@@ -9,6 +9,8 @@ import { CashRegisterSessionRepository } from '../../domain/repositories/cash-re
 type Input = {
   page?: number;
   limit?: number;
+  dateFrom?: Date;
+  dateTo?: Date;
 };
 
 type Output = PaginationOutput<FindAllCashRegisterSessionsItemOutput>;
@@ -28,6 +30,10 @@ export class FindAllCashRegisterSessionsUseCase
 
     const sessions = await this.cashRegisterSessionRepository.findAllByCompanyId(
       loggedUser.company.id,
+      {
+        dateFrom: input.dateFrom,
+        dateTo: input.dateTo,
+      },
       {
         page: input.page,
         limit: input.limit,

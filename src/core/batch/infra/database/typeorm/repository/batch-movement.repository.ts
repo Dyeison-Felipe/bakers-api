@@ -21,7 +21,7 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
 
     const savedWithRelations = await this.batchMovementRepository.findOne({
       where: { id: saved.id },
-      relations: ['batch'],
+      relations: ['batch', 'product'],
     });
 
     return BatchMovementMapper.toEntity(savedWithRelations!);
@@ -30,7 +30,7 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
   async findById(id: string): Promise<BatchMovement | null> {
     const schema = await this.batchMovementRepository.findOne({
       where: { id },
-      relations: ['batch'],
+      relations: ['batch', 'product'],
     });
 
     if (!schema) return null;
@@ -41,7 +41,7 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
   async findAllByBatchId(batchId: string): Promise<BatchMovement[]> {
     const schemas = await this.batchMovementRepository.find({
       where: { batch: { id: batchId } },
-      relations: ['batch'],
+      relations: ['batch', 'product'],
       order: { createdAt: 'ASC' },
     });
 
@@ -56,8 +56,8 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
   ): Promise<number> {
     const result = await this.batchMovementRepository
       .createQueryBuilder('movement')
-      .leftJoin('movement.batch', 'batch')
-      .leftJoin('batch.company', 'company')
+      .leftJoin('movement.product', 'product')
+      .leftJoin('product.company', 'company')
       .select(
         'COALESCE(SUM(movement.quantity * movement.unitCostSnapshot), 0)',
         'total',
@@ -81,15 +81,14 @@ export class BatchMovementRepositoryImpl implements BatchMovementRepository {
   ): Promise<BatchMovementReportItem[]> {
     const rows = await this.batchMovementRepository
       .createQueryBuilder('movement')
-      .leftJoin('movement.batch', 'batch')
-      .leftJoin('batch.company', 'company')
-      .leftJoin('batch.product', 'product')
+      .leftJoin('movement.product', 'product')
+      .leftJoin('product.company', 'company')
       .select('movement.id', 'id')
       .addSelect('movement.createdAt', 'createdAt')
       .addSelect('product.id', 'productId')
       .addSelect('product.name', 'productName')
       .addSelect('movement.quantity', 'quantity')
-      .addSelect('batch.unitOfMeasurement', 'unitOfMeasurement')
+      .addSelect('product.unitOfMeasurement', 'unitOfMeasurement')
       .addSelect('movement.unitCostSnapshot', 'unitCostSnapshot')
       .addSelect(
         'COALESCE(movement.quantity * movement.unitCostSnapshot, 0)',

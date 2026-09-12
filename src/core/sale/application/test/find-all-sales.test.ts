@@ -42,6 +42,7 @@ describe('FindAllSalesUseCase', () => {
         status: 'COMPLETED',
         paymentMethod: 'CASH',
         totalAmount: 10,
+        customerCpf: null,
         createdAt: expect.any(Date),
       },
     ]);

@@ -16,8 +16,12 @@ import {
 import { BatchMovementProps } from '../entities/batch-movement.entity';
 
 export class BatchMovementRules {
+  @IsOptional()
   @IsUUID()
-  batchId: string;
+  batchId: string | null;
+
+  @IsUUID()
+  productId: string;
 
   @IsEnum(TypeBatchMovement)
   type: TypeBatchMovement;
