@@ -14,14 +14,13 @@ import {
 import type { ProductRepository } from '../../domain/repositories/product.repository';
 import type { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import type { StorageService } from '@/shared/application/storage/storage.service';
-import type { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
 import type { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import type { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import type { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
 import type { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import type { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
-import type { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
+import type { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 
 describe('CreateProductUseCase', () => {
   let productRepository: jest.Mocked<
@@ -35,14 +34,13 @@ describe('CreateProductUseCase', () => {
   >;
   let categoryRepository: jest.Mocked<Pick<CategoryRepository, 'findCategoryByIdAndCompanyId'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'upload'>>;
-  let productRecipeItemRepository: jest.Mocked<Pick<ProductRecipeItemRepository, 'save'>>;
   let productAdditionalCostRepository: jest.Mocked<Pick<ProductAdditionalCostRepository, 'save'>>;
   let additionalCostRepository: jest.Mocked<Pick<AdditionalCostRepository, 'findAllByIdsAndCompanyId'>>;
   let recipeRepository: jest.Mocked<Pick<RecipeRepository, 'findAllByIdsAndCompanyId'>>;
   let recipeItemRepository: jest.Mocked<Pick<RecipeItemRepository, 'findAllByRecipeIds'>>;
   let productRecipeLinkRepository: jest.Mocked<Pick<ProductRecipeLinkRepository, 'save'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
-  let createBatchUseCase: jest.Mocked<Pick<CreateBatchUseCase, 'execute'>>;
+  let adjustProductStockUseCase: jest.Mocked<Pick<AdjustProductStockUseCase, 'execute'>>;
   let sut: CreateProductUseCase;
 
   const ownProductionInput = {
@@ -70,7 +68,6 @@ describe('CreateProductUseCase', () => {
       findCategoryByIdAndCompanyId: jest.fn().mockResolvedValue(makeCategory()),
     };
     storageService = { upload: jest.fn() };
-    productRecipeItemRepository = { save: jest.fn().mockResolvedValue(undefined) };
     productAdditionalCostRepository = { save: jest.fn().mockResolvedValue(undefined) };
     additionalCostRepository = { findAllByIdsAndCompanyId: jest.fn().mockResolvedValue([]) };
     recipeRepository = { findAllByIdsAndCompanyId: jest.fn().mockResolvedValue([]) };
@@ -80,20 +77,21 @@ describe('CreateProductUseCase', () => {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
     };
-    createBatchUseCase = { execute: jest.fn().mockResolvedValue({ id: 'batch-1' }) };
+    adjustProductStockUseCase = {
+      execute: jest.fn().mockResolvedValue({ productId: 'product-1', totalCost: 0 }),
+    };
 
     sut = new CreateProductUseCase(
       productRepository as unknown as ProductRepository,
       loggedUserService,
       categoryRepository as unknown as CategoryRepository,
       storageService as unknown as StorageService,
-      productRecipeItemRepository as unknown as ProductRecipeItemRepository,
       productAdditionalCostRepository as unknown as ProductAdditionalCostRepository,
       additionalCostRepository as unknown as AdditionalCostRepository,
       recipeRepository as unknown as RecipeRepository,
       recipeItemRepository as unknown as RecipeItemRepository,
       productRecipeLinkRepository as unknown as ProductRecipeLinkRepository,
-      createBatchUseCase as unknown as CreateBatchUseCase,
+      adjustProductStockUseCase as unknown as AdjustProductStockUseCase,
     );
   });
 
@@ -123,15 +121,6 @@ describe('CreateProductUseCase', () => {
     await expect(sut.execute(ownProductionInput)).rejects.toThrow(NotFoundError);
   });
 
-  it('should throw NotFoundError when a raw material is not found', async () => {
-    await expect(
-      sut.execute({
-        ...ownProductionInput,
-        productMaterial: [{ id: 'missing', quantity: 1 }],
-      }),
-    ).rejects.toThrow(NotFoundError);
-  });
-
   it('should throw NotFoundError when an additional cost is not found', async () => {
     await expect(
       sut.execute({
@@ -150,10 +139,7 @@ describe('CreateProductUseCase', () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('should compute costPrice from materials, additional costs and recipe links, and persist all links', async () => {
-    productRepository.findAllByIdsAndCompanyId.mockResolvedValue([
-      makeProduct({ id: 'mat-1', consumerUnit: 'kg', pricePerKilogram: 4 }),
-    ]);
+  it('should compute costPrice from additional costs and recipe links, and persist all links', async () => {
     additionalCostRepository.findAllByIdsAndCompanyId.mockResolvedValue([
       makeAdditionalCost({ id: 'ac-1' }),
     ]);
@@ -164,14 +150,12 @@ describe('CreateProductUseCase', () => {
 
     await sut.execute({
       ...ownProductionInput,
-      productMaterial: [{ id: 'mat-1', quantity: 2 }], // 8
       additionalCost: [{ id: 'ac-1', value: 5 }], // 5
       recipeLinks: [{ id: 'recipe-1' }], // 3
     });
 
     const savedProduct = productRepository.save.mock.calls[0][0];
-    expect(savedProduct.costPrice).toBe(16);
-    expect(productRecipeItemRepository.save).toHaveBeenCalledTimes(1);
+    expect(savedProduct.costPrice).toBe(8);
     expect(productAdditionalCostRepository.save).toHaveBeenCalledTimes(1);
     expect(productRecipeLinkRepository.save).toHaveBeenCalledTimes(1);
   });
@@ -214,7 +198,7 @@ describe('CreateProductUseCase', () => {
     expect(output).toEqual({ id: expect.any(String) });
   });
 
-  it('should create an initial batch instead of writing currentStock directly when stock is informed', async () => {
+  it('should register a stock entry instead of writing currentStock directly when stock is informed', async () => {
     await sut.execute({
       ...ownProductionInput,
       currentStock: 20,
@@ -223,19 +207,19 @@ describe('CreateProductUseCase', () => {
 
     const savedProduct = productRepository.save.mock.calls[0][0];
     expect(savedProduct.currentStock).toBeNull();
-    expect(createBatchUseCase.execute).toHaveBeenCalledWith(
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({
         quantity: 20,
-        unitOfMeasurement: TypeUnitOfMeasurement.UN,
-        dailyProductionItemId: null,
+        type: 'ENTRY',
+        reason: 'PRODUCTION',
       }),
     );
   });
 
-  it('should not create a batch when no initial stock is informed', async () => {
+  it('should not register a stock entry when no initial stock is informed', async () => {
     await sut.execute(ownProductionInput);
 
-    expect(createBatchUseCase.execute).not.toHaveBeenCalled();
+    expect(adjustProductStockUseCase.execute).not.toHaveBeenCalled();
   });
 
   it('should throw BadRequestError when initial stock is informed without a unit of measurement', async () => {

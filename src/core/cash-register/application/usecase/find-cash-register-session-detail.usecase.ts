@@ -8,8 +8,8 @@ import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.re
 import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
@@ -40,8 +40,8 @@ export class FindCashRegisterSessionDetailUseCase
     private readonly dailyProductionItemRepository: DailyProductionItemRepository,
     @Inject(PROVIDERS.EXPENSE_REPOSITORY)
     private readonly expenseRepository: ExpenseRepository,
-    @Inject(PROVIDERS.BATCH_MOVEMENT_REPOSITORY)
-    private readonly batchMovementRepository: BatchMovementRepository,
+    @Inject(PROVIDERS.STOCK_MOVEMENT_REPOSITORY)
+    private readonly stockMovementRepository: StockMovementRepository,
     @Inject(PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY)
     private readonly cashRegisterMovementRepository: CashRegisterMovementRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
@@ -92,17 +92,17 @@ export class FindCashRegisterSessionDetailUseCase
         { dateFrom: sessionDayFrom, dateTo: sessionDayTo },
         { limit: 1000 },
       ),
-      this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
+      this.stockMovementRepository.sumUnitCostByCompanyAndDateAndReason(
         companyId,
         sessionWindowStart,
         sessionWindowEnd,
-        [TypeBatchMovementReason.WASTE, TypeBatchMovementReason.MANUAL_DISCARD],
+        [TypeStockMovementReason.WASTE],
       ),
-      this.batchMovementRepository.sumUnitCostByCompanyAndDateAndReason(
+      this.stockMovementRepository.sumUnitCostByCompanyAndDateAndReason(
         companyId,
         sessionWindowStart,
         sessionWindowEnd,
-        [TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST],
+        [TypeStockMovementReason.LEFTOVER_SOLD_AT_COST],
       ),
       this.cashRegisterMovementRepository.sumAmountByCashRegisterSessionIdAndType(
         session.id,

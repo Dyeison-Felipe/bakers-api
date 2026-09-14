@@ -5,9 +5,7 @@ import { EntityValidationError } from '@/shared/application/errors/validation-er
 import { Recipe } from './recipe.entity';
 import { RecipeItemValidatorFactory } from '../validators/recipe-item-validator';
 
-// Item de uma receita-base reutilizável (matéria-prima + quantidade). Não
-// confundir com ProductRecipeItem, que é a matéria-prima avulsa vinculada
-// direto a um produto de produção própria, fora de qualquer receita.
+// Item de uma receita (matéria-prima + quantidade).
 export type RecipeItemProps = {
   recipe: Recipe;
   material: Product;

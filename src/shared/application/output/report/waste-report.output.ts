@@ -1,4 +1,4 @@
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export type WasteReportItem = {
@@ -10,7 +10,7 @@ export type WasteReportItem = {
   unitOfMeasurement: TypeUnitOfMeasurement;
   unitCost: number | null;
   totalCost: number;
-  reason: TypeBatchMovementReason;
+  reason: TypeStockMovementReason;
   reasonDescription: string | null;
 };
 

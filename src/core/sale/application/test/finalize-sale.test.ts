@@ -11,7 +11,7 @@ import type { SaleRepository } from '../../domain/repositories/sale.repository';
 import type { SaleItemRepository } from '../../domain/repositories/sale-item.repository';
 import type { StorageService } from '@/shared/application/storage/storage.service';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
-import type { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
+import type { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 import type { CustomerRepository } from '@/core/customer/domain/repositories/customer.repository';
 
 jest.mock('../services/sale-receipt-pdf.service', () => ({
@@ -25,7 +25,7 @@ describe('FinalizeSaleUseCase', () => {
   let saleItemRepository: jest.Mocked<Pick<SaleItemRepository, 'saveMany'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'uploadBuffer'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
-  let writeOffBatchUseCase: jest.Mocked<Pick<WriteOffBatchUseCase, 'execute'>>;
+  let adjustProductStockUseCase: jest.Mocked<Pick<AdjustProductStockUseCase, 'execute'>>;
   let customerRepository: jest.Mocked<
     Pick<CustomerRepository, 'findCustomerByIdAndCompanyId'>
   >;
@@ -48,7 +48,9 @@ describe('FinalizeSaleUseCase', () => {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
     };
-    writeOffBatchUseCase = { execute: jest.fn().mockResolvedValue(undefined) };
+    adjustProductStockUseCase = {
+      execute: jest.fn().mockResolvedValue({ productId: 'product-1', totalCost: 0 }),
+    };
     customerRepository = {
       findCustomerByIdAndCompanyId: jest.fn().mockResolvedValue(null),
     };
@@ -61,7 +63,7 @@ describe('FinalizeSaleUseCase', () => {
       storageService as unknown as StorageService,
       loggedUserService,
       customerRepository as unknown as CustomerRepository,
-      writeOffBatchUseCase as unknown as WriteOffBatchUseCase,
+      adjustProductStockUseCase as unknown as AdjustProductStockUseCase,
     );
   });
 
@@ -188,8 +190,8 @@ describe('FinalizeSaleUseCase', () => {
       paymentMethod: TypePaymentMethod.PIX,
     });
 
-    expect(writeOffBatchUseCase.execute).toHaveBeenCalledTimes(1);
-    expect(writeOffBatchUseCase.execute).toHaveBeenCalledWith(
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledTimes(1);
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ productId: 'product-1', quantity: 1 }),
     );
   });

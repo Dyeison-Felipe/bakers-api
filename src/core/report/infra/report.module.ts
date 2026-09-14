@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
-import { BatchPersistenceModule } from '@/core/batch/infra/batch-persistence.module';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
+import { StockMovementPersistenceModule } from '@/core/stock-movement/infra/stock-movement-persistence.module';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { CashRegisterModule } from '@/core/cash-register/infra/cash-register.module';
 import { CashRegisterPersistenceModule } from '@/core/cash-register/infra/cash-register-persistence.module';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
@@ -30,7 +30,7 @@ import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate
 
 @Module({
   imports: [
-    BatchPersistenceModule,
+    StockMovementPersistenceModule,
     CashRegisterModule,
     CashRegisterPersistenceModule,
     DailyProductionPersistenceModule,
@@ -42,10 +42,10 @@ import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate
     {
       provide: FindWasteReportUseCase,
       useFactory: (
-        batchMovementRepository: BatchMovementRepository,
+        stockMovementRepository: StockMovementRepository,
         loggedUserService: LoggedUserService,
-      ) => new FindWasteReportUseCase(batchMovementRepository, loggedUserService),
-      inject: [PROVIDERS.BATCH_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+      ) => new FindWasteReportUseCase(stockMovementRepository, loggedUserService),
+      inject: [PROVIDERS.STOCK_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
     {
       provide: FindCashRegisterReportUseCase,
@@ -105,21 +105,21 @@ import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
         expenseRepository: ExpenseRepository,
-        batchMovementRepository: BatchMovementRepository,
+        stockMovementRepository: StockMovementRepository,
         loggedUserService: LoggedUserService,
       ) =>
         new FindCostComparisonSeriesUseCase(
           dailyProductionRepository,
           dailyProductionItemRepository,
           expenseRepository,
-          batchMovementRepository,
+          stockMovementRepository,
           loggedUserService,
         ),
       inject: [
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
         PROVIDERS.EXPENSE_REPOSITORY,
-        PROVIDERS.BATCH_MOVEMENT_REPOSITORY,
+        PROVIDERS.STOCK_MOVEMENT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },
@@ -135,14 +135,14 @@ import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate
     {
       provide: FindTopWastedProductsUseCase,
       useFactory: (
-        batchMovementRepository: BatchMovementRepository,
+        stockMovementRepository: StockMovementRepository,
         loggedUserService: LoggedUserService,
       ) =>
         new FindTopWastedProductsUseCase(
-          batchMovementRepository,
+          stockMovementRepository,
           loggedUserService,
         ),
-      inject: [PROVIDERS.BATCH_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+      inject: [PROVIDERS.STOCK_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
     {
       provide: GenerateWasteReportPdfUseCase,

@@ -21,7 +21,6 @@ import {
 } from '@/shared/infra/enums/product';
 import { MulterFileDto } from '@/shared/infra/dto/multer-file';
 import { Type } from 'class-transformer';
-import { ProductMaterialDto } from './calculate-recipe-cost.dto';
 import { AdditionalCostInputDto } from './additional-cost.dto';
 import { RecipeLinkInputDto } from './recipe-link.dto';
 
@@ -245,16 +244,6 @@ export class CreateProductDto {
   @IsUUID()
   @IsNotEmpty()
   category: string;
-
-  @ApiPropertyOptional({
-    description: 'Matérias-primas utilizadas na receita (produção própria)',
-    type: [ProductMaterialDto],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ProductMaterialDto)
-  productMaterial?: ProductMaterialDto[];
 
   @ApiPropertyOptional({
     description: 'Custos adicionais vinculados ao produto (produção própria)',

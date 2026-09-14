@@ -17,17 +17,12 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { MulterFile } from '@/shared/application/storage/multer-file.type';
 import { StorageService } from '@/shared/application/storage/storage.service';
-import { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
-import { ProductRecipeItem } from '../../domain/entities/product-recipe-item.entity';
 import { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import { ProductAdditionalCost } from '../../domain/entities/product-additional-cost.entity';
 import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import { AdditionalCost } from '@/core/additional-cost/domain/entities/additional-cost.entity';
 import { Transactional } from 'typeorm-transactional';
-import {
-  MaterialUsage,
-  ProductRecipeCostCalculator,
-} from '../services/product-recipe-cost-calculator.service';
+import { ProductRecipeCostCalculator } from '../services/product-recipe-cost-calculator.service';
 import { ProductUnitCostCalculator } from '../services/product-unit-cost-calculator.service';
 import { ProductProfitCalculator } from '../services/product-proft-calculator.service';
 import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
@@ -35,12 +30,11 @@ import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-i
 import { Recipe } from '@/core/recipe/domain/entities/recipe.entity';
 import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import { ProductRecipeLink } from '../../domain/entities/product-recipe-link.entity';
-import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
-
-type CostPriceProduct = {
-  id: string;
-  quantity: number;
-};
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
+import {
+  TypeStockMovement,
+  TypeStockMovementReason,
+} from '@/shared/infra/enums/stock-movement';
 
 type AdditionalCostInput = {
   id: string;
@@ -81,7 +75,6 @@ type Input = {
   volume?: number;
   category: string;
   image?: MulterFile;
-  productMaterial?: CostPriceProduct[];
   additionalCost?: AdditionalCostInput[];
   recipeLinks?: RecipeLinkInput[];
 };
@@ -98,8 +91,6 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     private readonly categoryRepository: CategoryRepository,
     @Inject(PROVIDERS.STORAGE_SERVICE)
     private readonly storageService: StorageService,
-    @Inject(PROVIDERS.PRODUCT_RECIPE_ITEM)
-    private readonly productRecipeItemRepository: ProductRecipeItemRepository,
     @Inject(PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY)
     private readonly productAdditionalCostRepository: ProductAdditionalCostRepository,
     @Inject(PROVIDERS.ADDITIONAL_COST_REPOSITORY)
@@ -110,7 +101,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     private readonly recipeItemRepository: RecipeItemRepository,
     @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
     private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
-    private readonly createBatchUseCase: CreateBatchUseCase,
+    private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
   ) {}
 
   @Transactional()
@@ -167,19 +158,11 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       throw new NotFoundError(`Categoria não encontrada`);
     }
 
-    // 1. Custo de receita (matérias-primas) — SOMENTE produção própria
+    // 1. Custo de receita — SOMENTE produção própria
     let costPrice = input.costPrice;
-    let materialsUsage: MaterialUsage[] = [];
     let additionalCostsUsage: AdditionalCostUsage[] = [];
     let resolvedRecipes: Recipe[] = [];
     let recipesCost = 0;
-
-    if (isOwnProduction && input.productMaterial) {
-      materialsUsage = await this.resolveMaterialsUsage(
-        input.productMaterial,
-        company.id,
-      );
-    }
 
     // 1.1 Custos adicionais — SOMENTE produção própria
     if (isOwnProduction && input.additionalCost) {
@@ -189,7 +172,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       );
     }
 
-    // 1.2 Receitas-base reutilizáveis — SOMENTE produção própria
+    // 1.2 Receitas — SOMENTE produção própria
     if (isOwnProduction && input.recipeLinks?.length) {
       resolvedRecipes = await this.resolveRecipeLinks(
         input.recipeLinks,
@@ -198,17 +181,13 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       recipesCost = await this.calculateRecipesCost(resolvedRecipes);
     }
 
-    if (materialsUsage.length || additionalCostsUsage.length || resolvedRecipes.length) {
-      const materialsCost = materialsUsage.length
-        ? ProductRecipeCostCalculator.calculateTotalCost(materialsUsage)
-        : 0;
-
+    if (additionalCostsUsage.length || resolvedRecipes.length) {
       const additionalCostsTotal = additionalCostsUsage.reduce(
         (sum, usage) => sum + usage.value,
         0,
       );
 
-      costPrice = materialsCost + additionalCostsTotal + recipesCost;
+      costPrice = additionalCostsTotal + recipesCost;
     }
 
     // 2. Custo unitário / por kg — matéria-prima E produção própria
@@ -258,9 +237,8 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       salePrice: requiresPricing ? salePrice : null,
       scaleReference: input.scaleReference ?? null,
       // Nasce sem estoque: se houver estoque inicial, ele é lançado logo abaixo
-      // via `CreateBatchUseCase`, que cria o lote e incrementa `stockAtual` em
-      // conjunto — nunca setado direto aqui (senão fica sem lote por trás e a
-      // baixa por venda/produção falha por "estoque insuficiente").
+      // via `AdjustProductStockUseCase`, que também registra o movimento de
+      // entrada — nunca setado direto aqui, pra manter o histórico consistente.
       stockAtual: null,
       stockMin: input.stockMin ?? null,
       stockManagement:
@@ -283,17 +261,12 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     const saveProduct = await this.productRepository.save(newProduct);
 
     if (input.stockManagement && initialStock > 0 && input.unitOfMeasurement) {
-      await this.createBatchUseCase.execute({
+      await this.adjustProductStockUseCase.execute({
         productId: saveProduct.id,
         quantity: initialStock,
-        unitOfMeasurement: input.unitOfMeasurement,
-        productionDate: new Date(),
-        dailyProductionItemId: null,
+        type: TypeStockMovement.ENTRY,
+        reason: TypeStockMovementReason.PRODUCTION,
       });
-    }
-
-    if (isOwnProduction && materialsUsage.length) {
-      await this.saveRecipeItems(saveProduct, materialsUsage);
     }
 
     if (isOwnProduction && additionalCostsUsage.length) {
@@ -350,36 +323,6 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
     );
   }
 
-  private async resolveMaterialsUsage(
-    productMaterial: CostPriceProduct[],
-    companyId: string,
-  ): Promise<MaterialUsage[]> {
-    if (!productMaterial?.length) {
-      return [];
-    }
-
-    const materialIds = productMaterial.map((m) => m.id);
-
-    const materials = await this.productRepository.findAllByIdsAndCompanyId(
-      materialIds,
-      companyId,
-    );
-
-    const materialsMap = new Map(materials.map((m) => [m.id, m]));
-
-    const missing = materialIds.filter((id) => !materialsMap.has(id));
-    if (missing.length) {
-      throw new NotFoundError(
-        `Matéria(s)-prima não encontrada(s): ${missing.join(', ')}`,
-      );
-    }
-
-    return productMaterial.map((m) => ({
-      material: materialsMap.get(m.id)!,
-      quantity: m.quantity,
-    }));
-  }
-
   private async resolveAdditionalCostsUsage(
     additionalCosts: AdditionalCostInput[],
     companyId: string,
@@ -413,23 +356,6 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       additionalCost: additionalCostsMap.get(ac.id)!,
       value: ac.value,
     }));
-  }
-
-  private async saveRecipeItems(
-    product: Product,
-    materialsUsage: MaterialUsage[],
-  ): Promise<void> {
-    const recipeItems = materialsUsage.map((usage) =>
-      ProductRecipeItem.create({
-        product,
-        material: usage.material,
-        quantity: usage.quantity,
-      }),
-    );
-
-    await Promise.all(
-      recipeItems.map((item) => this.productRecipeItemRepository.save(item)),
-    );
   }
 
   private async saveAdditionalCosts(

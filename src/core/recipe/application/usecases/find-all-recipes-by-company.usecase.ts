@@ -6,10 +6,15 @@ import { RecipeItemRepository } from '../../domain/repositories/recipe-item.repo
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { ProductRecipeCostCalculator } from '@/core/product/application/services/product-recipe-cost-calculator.service';
 import { RecipeDetailOutput } from '@/shared/application/output/recipe/recipe.output';
+import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
 
-type Input = void;
+type Input = {
+  name?: string;
+  page?: number;
+  limit?: number;
+};
 
-type Output = Omit<RecipeDetailOutput, 'items'>[];
+type Output = PaginationOutput<Omit<RecipeDetailOutput, 'items'>>;
 
 export class FindAllRecipesByCompanyUseCase implements UseCase<Input, Output> {
   constructor(
@@ -21,29 +26,37 @@ export class FindAllRecipesByCompanyUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute(): Promise<Output> {
+  async execute(input: Input = {}): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const company = loggedUser.company;
 
-    const recipes = await this.recipeRepository.findAllByCompanyId(company.id);
-    if (!recipes.length) return [];
+    const { items: recipes, meta } =
+      await this.recipeRepository.findAllByCompanyIdPaginated(
+        company.id,
+        { page: input.page, limit: input.limit },
+        input.name,
+      );
 
-    const items = await this.recipeItemRepository.findAllByRecipeIds(
+    if (!recipes.length) {
+      return { items: [], meta };
+    }
+
+    const recipeItems = await this.recipeItemRepository.findAllByRecipeIds(
       recipes.map((recipe) => recipe.id),
     );
 
-    const itemsByRecipeId = new Map<string, typeof items>();
-    for (const item of items) {
+    const itemsByRecipeId = new Map<string, typeof recipeItems>();
+    for (const item of recipeItems) {
       const list = itemsByRecipeId.get(item.recipe.id) ?? [];
       list.push(item);
       itemsByRecipeId.set(item.recipe.id, list);
     }
 
-    return recipes.map((recipe) => {
-      const recipeItems = itemsByRecipeId.get(recipe.id) ?? [];
-      const costPrice = recipeItems.length
+    const items = recipes.map((recipe) => {
+      const items = itemsByRecipeId.get(recipe.id) ?? [];
+      const costPrice = items.length
         ? ProductRecipeCostCalculator.calculateTotalCost(
-            recipeItems.map((item) => ({
+            items.map((item) => ({
               material: item.material,
               quantity: item.quantity,
             })),
@@ -52,5 +65,7 @@ export class FindAllRecipesByCompanyUseCase implements UseCase<Input, Output> {
 
       return { id: recipe.id, name: recipe.name, costPrice };
     });
+
+    return { items, meta };
   }
 }

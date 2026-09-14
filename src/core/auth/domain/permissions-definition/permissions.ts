@@ -2,7 +2,7 @@ import { PermissionCategory } from "./category";
 import { PermissionPlan } from "./plan";
 import { PermissionProduct } from "./product";
 import { PermissionUser } from "./user";
-import { PermissionBatch } from "./batch";
+import { PermissionStockMovement } from "./stock-movement";
 import { PermissionDailyProduction } from "./daily-production";
 import { PermissionSale } from "./sale";
 import { PermissionCashRegister } from "./cash-register";
@@ -25,7 +25,7 @@ export const Permissions = {
   ...PermissionCategory,
   ...PermissionProduct,
   ...PermissionUser,
-  ...PermissionBatch,
+  ...PermissionStockMovement,
   ...PermissionDailyProduction,
   ...PermissionSale,
   ...PermissionCashRegister,

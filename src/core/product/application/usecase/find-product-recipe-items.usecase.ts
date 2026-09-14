@@ -1,7 +1,6 @@
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
-import { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
 import { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
@@ -12,20 +11,6 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 
 type Input = {
   productId: string;
-};
-
-type RecipeItemOutput = {
-  id: string;
-  quantity: number;
-  material: {
-    id: string;
-    name: string;
-    imagePath: string | null;
-    consumerUnit: string | null;
-    unitCostPrice: number;
-    pricePerKilogram: number | null;
-    costPrice: number;
-  };
 };
 
 type AdditionalCostItemOutput = {
@@ -47,15 +32,12 @@ type RecipeLinkOutput = {
 };
 
 type Output = {
-  recipeItems: RecipeItemOutput[];
   additionalCost: AdditionalCostItemOutput[];
   recipeLinks: RecipeLinkOutput[];
 };
 
 export class FindProductRecipeUseCase implements UseCase<Input, Output> {
   constructor(
-    @Inject(PROVIDERS.PRODUCT_RECIPE_ITEM)
-    private readonly productRecipeItemRepository: ProductRecipeItemRepository,
     @Inject(PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY)
     private readonly productAdditionalCostRepository: ProductAdditionalCostRepository,
     @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
@@ -80,8 +62,7 @@ export class FindProductRecipeUseCase implements UseCase<Input, Output> {
       throw new NotFoundError('Produto não encontrado');
     }
 
-    const [recipeItems, additionalCosts, recipeLinks] = await Promise.all([
-      this.productRecipeItemRepository.findAllByProductId(productId),
+    const [additionalCosts, recipeLinks] = await Promise.all([
       this.productAdditionalCostRepository.findAllByProductId(productId),
       this.productRecipeLinkRepository.findAllByProductId(productId),
     ]);
@@ -108,19 +89,6 @@ export class FindProductRecipeUseCase implements UseCase<Input, Output> {
     );
 
     const output: Output = {
-      recipeItems: recipeItems.map((item) => ({
-        id: item.id,
-        quantity: item.quantity,
-        material: {
-          id: item.material.id,
-          name: item.material.name,
-          imagePath: item.material.imagePath,
-          consumerUnit: item.material.consumerUnit,
-          unitCostPrice: item.material.unitCostPrice,
-          pricePerKilogram: item.material.pricePerKilogram,
-          costPrice: item.material.costPrice,
-        },
-      })),
       additionalCost: additionalCosts.map((item) => ({
         id: item.id,
         value: item.value,

@@ -7,8 +7,16 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionRecipe } from '@/core/auth/domain/permissions-definition/recipe';
 import { CreateRecipeUseCase } from '../../application/usecases/create-recipe.usecase';
@@ -20,6 +28,7 @@ import { CreateRecipeDto } from '../dtos/create-recipe.dto';
 import { UpdateRecipeDto } from '../dtos/update-recipe.dto';
 import { RecipePresenter } from '@/shared/infra/presenter/recipe/recipe.presenter';
 import { RecipeDetailPresenter } from '@/shared/infra/presenter/recipe/recipe-detail.presenter';
+import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 
 @ApiTags('Recipes')
 @Controller('v1/recipe')
@@ -69,9 +78,27 @@ export class RecipeController {
 
   @Get()
   @Permission(PermissionRecipe.RECIPE_READER)
-  @ApiOperation({ summary: 'Lista as receitas da empresa logada' })
+  @ApiOperation({
+    summary: 'Lista paginada das receitas da empresa logada',
+    description: 'Pode ser filtrada por nome (busca parcial, case-insensitive).',
+  })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    description: 'Busca receitas cujo nome contenha o texto informado.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiOkResponse({ type: RecipePresenter, isArray: true })
-  async findAll() {
-    return await this.findAllRecipesByCompanyUseCase.execute();
+  async findAll(
+    @Query('name') name?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<Pagination<RecipePresenter>> {
+    return await this.findAllRecipesByCompanyUseCase.execute({
+      name,
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
   }
 }

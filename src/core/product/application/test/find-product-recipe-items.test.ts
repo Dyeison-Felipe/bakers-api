@@ -3,11 +3,9 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import {
   makeLoggedUser,
   makeProductAdditionalCost,
-  makeProductRecipeItem,
   makeProductRecipeLink,
   makeRecipeItem,
 } from './fixtures';
-import type { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
 import type { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import type { ProductRecipeLinkRepository } from '../../domain/repositories/product-recipe-link.repository';
 import type { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
@@ -16,7 +14,6 @@ import type { LoggedUserService } from '@/shared/application/logged-user/logged-
 import type { Product } from '../../domain/entities/product.entity';
 
 describe('FindProductRecipeUseCase', () => {
-  let productRecipeItemRepository: jest.Mocked<Pick<ProductRecipeItemRepository, 'findAllByProductId'>>;
   let productAdditionalCostRepository: jest.Mocked<Pick<ProductAdditionalCostRepository, 'findAllByProductId'>>;
   let productRecipeLinkRepository: jest.Mocked<Pick<ProductRecipeLinkRepository, 'findAllByProductId'>>;
   let recipeItemRepository: jest.Mocked<Pick<RecipeItemRepository, 'findAllByRecipeId'>>;
@@ -25,7 +22,6 @@ describe('FindProductRecipeUseCase', () => {
   let sut: FindProductRecipeUseCase;
 
   beforeEach(() => {
-    productRecipeItemRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
     productAdditionalCostRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
     productRecipeLinkRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
     recipeItemRepository = { findAllByRecipeId: jest.fn().mockResolvedValue([]) };
@@ -38,7 +34,6 @@ describe('FindProductRecipeUseCase', () => {
     };
 
     sut = new FindProductRecipeUseCase(
-      productRecipeItemRepository as unknown as ProductRecipeItemRepository,
       productAdditionalCostRepository as unknown as ProductAdditionalCostRepository,
       productRecipeLinkRepository as unknown as ProductRecipeLinkRepository,
       recipeItemRepository as unknown as RecipeItemRepository,
@@ -50,7 +45,7 @@ describe('FindProductRecipeUseCase', () => {
   it('should return empty lists when the product has no recipe data', async () => {
     const output = await sut.execute({ productId: 'product-1' });
 
-    expect(output).toEqual({ recipeItems: [], additionalCost: [], recipeLinks: [] });
+    expect(output).toEqual({ additionalCost: [], recipeLinks: [] });
   });
 
   it('should throw NotFoundError when the product does not belong to the logged company', async () => {
@@ -68,29 +63,13 @@ describe('FindProductRecipeUseCase', () => {
     );
   });
 
-  it('should map recipe items and additional costs to the output shape', async () => {
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([makeProductRecipeItem()]);
+  it('should map additional costs to the output shape', async () => {
     productAdditionalCostRepository.findAllByProductId.mockResolvedValue([
       makeProductAdditionalCost(),
     ]);
 
     const output = await sut.execute({ productId: 'product-1' });
 
-    expect(output.recipeItems).toEqual([
-      {
-        id: 'product-recipe-item-1',
-        quantity: 1,
-        material: {
-          id: 'material-1',
-          name: 'Farinha',
-          imagePath: null,
-          consumerUnit: 'kg',
-          unitCostPrice: 4,
-          pricePerKilogram: 4,
-          costPrice: 10,
-        },
-      },
-    ]);
     expect(output.additionalCost).toEqual([
       {
         id: 'product-additional-cost-1',

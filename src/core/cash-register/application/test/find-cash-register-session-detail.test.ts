@@ -1,6 +1,6 @@
 import { FindCashRegisterSessionDetailUseCase } from '../usecase/find-cash-register-session-detail.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { makeLoggedUser, makePagination, makeSession } from './fixtures';
 import type { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import type { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
@@ -8,7 +8,7 @@ import type { SaleItemRepository } from '@/core/sale/domain/repositories/sale-it
 import type { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import type { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import type { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
-import type { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
+import type { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 describe('FindCashRegisterSessionDetailUseCase', () => {
@@ -27,8 +27,8 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
   let expenseRepository: jest.Mocked<
     Pick<ExpenseRepository, 'findAllByCompanyId'>
   >;
-  let batchMovementRepository: jest.Mocked<
-    Pick<BatchMovementRepository, 'sumUnitCostByCompanyAndDateAndReason'>
+  let stockMovementRepository: jest.Mocked<
+    Pick<StockMovementRepository, 'sumUnitCostByCompanyAndDateAndReason'>
   >;
   let cashRegisterMovementRepository: jest.Mocked<
     Pick<CashRegisterMovementRepository, 'sumAmountByCashRegisterSessionIdAndType'>
@@ -52,7 +52,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     expenseRepository = {
       findAllByCompanyId: jest.fn().mockResolvedValue(makePagination([])),
     };
-    batchMovementRepository = {
+    stockMovementRepository = {
       sumUnitCostByCompanyAndDateAndReason: jest.fn().mockResolvedValue(0),
     };
     cashRegisterMovementRepository = {
@@ -69,7 +69,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
       dailyProductionRepository as unknown as DailyProductionRepository,
       dailyProductionItemRepository as unknown as DailyProductionItemRepository,
       expenseRepository as unknown as ExpenseRepository,
-      batchMovementRepository as unknown as BatchMovementRepository,
+      stockMovementRepository as unknown as StockMovementRepository,
       cashRegisterMovementRepository as unknown as CashRegisterMovementRepository,
       loggedUserService,
     );
@@ -100,10 +100,10 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     dailyProductionItemRepository.findAllByDailyProductionId.mockResolvedValue([
       { status: 'PRODUCED', plannedCost: 60 } as never,
     ]);
-    batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
+    stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
       (_companyId, _from, _to, reasons) =>
         Promise.resolve(
-          reasons.includes(TypeBatchMovementReason.WASTE) ? 40 : 10,
+          reasons.includes(TypeStockMovementReason.WASTE) ? 40 : 10,
         ),
     );
 
@@ -143,13 +143,13 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     expect(output.productionCost).toBe(45);
   });
 
-  it('should map totalWaste and totalRecoveredAtCost from batch movement sums', async () => {
+  it('should map totalWaste and totalRecoveredAtCost from stock movement sums', async () => {
     const session = makeSession();
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
-    batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
+    stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mockImplementation(
       (_companyId, _from, _to, reasons) =>
         Promise.resolve(
-          reasons.includes(TypeBatchMovementReason.WASTE) ? 40 : 15,
+          reasons.includes(TypeStockMovementReason.WASTE) ? 40 : 15,
         ),
     );
 
@@ -159,19 +159,19 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     expect(output.totalRecoveredAtCost).toBe(15);
   });
 
-  it('should include MANUAL_DISCARD write-offs (from the batch write-off screen) alongside WASTE when summing totalWaste', async () => {
+  it('should sum only the WASTE reason when computing totalWaste', async () => {
     const session = makeSession();
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
 
     await sut.execute({ id: session.id });
 
     const [wasteCall] =
-      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls;
+      stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls;
     const [, , , reasons] = wasteCall;
-    expect(reasons).toEqual(['WASTE', 'MANUAL_DISCARD']);
+    expect(reasons).toEqual(['WASTE']);
 
     const [, , , recoveredReasons] =
-      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[1];
+      stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[1];
     expect(recoveredReasons).toEqual(['LEFTOVER_SOLD_AT_COST']);
   });
 
@@ -188,7 +188,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     expect(output.totalWithdrawals).toBe(25);
   });
 
-  it('should scope production, expenses and batch movements to the full session window, not just the opening day', async () => {
+  it('should scope production, expenses and stock movements to the full session window, not just the opening day', async () => {
     const session = makeSession({
       openedAt: new Date('2026-08-06T09:00:00'),
       closedAt: new Date('2026-08-10T18:30:00'),
@@ -212,12 +212,12 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     });
 
     const [, waitFrom, waitTo] =
-      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
+      stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
     expect(waitFrom).toEqual(session.openedAt);
     expect(waitTo).toEqual(session.closedAt);
   });
 
-  it('should use "now" as the batch movement window end when the session is still open', async () => {
+  it('should use "now" as the stock movement window end when the session is still open', async () => {
     const session = makeSession({
       openedAt: new Date('2026-08-06T09:00:00'),
       closedAt: null,
@@ -229,7 +229,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     const after = new Date();
 
     const [, , windowEnd] =
-      batchMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
+      stockMovementRepository.sumUnitCostByCompanyAndDateAndReason.mock.calls[0];
     expect((windowEnd as Date).getTime()).toBeGreaterThanOrEqual(before.getTime());
     expect((windowEnd as Date).getTime()).toBeLessThanOrEqual(after.getTime());
   });

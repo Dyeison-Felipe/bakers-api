@@ -3,9 +3,11 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { ProductPersistenceModule } from '@/core/product/infra/product-persistence.module';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
-import { ProductRecipeItemRepository } from '@/core/product/domain/repositories/product-recipe-item.repository';
-import { BatchModule } from '@/core/batch/infra/batch.module';
-import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
+import { ProductRecipeLinkRepository } from '@/core/product/domain/repositories/product-recipe-link.repository';
+import { RecipePersistenceModule } from '@/core/recipe/infra/recipe-persistence.module';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
+import { StockMovementModule } from '@/core/stock-movement/infra/stock-movement.module';
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 import { DailyProductionPersistenceModule } from './daily-production-persistence.module';
 import { DailyProductionRepository } from '../domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '../domain/repositories/daily-production-item.repository';
@@ -22,7 +24,12 @@ import { FindDailyProductionByIdUseCase } from '../application/usecase/find-dail
 import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-daily-productions.usecase';
 
 @Module({
-  imports: [DailyProductionPersistenceModule, ProductPersistenceModule, BatchModule],
+  imports: [
+    DailyProductionPersistenceModule,
+    ProductPersistenceModule,
+    RecipePersistenceModule,
+    StockMovementModule,
+  ],
   controllers: [DailyProductionController],
   providers: [
     {
@@ -106,19 +113,19 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
         loggedUserService: LoggedUserService,
-        createBatchUseCase: CreateBatchUseCase,
+        adjustProductStockUseCase: AdjustProductStockUseCase,
       ) =>
         new MarkDailyProductionItemAsProducedUseCase(
           dailyProductionRepository,
           dailyProductionItemRepository,
           loggedUserService,
-          createBatchUseCase,
+          adjustProductStockUseCase,
         ),
       inject: [
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
-        CreateBatchUseCase,
+        AdjustProductStockUseCase,
       ],
     },
     {
@@ -194,17 +201,20 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
       provide: FindDailyProductionItemRequirementsUseCase,
       useFactory: (
         dailyProductionItemRepository: DailyProductionItemRepository,
-        productRecipeItemRepository: ProductRecipeItemRepository,
+        productRecipeLinkRepository: ProductRecipeLinkRepository,
+        recipeItemRepository: RecipeItemRepository,
         loggedUserService: LoggedUserService,
       ) =>
         new FindDailyProductionItemRequirementsUseCase(
           dailyProductionItemRepository,
-          productRecipeItemRepository,
+          productRecipeLinkRepository,
+          recipeItemRepository,
           loggedUserService,
         ),
       inject: [
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
-        PROVIDERS.PRODUCT_RECIPE_ITEM,
+        PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },

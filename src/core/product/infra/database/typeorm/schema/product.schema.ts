@@ -8,8 +8,7 @@ import {
   TypeUnitOfMeasurement,
   TypeUnitOfPurchase,
 } from '@/shared/infra/enums/product';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
-import { ProductRecipeItemSchema } from './product-recipe-item';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('product')
 export class ProductSchema extends BaseSchema {
@@ -197,10 +196,4 @@ export class ProductSchema extends BaseSchema {
   @ManyToOne(() => CategorySchema, (category) => category.product)
   @JoinColumn({ name: 'category' })
   category: CategorySchema;
-
-  @OneToMany(
-    () => ProductRecipeItemSchema,
-    (productRecipe) => productRecipe.product,
-  )
-  recipeItems: ProductRecipeItemSchema[];
 }

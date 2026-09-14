@@ -2,7 +2,6 @@ import { UserEntity } from '@/core/user/domain/entities/user.entity';
 import { Company } from '@/core/company/domain/entities/company.entity';
 import { Category } from '@/core/category/domain/entities/category.entity';
 import { Product } from '../../domain/entities/product.entity';
-import { ProductRecipeItem } from '../../domain/entities/product-recipe-item.entity';
 import { ProductAdditionalCost } from '../../domain/entities/product-additional-cost.entity';
 import { ProductRecipeLink } from '../../domain/entities/product-recipe-link.entity';
 import { AdditionalCost } from '@/core/additional-cost/domain/entities/additional-cost.entity';
@@ -137,29 +136,6 @@ export const makeRecipeItem = (overrides: Record<string, unknown> = {}): RecipeI
   };
   Object.setPrototypeOf(recipeItem, RecipeItem.prototype);
   return recipeItem as unknown as RecipeItem;
-};
-
-export const makeProductRecipeItem = (
-  overrides: Record<string, unknown> = {},
-): ProductRecipeItem => {
-  const item = {
-    id: 'product-recipe-item-1',
-    product: makeProduct(),
-    material: makeProduct({
-      id: 'material-1',
-      name: 'Farinha',
-      consumerUnit: TypeConsumptionUnit.KG,
-      pricePerKilogram: 4,
-      unitCostPrice: 4,
-    }),
-    quantity: 1,
-    updateQuantity(quantity: number) {
-      this.quantity = quantity;
-    },
-    ...overrides,
-  };
-  Object.setPrototypeOf(item, ProductRecipeItem.prototype);
-  return item as unknown as ProductRecipeItem;
 };
 
 export const makeProductAdditionalCost = (

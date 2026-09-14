@@ -9,10 +9,13 @@ import { StorageService } from '@/shared/application/storage/storage.service';
 import { FinalizeSaleOutput } from '@/shared/application/output/sale/finalize-sale.output';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import {
+  TypeStockMovement,
+  TypeStockMovementReason,
+} from '@/shared/infra/enums/stock-movement';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { Product } from '@/core/product/domain/entities/product.entity';
-import { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
 import { CustomerRepository } from '@/core/customer/domain/repositories/customer.repository';
@@ -68,7 +71,7 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
     @Inject(PROVIDERS.CUSTOMER_REPOSITORY)
     private readonly customerRepository: CustomerRepository,
-    private readonly writeOffBatchUseCase: WriteOffBatchUseCase,
+    private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
   ) {}
 
   @Transactional()
@@ -176,10 +179,11 @@ export class FinalizeSaleUseCase implements UseCase<Input, Output> {
     for (const item of preparedItems) {
       if (!item.product.stockManagement) continue;
 
-      await this.writeOffBatchUseCase.execute({
+      await this.adjustProductStockUseCase.execute({
         productId: item.product.id,
         quantity: item.quantityForStock,
-        reason: TypeBatchMovementReason.SALE,
+        type: TypeStockMovement.EXIT,
+        reason: TypeStockMovementReason.SALE,
       });
     }
 

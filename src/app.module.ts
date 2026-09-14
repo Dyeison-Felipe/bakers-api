@@ -27,7 +27,7 @@ import { StorageModule } from './shared/infra/storage/storage.module';
 import { StripeModule } from './shared/infra/stripe/stripe.module';
 import { SubscriptionModule } from './core/subscription/infra/subscription.module';
 import { AdditionalCostModule } from './core/additional-cost/infra/additional-cost.module';
-import { BatchModule } from './core/batch/infra/batch.module';
+import { StockMovementModule } from './core/stock-movement/infra/stock-movement.module';
 import { DailyProductionModule } from './core/daily-production/infra/daily-production.module';
 import { SaleModule } from './core/sale/infra/sale.module';
 import { CashRegisterModule } from './core/cash-register/infra/cash-register.module';
@@ -40,7 +40,7 @@ import { CustomerModule } from './core/customer/infra/customer.module';
 @Module({
   imports: [
     AdditionalCostModule,
-    BatchModule,
+    StockMovementModule,
     DailyProductionModule,
     SaleModule,
     CashRegisterModule,

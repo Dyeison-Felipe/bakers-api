@@ -5,8 +5,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { CostComparisonSeriesOutput } from '@/shared/application/output/report/cost-comparison-series.output';
 
 type Input = {
@@ -28,8 +28,8 @@ export class FindCostComparisonSeriesUseCase implements UseCase<Input, Output> {
     private readonly dailyProductionItemRepository: DailyProductionItemRepository,
     @Inject(PROVIDERS.EXPENSE_REPOSITORY)
     private readonly expenseRepository: ExpenseRepository,
-    @Inject(PROVIDERS.BATCH_MOVEMENT_REPOSITORY)
-    private readonly batchMovementRepository: BatchMovementRepository,
+    @Inject(PROVIDERS.STOCK_MOVEMENT_REPOSITORY)
+    private readonly stockMovementRepository: StockMovementRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
@@ -49,11 +49,11 @@ export class FindCostComparisonSeriesUseCase implements UseCase<Input, Output> {
         { dateFrom, dateTo },
         { limit: 1000 },
       ),
-      this.batchMovementRepository.findAllByCompanyAndDateAndReason(
+      this.stockMovementRepository.findAllByCompanyAndDateAndReason(
         companyId,
         dateFrom,
         dateTo,
-        [TypeBatchMovementReason.WASTE, TypeBatchMovementReason.MANUAL_DISCARD],
+        [TypeStockMovementReason.WASTE],
       ),
     ]);
 

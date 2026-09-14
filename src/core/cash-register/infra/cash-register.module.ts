@@ -9,8 +9,8 @@ import { DailyProductionRepository } from '@/core/daily-production/domain/reposi
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persistence.module';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
-import { BatchPersistenceModule } from '@/core/batch/infra/batch-persistence.module';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
+import { StockMovementPersistenceModule } from '@/core/stock-movement/infra/stock-movement-persistence.module';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { CashRegisterPersistenceModule } from './cash-register-persistence.module';
 import { CashRegisterSessionRepository } from '../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../domain/repositories/cash-register-movement.repository';
@@ -29,7 +29,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
     SalePersistenceModule,
     DailyProductionPersistenceModule,
     ExpensePersistenceModule,
-    BatchPersistenceModule,
+    StockMovementPersistenceModule,
   ],
   controllers: [CashRegisterController],
   providers: [
@@ -107,7 +107,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
         expenseRepository: ExpenseRepository,
-        batchMovementRepository: BatchMovementRepository,
+        stockMovementRepository: StockMovementRepository,
         cashRegisterMovementRepository: CashRegisterMovementRepository,
         loggedUserService: LoggedUserService,
       ) =>
@@ -117,7 +117,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
           dailyProductionRepository,
           dailyProductionItemRepository,
           expenseRepository,
-          batchMovementRepository,
+          stockMovementRepository,
           cashRegisterMovementRepository,
           loggedUserService,
         ),
@@ -127,7 +127,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
         PROVIDERS.EXPENSE_REPOSITORY,
-        PROVIDERS.BATCH_MOVEMENT_REPOSITORY,
+        PROVIDERS.STOCK_MOVEMENT_REPOSITORY,
         PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],

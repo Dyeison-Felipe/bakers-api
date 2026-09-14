@@ -7,7 +7,7 @@ import { makeItem, makeLoggedUser } from './fixtures';
 import type { DailyProductionRepository } from '../../domain/repositories/daily-production.repository';
 import type { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
-import type { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
+import type { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 
 describe('MarkDailyProductionItemAsProducedUseCase', () => {
   let dailyProductionRepository: jest.Mocked<
@@ -17,7 +17,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     Pick<DailyProductionItemRepository, 'findByIdWithDailyProduction' | 'update' | 'findAllByDailyProductionId'>
   >;
   let loggedUserService: jest.Mocked<LoggedUserService>;
-  let createBatchUseCase: jest.Mocked<Pick<CreateBatchUseCase, 'execute'>>;
+  let adjustProductStockUseCase: jest.Mocked<Pick<AdjustProductStockUseCase, 'execute'>>;
   let sut: MarkDailyProductionItemAsProducedUseCase;
 
   beforeEach(() => {
@@ -34,15 +34,15 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
     };
-    createBatchUseCase = {
-      execute: jest.fn().mockResolvedValue({ id: 'batch-1' }),
+    adjustProductStockUseCase = {
+      execute: jest.fn().mockResolvedValue({ productId: 'product-1', totalCost: 0 }),
     };
 
     sut = new MarkDailyProductionItemAsProducedUseCase(
       dailyProductionRepository as unknown as DailyProductionRepository,
       dailyProductionItemRepository as unknown as DailyProductionItemRepository,
       loggedUserService,
-      createBatchUseCase as unknown as CreateBatchUseCase,
+      adjustProductStockUseCase as unknown as AdjustProductStockUseCase,
     );
   });
 
@@ -68,26 +68,26 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     await expect(sut.execute({ id: 'item-1' })).rejects.toThrow(BadRequestError);
   });
 
-  it('should create a batch with the actual weight for weight-based items', async () => {
+  it('should register a stock entry with the actual weight for weight-based items', async () => {
     const item = makeItem({ unitOfMeasurement: TypeUnitOfMeasurement.KG });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
 
     await sut.execute({ id: item.id, actualWeight: 4.5 });
 
-    expect(createBatchUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ quantity: 4.5, dailyProductionItemId: item.id }),
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ quantity: 4.5, type: 'ENTRY', reason: 'PRODUCTION' }),
     );
     expect(item.actualWeight).toBe(4.5);
     expect(item.actualQuantity).toBeNull();
   });
 
-  it('should create a batch with the planned quantity for unit-based items', async () => {
+  it('should register a stock entry with the planned quantity for unit-based items', async () => {
     const item = makeItem({ unitOfMeasurement: TypeUnitOfMeasurement.UN, plannedQuantity: 20 });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
 
     await sut.execute({ id: item.id });
 
-    expect(createBatchUseCase.execute).toHaveBeenCalledWith(
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ quantity: 20 }),
     );
     expect(item.actualQuantity).toBe(20);
@@ -100,7 +100,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     const output = await sut.execute({ id: item.id });
 
     expect(item.status).toBe(TypeDailyProductionItemStatus.PRODUCED);
-    expect(output).toEqual({ id: item.id, batchId: 'batch-1' });
+    expect(output).toEqual({ id: item.id });
     expect(dailyProductionItemRepository.update).toHaveBeenCalledWith(item);
   });
 

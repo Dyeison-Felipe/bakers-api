@@ -1,21 +1,12 @@
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
-import { ProductRepository } from '../../domain/repositories/product.repository';
 import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import {
-  MaterialUsage,
-  ProductRecipeCostCalculator,
-} from '../services/product-recipe-cost-calculator.service';
+import { ProductRecipeCostCalculator } from '../services/product-recipe-cost-calculator.service';
 import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
-
-type ProductMaterialInput = {
-  id: string;
-  quantity: number;
-};
 
 type AdditionalCostInput = {
   id: string;
@@ -27,7 +18,6 @@ type RecipeLinkInput = {
 };
 
 type Input = {
-  productMaterial?: ProductMaterialInput[];
   additionalCosts?: AdditionalCostInput[];
   recipeLinks?: RecipeLinkInput[];
 };
@@ -38,8 +28,6 @@ type Output = {
 
 export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
   constructor(
-    @Inject(PROVIDERS.PRODUCT_REPOSITORY)
-    private readonly productRepository: ProductRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
     @Inject(PROVIDERS.ADDITIONAL_COST_REPOSITORY)
@@ -54,14 +42,6 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const company = loggedUser.company;
 
-    const materialsUsage = await this.resolveMaterialsUsage(
-      input.productMaterial ?? [],
-      company.id,
-    );
-
-    const materialsCost =
-      ProductRecipeCostCalculator.calculateTotalCost(materialsUsage);
-
     const additionalCostsTotal = await this.resolveAdditionalCostsTotal(
       input.additionalCosts ?? [],
       company.id,
@@ -72,7 +52,7 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
       company.id,
     );
 
-    const costPrice = materialsCost + additionalCostsTotal + recipesCost;
+    const costPrice = additionalCostsTotal + recipesCost;
 
     return { costPrice };
   }
@@ -101,36 +81,6 @@ export class CalculateRecipeCostUseCase implements UseCase<Input, Output> {
     return ProductRecipeCostCalculator.calculateTotalCost(
       items.map((item) => ({ material: item.material, quantity: item.quantity })),
     );
-  }
-
-  private async resolveMaterialsUsage(
-    productMaterial: ProductMaterialInput[],
-    companyId: string,
-  ): Promise<MaterialUsage[]> {
-    if (!productMaterial?.length) {
-      return [];
-    }
-
-    const materialIds = productMaterial.map((m) => m.id);
-
-    const materials = await this.productRepository.findAllByIdsAndCompanyId(
-      materialIds,
-      companyId,
-    );
-
-    const materialsMap = new Map(materials.map((m) => [m.id, m]));
-
-    const missing = materialIds.filter((id) => !materialsMap.has(id));
-    if (missing.length) {
-      throw new NotFoundError(
-        `Matéria(s)-prima não encontrada(s): ${missing.join(', ')}`,
-      );
-    }
-
-    return productMaterial.map((m) => ({
-      material: materialsMap.get(m.id)!,
-      quantity: m.quantity,
-    }));
   }
 
   private async resolveAdditionalCostsTotal(

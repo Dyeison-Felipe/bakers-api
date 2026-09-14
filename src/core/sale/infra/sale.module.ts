@@ -4,8 +4,8 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 import { StorageService } from '@/shared/application/storage/storage.service';
 import { ProductPersistenceModule } from '@/core/product/infra/product-persistence.module';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
-import { BatchModule } from '@/core/batch/infra/batch.module';
-import { WriteOffBatchUseCase } from '@/core/batch/application/usecase/write-off-batch.usecase';
+import { StockMovementModule } from '@/core/stock-movement/infra/stock-movement.module';
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 import { CashRegisterPersistenceModule } from '@/core/cash-register/infra/cash-register-persistence.module';
 import { CashRegisterSessionRepository } from '@/core/cash-register/domain/repositories/cash-register-session.repository';
 import { CustomerPersistenceModule } from '@/core/customer/infra/customer-persistence.module';
@@ -26,7 +26,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
     ProductPersistenceModule,
     CashRegisterPersistenceModule,
     CustomerPersistenceModule,
-    BatchModule,
+    StockMovementModule,
   ],
   controllers: [SaleController],
   providers: [
@@ -49,7 +49,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
         storageService: StorageService,
         loggedUserService: LoggedUserService,
         customerRepository: CustomerRepository,
-        writeOffBatchUseCase: WriteOffBatchUseCase,
+        adjustProductStockUseCase: AdjustProductStockUseCase,
       ) =>
         new FinalizeSaleUseCase(
           productRepository,
@@ -59,7 +59,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
           storageService,
           loggedUserService,
           customerRepository,
-          writeOffBatchUseCase,
+          adjustProductStockUseCase,
         ),
       inject: [
         PROVIDERS.PRODUCT_REPOSITORY,
@@ -69,7 +69,7 @@ import { GetSaleReceiptUseCase } from '../application/usecase/get-sale-receipt.u
         PROVIDERS.STORAGE_SERVICE,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.CUSTOMER_REPOSITORY,
-        WriteOffBatchUseCase,
+        AdjustProductStockUseCase,
       ],
     },
     {

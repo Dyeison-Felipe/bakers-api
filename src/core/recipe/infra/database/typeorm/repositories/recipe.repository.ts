@@ -4,6 +4,10 @@ import { RecipeSchema } from '../schema/recipe.schema';
 import { In, Repository } from 'typeorm';
 import { Recipe } from '@/core/recipe/domain/entities/recipe.entity';
 import { RecipeMapper } from './mappers/recipe-mapper';
+import {
+  Pagination,
+  PaginationInput,
+} from '@/shared/domain/pagination/pagination';
 
 export class RecipeRepositoryImpl implements RecipeRepository {
   constructor(
@@ -48,6 +52,45 @@ export class RecipeRepositoryImpl implements RecipeRepository {
       relations: ['company'],
     });
     return schemas.map(RecipeMapper.toEntity);
+  }
+
+  async findAllByCompanyIdPaginated(
+    companyId: string,
+    pagination?: PaginationInput,
+    name?: string,
+  ): Promise<Pagination<Recipe>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 100;
+    const direction = pagination?.direction ?? 'ASC';
+
+    const query = this.recipeRepository
+      .createQueryBuilder('recipe')
+      .leftJoinAndSelect('recipe.company', 'company')
+      .where('company.id = :companyId', { companyId });
+
+    if (name) {
+      query.andWhere('recipe.name ILIKE :name', { name: `%${name}%` });
+    }
+
+    query
+      .orderBy('recipe.name', direction)
+      .addOrderBy('recipe.id', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [schemas, totalItems] = await query.getManyAndCount();
+    const items = schemas.map(RecipeMapper.toEntity);
+
+    return {
+      items,
+      meta: {
+        totalItems,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async save(entity: Recipe): Promise<Recipe> {

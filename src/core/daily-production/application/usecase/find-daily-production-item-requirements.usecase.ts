@@ -4,8 +4,12 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { DailyProductionItemRequirementsOutput } from '@/shared/application/output/daily-production/daily-production-item-requirements.output';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
-import { ProductRecipeItemRepository } from '@/core/product/domain/repositories/product-recipe-item.repository';
+import {
+  TypeConsumptionUnit,
+  TypeUnitOfMeasurement,
+} from '@/shared/infra/enums/product';
+import { ProductRecipeLinkRepository } from '@/core/product/domain/repositories/product-recipe-link.repository';
+import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
 
 type Input = {
@@ -22,8 +26,10 @@ export class FindDailyProductionItemRequirementsUseCase
   constructor(
     @Inject(PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY)
     private readonly dailyProductionItemRepository: DailyProductionItemRepository,
-    @Inject(PROVIDERS.PRODUCT_RECIPE_ITEM)
-    private readonly productRecipeItemRepository: ProductRecipeItemRepository,
+    @Inject(PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY)
+    private readonly productRecipeLinkRepository: ProductRecipeLinkRepository,
+    @Inject(PROVIDERS.RECIPE_ITEM_REPOSITORY)
+    private readonly recipeItemRepository: RecipeItemRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
@@ -48,17 +54,54 @@ export class FindDailyProductionItemRequirementsUseCase
         ? (item.plannedQuantity ?? 0) / productQuantity
         : 0;
 
-    const recipeItems = await this.productRecipeItemRepository.findAllByProductId(
+    const recipeLinks = await this.productRecipeLinkRepository.findAllByProductId(
       item.product!.id,
     );
 
+    if (!recipeLinks.length) {
+      return { items: [] };
+    }
+
+    const recipeItems = await this.recipeItemRepository.findAllByRecipeIds(
+      recipeLinks.map((link) => link.recipe.id),
+    );
+
+    // Um produto pode ter mais de uma receita vinculada — se a mesma
+    // matéria-prima aparecer em receitas diferentes, a produção real consome
+    // a soma das quantidades.
+    const requirementsByMaterial = new Map<
+      string,
+      {
+        materialId: string;
+        materialName: string;
+        recipeQuantity: number;
+        consumerUnit: TypeConsumptionUnit | null;
+      }
+    >();
+
+    for (const recipeItem of recipeItems) {
+      const materialId = recipeItem.material.id;
+      const current = requirementsByMaterial.get(materialId);
+
+      if (current) {
+        current.recipeQuantity += recipeItem.quantity;
+      } else {
+        requirementsByMaterial.set(materialId, {
+          materialId,
+          materialName: recipeItem.material.name,
+          recipeQuantity: recipeItem.quantity,
+          consumerUnit: recipeItem.material.consumerUnit,
+        });
+      }
+    }
+
     return {
-      items: recipeItems.map((recipeItem) => ({
-        materialId: recipeItem.material.id,
-        materialName: recipeItem.material.name,
-        recipeQuantity: recipeItem.quantity,
-        requiredQuantity: round3(recipeItem.quantity * multiplier),
-        consumerUnit: recipeItem.material.consumerUnit,
+      items: Array.from(requirementsByMaterial.values()).map((requirement) => ({
+        materialId: requirement.materialId,
+        materialName: requirement.materialName,
+        recipeQuantity: requirement.recipeQuantity,
+        requiredQuantity: round3(requirement.recipeQuantity * multiplier),
+        consumerUnit: requirement.consumerUnit,
       })),
     };
   }

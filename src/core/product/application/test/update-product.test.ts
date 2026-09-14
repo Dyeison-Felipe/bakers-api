@@ -8,7 +8,6 @@ import {
   makeLoggedUser,
   makeProduct,
   makeProductAdditionalCost,
-  makeProductRecipeItem,
   makeProductRecipeLink,
   makeRecipe,
   makeRecipeItem,
@@ -16,7 +15,6 @@ import {
 import type { ProductRepository } from '../../domain/repositories/product.repository';
 import type { CategoryRepository } from '@/core/category/domain/repositories/category.repository';
 import type { StorageService } from '@/shared/application/storage/storage.service';
-import type { ProductRecipeItemRepository } from '../../domain/repositories/product-recipe-item.repository';
 import type { ProductAdditionalCostRepository } from '../../domain/repositories/product-additional-cost.repository';
 import type { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import type { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
@@ -36,9 +34,6 @@ describe('UpdateProductUseCase', () => {
   >;
   let categoryRepository: jest.Mocked<Pick<CategoryRepository, 'findCategoryByIdAndCompanyId'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'upload' | 'delete'>>;
-  let productRecipeItemRepository: jest.Mocked<
-    Pick<ProductRecipeItemRepository, 'findAllByProductId' | 'deleteById' | 'save'>
-  >;
   let productAdditionalCostRepository: jest.Mocked<
     Pick<ProductAdditionalCostRepository, 'findAllByProductId' | 'delete' | 'save' | 'update'>
   >;
@@ -78,11 +73,6 @@ describe('UpdateProductUseCase', () => {
       findCategoryByIdAndCompanyId: jest.fn().mockResolvedValue(makeCategory()),
     };
     storageService = { upload: jest.fn(), delete: jest.fn() };
-    productRecipeItemRepository = {
-      findAllByProductId: jest.fn().mockResolvedValue([]),
-      deleteById: jest.fn().mockResolvedValue(undefined),
-      save: jest.fn().mockResolvedValue(undefined),
-    };
     productAdditionalCostRepository = {
       findAllByProductId: jest.fn().mockResolvedValue([]),
       delete: jest.fn().mockResolvedValue(undefined),
@@ -107,7 +97,6 @@ describe('UpdateProductUseCase', () => {
       categoryRepository as unknown as CategoryRepository,
       loggedUserService,
       storageService as unknown as StorageService,
-      productRecipeItemRepository as unknown as ProductRecipeItemRepository,
       productAdditionalCostRepository as unknown as ProductAdditionalCostRepository,
       additionalCostRepository as unknown as AdditionalCostRepository,
       recipeRepository as unknown as RecipeRepository,
@@ -138,12 +127,6 @@ describe('UpdateProductUseCase', () => {
     );
   });
 
-  it('should throw NotFoundError when a raw material is not found', async () => {
-    await expect(
-      sut.execute({ ...baseInput, productMaterial: [{ id: 'missing', quantity: 1 }] }),
-    ).rejects.toThrow(NotFoundError);
-  });
-
   it('should throw NotFoundError when an additional cost is not found', async () => {
     await expect(
       sut.execute({ ...baseInput, additionalCost: [{ id: 'missing', value: 1 }] }),
@@ -154,33 +137,6 @@ describe('UpdateProductUseCase', () => {
     await expect(
       sut.execute({ ...baseInput, recipeLinks: [{ id: 'missing' }] }),
     ).rejects.toThrow(NotFoundError);
-  });
-
-  it('should remove a recipe item whose material is no longer in the incoming list', async () => {
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([
-      makeProductRecipeItem({ id: 'old-item', material: { id: 'old-mat' } }),
-    ]);
-
-    await sut.execute({ ...baseInput, productMaterial: [] });
-
-    expect(productRecipeItemRepository.deleteById).toHaveBeenCalledWith('old-item');
-  });
-
-  it('should update the quantity of an existing recipe item when it changed', async () => {
-    productRepository.findAllByIdsAndCompanyId.mockResolvedValue([
-      makeProduct({ id: 'mat-1', consumerUnit: 'kg', pricePerKilogram: 4 }),
-    ]);
-    const existingItem = makeProductRecipeItem({
-      id: 'item-1',
-      material: { id: 'mat-1' },
-      quantity: 1,
-    });
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([existingItem]);
-
-    await sut.execute({ ...baseInput, productMaterial: [{ id: 'mat-1', quantity: 3 }] });
-
-    expect(existingItem.quantity).toBe(3);
-    expect(productRecipeItemRepository.save).toHaveBeenCalledWith(existingItem);
   });
 
   it('should update the value of an existing additional cost when it changed', async () => {
@@ -219,10 +175,7 @@ describe('UpdateProductUseCase', () => {
     expect(productRecipeLinkRepository.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should delete every recipe item, additional cost and recipe link when the product stops being own-production', async () => {
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([
-      makeProductRecipeItem({ id: 'item-1' }),
-    ]);
+  it('should delete every additional cost and recipe link when the product stops being own-production', async () => {
     productAdditionalCostRepository.findAllByProductId.mockResolvedValue([
       makeProductAdditionalCost({ id: 'cost-1' }),
     ]);
@@ -236,7 +189,6 @@ describe('UpdateProductUseCase', () => {
       expirationDateInDays: undefined,
     });
 
-    expect(productRecipeItemRepository.deleteById).toHaveBeenCalledWith('item-1');
     expect(productAdditionalCostRepository.delete).toHaveBeenCalledWith('cost-1');
     expect(productRecipeLinkRepository.delete).toHaveBeenCalledWith('link-1');
   });

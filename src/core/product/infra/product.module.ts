@@ -17,7 +17,6 @@ import { UpdateStockProductUseCase } from '../application/usecase/increase-decre
 import { FindProductByIdAndCompanyId } from '../application/usecase/find-product-by-id.usecase';
 import { StorageService } from '@/shared/application/storage/storage.service';
 import { GetProductImageUseCase } from '../application/usecase/get-image.usecase';
-import { ProductRecipeItemRepository } from '../domain/repositories/product-recipe-item.repository';
 import { ProductAdditionalCostRepository } from '../domain/repositories/product-additional-cost.repository';
 import { CalculateUnitCostUseCase } from '../application/usecase/calculate-unit-cost.usecase';
 import { CalculateRecipeCostUseCase } from '../application/usecase/calculate-recipe-cost.usecase';
@@ -31,8 +30,8 @@ import { RecipeModule } from '@/core/recipe/infra/recipe.module';
 import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import { ProductRecipeLinkRepository } from '../domain/repositories/product-recipe-link.repository';
-import { BatchModule } from '@/core/batch/infra/batch.module';
-import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
+import { StockMovementModule } from '@/core/stock-movement/infra/stock-movement.module';
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
 
 @Module({
   imports: [
@@ -40,7 +39,7 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
     CategoryPersistenceModule,
     AdditionalCostModule,
     RecipeModule,
-    BatchModule,
+    StockMovementModule,
   ],
   controllers: [ProductController],
   providers: [
@@ -51,26 +50,24 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         loggedUserService: LoggedUserService,
         categoryRepository: CategoryRepository,
         storageService: StorageService,
-        productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         additionalCostRepository: AdditionalCostRepository,
         recipeRepository: RecipeRepository,
         recipeItemRepository: RecipeItemRepository,
         productRecipeLinkRepository: ProductRecipeLinkRepository,
-        createBatchUseCase: CreateBatchUseCase,
+        adjustProductStockUseCase: AdjustProductStockUseCase,
       ) => {
         return new CreateProductUseCase(
           productRepository,
           loggedUserService,
           categoryRepository,
           storageService,
-          productRecipeItemRepository,
           productAdditionalCostRepository,
           additionalCostRepository,
           recipeRepository,
           recipeItemRepository,
           productRecipeLinkRepository,
-          createBatchUseCase,
+          adjustProductStockUseCase,
         );
       },
       inject: [
@@ -78,13 +75,12 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.CATEGORY_REPOSITORY,
         PROVIDERS.STORAGE_SERVICE,
-        PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.RECIPE_REPOSITORY,
         PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
-        CreateBatchUseCase,
+        AdjustProductStockUseCase,
       ],
     },
     {
@@ -107,7 +103,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         categoryRepository: CategoryRepository,
         loggedUserService: LoggedUserService,
         storageService: StorageService,
-        productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         additionalCostRepository: AdditionalCostRepository,
         recipeRepository: RecipeRepository,
@@ -119,7 +114,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
           categoryRepository,
           loggedUserService,
           storageService,
-          productRecipeItemRepository,
           productAdditionalCostRepository,
           additionalCostRepository,
           recipeRepository,
@@ -132,7 +126,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         PROVIDERS.CATEGORY_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.STORAGE_SERVICE,
-        PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.RECIPE_REPOSITORY,
@@ -189,14 +182,12 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
     {
       provide: CalculateRecipeCostUseCase,
       useFactory: (
-        productRepository: ProductRepository,
         loggedUserService: LoggedUserService,
         additionalCostRepository: AdditionalCostRepository,
         recipeRepository: RecipeRepository,
         recipeItemRepository: RecipeItemRepository,
       ) => {
         return new CalculateRecipeCostUseCase(
-          productRepository,
           loggedUserService,
           additionalCostRepository,
           recipeRepository,
@@ -204,7 +195,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         );
       },
       inject: [
-        PROVIDERS.PRODUCT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         PROVIDERS.ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.RECIPE_REPOSITORY,
@@ -221,7 +211,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
     {
       provide: FindProductRecipeUseCase,
       useFactory: (
-        productRecipeItemRepository: ProductRecipeItemRepository,
         productAdditionalCostRepository: ProductAdditionalCostRepository,
         productRecipeLinkRepository: ProductRecipeLinkRepository,
         recipeItemRepository: RecipeItemRepository,
@@ -229,7 +218,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         loggedUserService: LoggedUserService,
       ) => {
         return new FindProductRecipeUseCase(
-          productRecipeItemRepository,
           productAdditionalCostRepository,
           productRecipeLinkRepository,
           recipeItemRepository,
@@ -238,7 +226,6 @@ import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batc
         );
       },
       inject: [
-        PROVIDERS.PRODUCT_RECIPE_ITEM,
         PROVIDERS.PRODUCT_ADDITIONAL_COST_REPOSITORY,
         PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
         PROVIDERS.RECIPE_ITEM_REPOSITORY,

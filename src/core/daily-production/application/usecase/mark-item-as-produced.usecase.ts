@@ -10,7 +10,11 @@ import {
   TypeDailyProductionItemStatus,
 } from '@/shared/infra/enums/daily-production';
 import { Transactional } from 'typeorm-transactional';
-import { CreateBatchUseCase } from '@/core/batch/application/usecase/create-batch.usecase';
+import { AdjustProductStockUseCase } from '@/core/stock-movement/application/usecase/adjust-product-stock.usecase';
+import {
+  TypeStockMovement,
+  TypeStockMovementReason,
+} from '@/shared/infra/enums/stock-movement';
 import { DailyProductionRepository } from '../../domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
 
@@ -31,7 +35,7 @@ export class MarkDailyProductionItemAsProducedUseCase
     private readonly dailyProductionItemRepository: DailyProductionItemRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
-    private readonly createBatchUseCase: CreateBatchUseCase,
+    private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
   ) {}
 
   @Transactional()
@@ -52,7 +56,7 @@ export class MarkDailyProductionItemAsProducedUseCase
 
     let actualQuantity: number | null = null;
     let actualWeight: number | null = null;
-    let quantityForBatch: number;
+    let quantityProduced: number;
 
     if (item.unitOfMeasurement === TypeUnitOfMeasurement.KG) {
       if (!input.actualWeight || input.actualWeight <= 0) {
@@ -60,18 +64,17 @@ export class MarkDailyProductionItemAsProducedUseCase
       }
 
       actualWeight = input.actualWeight;
-      quantityForBatch = input.actualWeight;
+      quantityProduced = input.actualWeight;
     } else {
       actualQuantity = item.plannedQuantity!;
-      quantityForBatch = item.plannedQuantity!;
+      quantityProduced = item.plannedQuantity!;
     }
 
-    const { id: batchId } = await this.createBatchUseCase.execute({
+    await this.adjustProductStockUseCase.execute({
       productId: item.product!.id,
-      quantity: quantityForBatch,
-      unitOfMeasurement: item.unitOfMeasurement,
-      productionDate: item.dailyProduction!.productionDate,
-      dailyProductionItemId: item.id,
+      quantity: quantityProduced,
+      type: TypeStockMovement.ENTRY,
+      reason: TypeStockMovementReason.PRODUCTION,
     });
 
     item.markAsProduced({
@@ -84,7 +87,7 @@ export class MarkDailyProductionItemAsProducedUseCase
 
     await this.completeDailyProductionIfNeeded(item.dailyProduction!.id, loggedUser.id);
 
-    return { id: item.id, batchId };
+    return { id: item.id };
   }
 
   private async completeDailyProductionIfNeeded(

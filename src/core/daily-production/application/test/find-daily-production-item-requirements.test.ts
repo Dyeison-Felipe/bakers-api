@@ -3,15 +3,19 @@ import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { TypeUnitOfMeasurement, TypeConsumptionUnit } from '@/shared/infra/enums/product';
 import { makeCompany, makeDailyProduction, makeItem, makeLoggedUser } from './fixtures';
 import type { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
-import type { ProductRecipeItemRepository } from '@/core/product/domain/repositories/product-recipe-item.repository';
+import type { ProductRecipeLinkRepository } from '@/core/product/domain/repositories/product-recipe-link.repository';
+import type { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 describe('FindDailyProductionItemRequirementsUseCase', () => {
   let dailyProductionItemRepository: jest.Mocked<
     Pick<DailyProductionItemRepository, 'findByIdWithDailyProduction'>
   >;
-  let productRecipeItemRepository: jest.Mocked<
-    Pick<ProductRecipeItemRepository, 'findAllByProductId'>
+  let productRecipeLinkRepository: jest.Mocked<
+    Pick<ProductRecipeLinkRepository, 'findAllByProductId'>
+  >;
+  let recipeItemRepository: jest.Mocked<
+    Pick<RecipeItemRepository, 'findAllByRecipeIds'>
   >;
   let loggedUserService: jest.Mocked<LoggedUserService>;
   let sut: FindDailyProductionItemRequirementsUseCase;
@@ -20,7 +24,8 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
     dailyProductionItemRepository = {
       findByIdWithDailyProduction: jest.fn().mockResolvedValue(makeItem()),
     };
-    productRecipeItemRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
+    productRecipeLinkRepository = { findAllByProductId: jest.fn().mockResolvedValue([]) };
+    recipeItemRepository = { findAllByRecipeIds: jest.fn().mockResolvedValue([]) };
     loggedUserService = {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
@@ -28,7 +33,8 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
 
     sut = new FindDailyProductionItemRequirementsUseCase(
       dailyProductionItemRepository as unknown as DailyProductionItemRepository,
-      productRecipeItemRepository as unknown as ProductRecipeItemRepository,
+      productRecipeLinkRepository as unknown as ProductRecipeLinkRepository,
+      recipeItemRepository as unknown as RecipeItemRepository,
       loggedUserService,
     );
   });
@@ -47,7 +53,10 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
       recipeMultiplier: 2,
     });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([
+    productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
+      { recipe: { id: 'recipe-1' } } as never,
+    ]);
+    recipeItemRepository.findAllByRecipeIds.mockResolvedValue([
       {
         quantity: 100,
         material: { id: 'mat-1', name: 'Farinha', consumerUnit: TypeConsumptionUnit.KG },
@@ -56,6 +65,7 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
 
     const output = await sut.execute({ itemId: item.id });
 
+    expect(recipeItemRepository.findAllByRecipeIds).toHaveBeenCalledWith(['recipe-1']);
     expect(output.items).toEqual([
       {
         materialId: 'mat-1',
@@ -74,7 +84,10 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
       product: { id: 'product-1', quantity: 10 } as never,
     });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([
+    productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
+      { recipe: { id: 'recipe-1' } } as never,
+    ]);
+    recipeItemRepository.findAllByRecipeIds.mockResolvedValue([
       {
         quantity: 50,
         material: { id: 'mat-1', name: 'Açúcar', consumerUnit: TypeConsumptionUnit.KG },
@@ -94,7 +107,10 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
       product: { id: 'product-1', quantity: null } as never,
     });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
-    productRecipeItemRepository.findAllByProductId.mockResolvedValue([
+    productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
+      { recipe: { id: 'recipe-1' } } as never,
+    ]);
+    recipeItemRepository.findAllByRecipeIds.mockResolvedValue([
       { quantity: 50, material: { id: 'mat-1', name: 'Açúcar', consumerUnit: TypeConsumptionUnit.KG } } as never,
     ]);
 
@@ -103,9 +119,61 @@ describe('FindDailyProductionItemRequirementsUseCase', () => {
     expect(output.items[0].requiredQuantity).toBe(0);
   });
 
-  it('should return an empty items list when the product has no recipe', async () => {
+  it('should return an empty items list when the product has no recipe linked', async () => {
+    productRecipeLinkRepository.findAllByProductId.mockResolvedValue([]);
+
     const output = await sut.execute({ itemId: 'item-1' });
 
     expect(output.items).toEqual([]);
+    expect(recipeItemRepository.findAllByRecipeIds).not.toHaveBeenCalled();
+  });
+
+  it('should sum quantities of the same material across multiple recipes linked to the product', async () => {
+    const item = makeItem({
+      unitOfMeasurement: TypeUnitOfMeasurement.KG,
+      recipeMultiplier: 1,
+    });
+    dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
+    productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
+      { recipe: { id: 'recipe-1' } } as never,
+      { recipe: { id: 'recipe-2' } } as never,
+    ]);
+    recipeItemRepository.findAllByRecipeIds.mockResolvedValue([
+      {
+        quantity: 30,
+        material: { id: 'mat-1', name: 'Farinha', consumerUnit: TypeConsumptionUnit.KG },
+      } as never,
+      {
+        quantity: 20,
+        material: { id: 'mat-1', name: 'Farinha', consumerUnit: TypeConsumptionUnit.KG },
+      } as never,
+      {
+        quantity: 5,
+        material: { id: 'mat-2', name: 'Açúcar', consumerUnit: TypeConsumptionUnit.KG },
+      } as never,
+    ]);
+
+    const output = await sut.execute({ itemId: item.id });
+
+    expect(recipeItemRepository.findAllByRecipeIds).toHaveBeenCalledWith(['recipe-1', 'recipe-2']);
+    expect(output.items).toEqual(
+      expect.arrayContaining([
+        {
+          materialId: 'mat-1',
+          materialName: 'Farinha',
+          recipeQuantity: 50, // 30 + 20 somados entre as duas receitas
+          requiredQuantity: 50,
+          consumerUnit: TypeConsumptionUnit.KG,
+        },
+        {
+          materialId: 'mat-2',
+          materialName: 'Açúcar',
+          recipeQuantity: 5,
+          requiredQuantity: 5,
+          consumerUnit: TypeConsumptionUnit.KG,
+        },
+      ]),
+    );
+    expect(output.items).toHaveLength(2);
   });
 });

@@ -2,8 +2,8 @@ import { Inject } from '@nestjs/common';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
-import { BatchMovementRepository } from '@/core/batch/domain/repositories/batch-movement.repository';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import {
   WasteReportDailyPoint,
   WasteReportItem,
@@ -24,8 +24,8 @@ const toDayKey = (date: Date): string => date.toISOString().slice(0, 10);
 
 export class FindWasteReportUseCase implements UseCase<Input, Output> {
   constructor(
-    @Inject(PROVIDERS.BATCH_MOVEMENT_REPOSITORY)
-    private readonly batchMovementRepository: BatchMovementRepository,
+    @Inject(PROVIDERS.STOCK_MOVEMENT_REPOSITORY)
+    private readonly stockMovementRepository: StockMovementRepository,
     @Inject(PROVIDERS.LOGGED_USER_SERVICE)
     private readonly loggedUserService: LoggedUserService,
   ) {}
@@ -35,17 +35,17 @@ export class FindWasteReportUseCase implements UseCase<Input, Output> {
     const companyId = loggedUser.company.id;
 
     const [wasteRows, recoveredRows] = await Promise.all([
-      this.batchMovementRepository.findAllByCompanyAndDateAndReason(
+      this.stockMovementRepository.findAllByCompanyAndDateAndReason(
         companyId,
         dateFrom,
         dateTo,
-        [TypeBatchMovementReason.WASTE, TypeBatchMovementReason.MANUAL_DISCARD],
+        [TypeStockMovementReason.WASTE],
       ),
-      this.batchMovementRepository.findAllByCompanyAndDateAndReason(
+      this.stockMovementRepository.findAllByCompanyAndDateAndReason(
         companyId,
         dateFrom,
         dateTo,
-        [TypeBatchMovementReason.LEFTOVER_SOLD_AT_COST],
+        [TypeStockMovementReason.LEFTOVER_SOLD_AT_COST],
       ),
     ]);
 

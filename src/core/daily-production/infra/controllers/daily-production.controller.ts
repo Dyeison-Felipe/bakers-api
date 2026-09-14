@@ -207,7 +207,7 @@ export class DailyProductionController {
   @ApiOperation({
     summary: 'Marca um item como produzido',
     description:
-      'Marca o item como produzido, cria o lote de estoque correspondente e, para produtos em KG, exige o peso real produzido.',
+      'Marca o item como produzido e dá entrada no estoque do produto; para produtos em KG, exige o peso real produzido.',
   })
   @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
   @ApiOkResponse({ type: MarkItemAsProducedPresenter })

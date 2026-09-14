@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TypeBatchMovementReason } from '@/shared/infra/enums/batch';
+import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export class WasteReportItemPresenter {
-  @ApiProperty({ description: 'Id do movimento de lote' })
+  @ApiProperty({ description: 'Id do movimento' })
   readonly id: string;
 
   @ApiProperty({ description: 'Data do movimento' })
@@ -27,8 +27,8 @@ export class WasteReportItemPresenter {
   @ApiProperty({ description: 'Valor total (quantidade x custo unitário)' })
   readonly totalCost: number;
 
-  @ApiProperty({ description: 'Motivo do movimento', enum: TypeBatchMovementReason })
-  readonly reason: TypeBatchMovementReason;
+  @ApiProperty({ description: 'Motivo do movimento', enum: TypeStockMovementReason })
+  readonly reason: TypeStockMovementReason;
 
   @ApiProperty({ description: 'Descrição livre do motivo' })
   readonly reasonDescription: string | null;
