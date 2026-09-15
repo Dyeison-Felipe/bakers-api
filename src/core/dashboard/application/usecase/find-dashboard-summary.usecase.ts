@@ -10,6 +10,7 @@ import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.re
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
 import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
+import { getBusinessTodayRange } from '@/shared/infra/utils/get-business-today-range';
 
 type Input = void;
 type Output = DashboardSummaryOutput;
@@ -34,21 +35,7 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
 
-    const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59,
-      999,
-    );
+    const { startOfDay, endOfDay } = getBusinessTodayRange();
 
     // Empresa sem PDV/Caixa no plano não tem dado de venda pra mostrar —
     // omite em vez de 403 (Dashboard nunca deve exibir erro de permissão).

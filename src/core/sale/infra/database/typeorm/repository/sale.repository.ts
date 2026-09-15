@@ -151,7 +151,12 @@ export class SaleRepositoryImpl implements SaleRepository {
     const rows = await this.saleRepository
       .createQueryBuilder('sale')
       .leftJoin('sale.company', 'company')
-      .select('DATE(sale.createdAt)', 'day')
+      // Cast pra texto: sem isso, o node-postgres devolve um objeto Date pra
+      // uma coluna "date" do Postgres, e o JSON.stringify da resposta HTTP
+      // serializa esse Date como timestamp completo (toISOString), fazendo o
+      // gráfico do Dashboard mostrar "2026-09-01T00:00:00.000Z" em vez de só
+      // "2026-09-01" no eixo X.
+      .select("DATE(sale.createdAt)::text", 'day')
       .addSelect(
         'COALESCE(SUM(CASE WHEN sale.paymentMethod = :cash THEN sale.totalAmount ELSE 0 END), 0)',
         'cash',
