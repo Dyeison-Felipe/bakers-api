@@ -58,6 +58,8 @@ import { FindProductRecipePresenter } from '@/shared/infra/presenter/product/fin
 import { FindProductRecipeUseCase } from '../../application/usecase/find-product-recipe-items.usecase';
 import { LowStockProductPresenter } from '@/shared/infra/presenter/product/low-stock-product.presenter';
 import { FindLowStockProductsUseCase } from '../../application/usecase/find-low-stock-products.usecase';
+import { NearExpiryProductPresenter } from '@/shared/infra/presenter/product/near-expiry-product.presenter';
+import { FindNearExpiryProductsUseCase } from '../../application/usecase/find-near-expiry-products.usecase';
 
 @Controller('v1/product')
 export class ProductController {
@@ -72,6 +74,7 @@ export class ProductController {
     private readonly calculateUnitCostUseCase: CalculateUnitCostUseCase,
     private readonly findProductRecipeUseCase: FindProductRecipeUseCase,
     private readonly findLowStockProductsUseCase: FindLowStockProductsUseCase,
+    private readonly findNearExpiryProductsUseCase: FindNearExpiryProductsUseCase,
   ) {}
 
   // Rota estática — precisa vir antes de ':id' e ':productId' pra não ser
@@ -84,6 +87,19 @@ export class ProductController {
   @ApiOkResponse({ type: LowStockProductPresenter, isArray: true })
   async findLowStock(): Promise<LowStockProductPresenter[]> {
     return await this.findLowStockProductsUseCase.execute();
+  }
+
+  // Rota estática — mesmo motivo da rota acima.
+  @Get('near-expiry')
+  @Permission(PermissionProduct.PRODUCT_READER)
+  @ApiOperation({
+    summary: 'Lista produtos com validade estimada próxima do vencimento',
+    description:
+      'Estima a validade a partir da última entrada de estoque do produto somada a `expirationDateInDays`, já que não há mais controle de validade por lote.',
+  })
+  @ApiOkResponse({ type: NearExpiryProductPresenter, isArray: true })
+  async findNearExpiry(): Promise<NearExpiryProductPresenter[]> {
+    return await this.findNearExpiryProductsUseCase.execute();
   }
 
   // no ProductController, adicionar:

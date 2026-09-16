@@ -9,6 +9,7 @@ import { StockMovementRepository } from '../domain/repositories/stock-movement.r
 import { StockMovementController } from './controllers/stock-movement.controller';
 import { AdjustProductStockUseCase } from '../application/usecase/adjust-product-stock.usecase';
 import { FindWasteMovementsUseCase } from '../application/usecase/find-waste-movements.usecase';
+import { FindStockMovementsUseCase } from '../application/usecase/find-stock-movements.usecase';
 
 @Module({
   imports: [StockMovementPersistenceModule, ProductPersistenceModule],
@@ -50,6 +51,15 @@ import { FindWasteMovementsUseCase } from '../application/usecase/find-waste-mov
         loggedUserService: LoggedUserService,
       ) =>
         new FindWasteMovementsUseCase(stockMovementRepository, loggedUserService),
+      inject: [PROVIDERS.STOCK_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindStockMovementsUseCase,
+      useFactory: (
+        stockMovementRepository: StockMovementRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindStockMovementsUseCase(stockMovementRepository, loggedUserService),
       inject: [PROVIDERS.STOCK_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],

@@ -3,6 +3,7 @@ import { In, Repository } from 'typeorm';
 import {
   SaleItemRepository,
   SalesCostSummary,
+  ProductRevenueAndCost,
 } from '@/core/sale/domain/repositories/sale-item.repository';
 import { SaleItem } from '@/core/sale/domain/entities/sale-item.entity';
 import { SaleItemSchema } from '../schema/sale-item.schema';
@@ -100,6 +101,51 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
       totalRevenue: Number(result?.totalRevenue ?? 0),
       totalCost: Number(result?.totalCost ?? 0),
     };
+  }
+
+  async findRevenueAndCostByProductAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<ProductRevenueAndCost[]> {
+    const rows = await this.saleItemRepository
+      .createQueryBuilder('saleItem')
+      .innerJoin('saleItem.sale', 'sale')
+      .innerJoin('sale.company', 'company')
+      .innerJoin('saleItem.product', 'product')
+      .select('product.id', 'productId')
+      .addSelect('product.name', 'productName')
+      .addSelect(
+        'COALESCE(SUM(COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'quantitySold',
+      )
+      .addSelect('COALESCE(SUM(saleItem.subtotal), 0)', 'revenue')
+      .addSelect(
+        'COALESCE(SUM(saleItem.unitCostSnapshot * COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'cost',
+      )
+      .where('company.id = :companyId', { companyId })
+      .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .groupBy('product.id')
+      .addGroupBy('product.name')
+      .getRawMany<{
+        productId: string;
+        productName: string;
+        quantitySold: string;
+        revenue: string;
+        cost: string;
+      }>();
+
+    return rows.map((row) => ({
+      productId: row.productId,
+      productName: row.productName,
+      quantitySold: Number(row.quantitySold),
+      revenue: Number(row.revenue),
+      cost: Number(row.cost),
+    }));
   }
 
   async update(entity: SaleItem): Promise<void> {

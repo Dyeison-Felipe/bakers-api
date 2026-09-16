@@ -26,6 +26,9 @@ import {
 import { AdditionalCostModule } from '@/core/additional-cost/infra/additional-cost.module';
 import { AdditionalCostRepository } from '@/core/additional-cost/domain/repositories/additional-cost.repository';
 import { FindLowStockProductsUseCase } from '../application/usecase/find-low-stock-products.usecase';
+import { FindNearExpiryProductsUseCase } from '../application/usecase/find-near-expiry-products.usecase';
+import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
+import { StockMovementPersistenceModule } from '@/core/stock-movement/infra/stock-movement-persistence.module';
 import { RecipeModule } from '@/core/recipe/infra/recipe.module';
 import { RecipeRepository } from '@/core/recipe/domain/repositories/recipe.repository';
 import { RecipeItemRepository } from '@/core/recipe/domain/repositories/recipe-item.repository';
@@ -40,6 +43,7 @@ import { AdjustProductStockUseCase } from '@/core/stock-movement/application/use
     AdditionalCostModule,
     RecipeModule,
     StockMovementModule,
+    StockMovementPersistenceModule,
   ],
   controllers: [ProductController],
   providers: [
@@ -245,6 +249,25 @@ import { AdjustProductStockUseCase } from '@/core/stock-movement/application/use
         );
       },
       inject: [PROVIDERS.PRODUCT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindNearExpiryProductsUseCase,
+      useFactory: (
+        productRepository: ProductRepository,
+        stockMovementRepository: StockMovementRepository,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindNearExpiryProductsUseCase(
+          productRepository,
+          stockMovementRepository,
+          loggedUserService,
+        );
+      },
+      inject: [
+        PROVIDERS.PRODUCT_REPOSITORY,
+        PROVIDERS.STOCK_MOVEMENT_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+      ],
     },
   ],
   exports: [],

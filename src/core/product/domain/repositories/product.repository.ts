@@ -46,4 +46,10 @@ export interface ProductRepository extends BaseRepository<Product> {
   ): Promise<Pagination<Product>>;
 
   findLowStockByCompanyId(companyId: string): Promise<Product[]>;
+
+  /** Produtos ativos, com controle de estoque, saldo em estoque e validade
+   * configurada (`expirationDateInDays`) — candidatos ao alerta de validade
+   * próxima. A estimativa de vencimento em si é calculada no usecase, a
+   * partir da última entrada de estoque de cada um. */
+  findExpiringSoonByCompanyId(companyId: string): Promise<Product[]>;
 }

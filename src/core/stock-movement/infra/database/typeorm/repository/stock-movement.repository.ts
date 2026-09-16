@@ -3,9 +3,10 @@ import { Repository } from 'typeorm';
 import {
   StockMovementRepository,
   StockMovementReportItem,
+  ProductLastEntryDate,
 } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { StockMovement } from '@/core/stock-movement/domain/entities/stock-movement.entity';
-import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
+import { TypeStockMovement, TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { StockMovementSchema } from '../schema/stock-movement.schema';
 import { StockMovementMapper } from './mappers/stock-movement.mapper';
 
@@ -84,6 +85,7 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
         'COALESCE(movement.quantity * movement.unitCostSnapshot, 0)',
         'totalCost',
       )
+      .addSelect('movement.type', 'type')
       .addSelect('movement.reason', 'reason')
       .addSelect('movement.reasonDescription', 'reasonDescription')
       .where('company.id = :companyId', { companyId })
@@ -102,6 +104,7 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
         unitOfMeasurement: StockMovementReportItem['unitOfMeasurement'];
         unitCostSnapshot: string | null;
         totalCost: string;
+        type: TypeStockMovement;
         reason: TypeStockMovementReason;
         reasonDescription: string | null;
       }>();
@@ -116,8 +119,30 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
       unitCostSnapshot:
         row.unitCostSnapshot === null ? null : Number(row.unitCostSnapshot),
       totalCost: Number(row.totalCost),
+      type: row.type,
       reason: row.reason,
       reasonDescription: row.reasonDescription,
+    }));
+  }
+
+  async findLastEntryDateByProductIds(
+    productIds: string[],
+  ): Promise<ProductLastEntryDate[]> {
+    if (!productIds.length) return [];
+
+    const rows = await this.stockMovementRepository
+      .createQueryBuilder('movement')
+      .leftJoin('movement.product', 'product')
+      .select('product.id', 'productId')
+      .addSelect('MAX(movement.createdAt)', 'lastEntryDate')
+      .where('product.id IN (:...productIds)', { productIds })
+      .andWhere('movement.type = :type', { type: TypeStockMovement.ENTRY })
+      .groupBy('product.id')
+      .getRawMany<{ productId: string; lastEntryDate: Date }>();
+
+    return rows.map((row) => ({
+      productId: row.productId,
+      lastEntryDate: row.lastEntryDate,
     }));
   }
 

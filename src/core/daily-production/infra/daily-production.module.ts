@@ -112,18 +112,24 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
       useFactory: (
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
+        productRecipeLinkRepository: ProductRecipeLinkRepository,
+        recipeItemRepository: RecipeItemRepository,
         loggedUserService: LoggedUserService,
         adjustProductStockUseCase: AdjustProductStockUseCase,
       ) =>
         new MarkDailyProductionItemAsProducedUseCase(
           dailyProductionRepository,
           dailyProductionItemRepository,
+          productRecipeLinkRepository,
+          recipeItemRepository,
           loggedUserService,
           adjustProductStockUseCase,
         ),
       inject: [
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.PRODUCT_RECIPE_LINK_REPOSITORY,
+        PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         AdjustProductStockUseCase,
       ],

@@ -14,6 +14,7 @@ import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persisten
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { SalePersistenceModule } from '@/core/sale/infra/sale-persistence.module';
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
+import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import { ReportController } from './controller/report.controller';
 import { FindWasteReportUseCase } from '../application/usecase/find-waste-report.usecase';
 import { FindCashRegisterReportUseCase } from '../application/usecase/find-cash-register-report.usecase';
@@ -27,6 +28,12 @@ import { GenerateWasteReportPdfUseCase } from '../application/usecase/generate-w
 import { GenerateCashRegisterReportPdfUseCase } from '../application/usecase/generate-cash-register-report-pdf.usecase';
 import { GenerateProductionReportPdfUseCase } from '../application/usecase/generate-production-report-pdf.usecase';
 import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate-expense-report-pdf.usecase';
+import { FindCpvReportUseCase } from '../application/usecase/find-cpv-report.usecase';
+import { FindContributionMarginReportUseCase } from '../application/usecase/find-contribution-margin-report.usecase';
+import { FindAbcCurveReportUseCase } from '../application/usecase/find-abc-curve-report.usecase';
+import { GenerateCpvReportPdfUseCase } from '../application/usecase/generate-cpv-report-pdf.usecase';
+import { GenerateContributionMarginReportPdfUseCase } from '../application/usecase/generate-contribution-margin-report-pdf.usecase';
+import { GenerateAbcCurveReportPdfUseCase } from '../application/usecase/generate-abc-curve-report-pdf.usecase';
 
 @Module({
   imports: [
@@ -188,6 +195,66 @@ import { GenerateExpenseReportPdfUseCase } from '../application/usecase/generate
           loggedUserService,
         ),
       inject: [FindExpenseReportUseCase, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindCpvReportUseCase,
+      useFactory: (
+        saleItemRepository: SaleItemRepository,
+        loggedUserService: LoggedUserService,
+      ) => new FindCpvReportUseCase(saleItemRepository, loggedUserService),
+      inject: [PROVIDERS.SALE_ITEM_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindContributionMarginReportUseCase,
+      useFactory: (
+        saleItemRepository: SaleItemRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindContributionMarginReportUseCase(
+          saleItemRepository,
+          loggedUserService,
+        ),
+      inject: [PROVIDERS.SALE_ITEM_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: FindAbcCurveReportUseCase,
+      useFactory: (
+        saleItemRepository: SaleItemRepository,
+        loggedUserService: LoggedUserService,
+      ) => new FindAbcCurveReportUseCase(saleItemRepository, loggedUserService),
+      inject: [PROVIDERS.SALE_ITEM_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: GenerateCpvReportPdfUseCase,
+      useFactory: (
+        findCpvReportUseCase: FindCpvReportUseCase,
+        loggedUserService: LoggedUserService,
+      ) => new GenerateCpvReportPdfUseCase(findCpvReportUseCase, loggedUserService),
+      inject: [FindCpvReportUseCase, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: GenerateContributionMarginReportPdfUseCase,
+      useFactory: (
+        findContributionMarginReportUseCase: FindContributionMarginReportUseCase,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new GenerateContributionMarginReportPdfUseCase(
+          findContributionMarginReportUseCase,
+          loggedUserService,
+        ),
+      inject: [FindContributionMarginReportUseCase, PROVIDERS.LOGGED_USER_SERVICE],
+    },
+    {
+      provide: GenerateAbcCurveReportPdfUseCase,
+      useFactory: (
+        findAbcCurveReportUseCase: FindAbcCurveReportUseCase,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new GenerateAbcCurveReportPdfUseCase(
+          findAbcCurveReportUseCase,
+          loggedUserService,
+        ),
+      inject: [FindAbcCurveReportUseCase, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [],

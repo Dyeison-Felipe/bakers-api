@@ -19,7 +19,6 @@
     "test:cov": "jest --coverage",
     "test:cov:report": "jest --coverage --testRegex=\".*\\.test\\.ts$\" --setupFiles=\"<rootDir>/../test/jest-unit-setup.ts\" && node scripts/coverage-by-layer.js",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky || true",
     "containers:dev": "npx dotenv-cli -e .env.development -- docker compose up -d"
   },
@@ -92,7 +91,8 @@
   },
   "jest": {
     "setupFiles": [
-      "<rootDir>/../test/jest-setup.ts"
+      "<rootDir>/../test/jest-setup.ts",
+      "<rootDir>/../test/jest-unit-setup.ts"
     ],
     "moduleFileExtensions": [
       "js",
@@ -100,7 +100,7 @@
       "ts"
     ],
     "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "testRegex": ".*\\.(spec|test)\\.ts$",
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     },

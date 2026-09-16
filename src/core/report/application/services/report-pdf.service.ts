@@ -3,6 +3,9 @@ import { WasteReportOutput } from '@/shared/application/output/report/waste-repo
 import { CashRegisterReportOutput } from '@/shared/application/output/report/cash-register-report.output';
 import { ProductionReportOutput } from '@/shared/application/output/report/production-report.output';
 import { ExpenseReportOutput } from '@/shared/application/output/report/expense-report.output';
+import { CpvReportOutput } from '@/shared/application/output/report/cpv-report.output';
+import { ContributionMarginReportOutput } from '@/shared/application/output/report/contribution-margin-report.output';
+import { AbcCurveReportOutput } from '@/shared/application/output/report/abc-curve-report.output';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { LOGO_PATH } from '@/shared/infra/pdf/pdf-assets';
 
@@ -408,6 +411,116 @@ export class ReportPdfService {
           formatDate(item.date),
           item.description,
           formatCurrency(item.value),
+        ]),
+      );
+    });
+  }
+
+  static generateCpvReport(input: {
+    company: ReportCompany;
+    period: ReportPeriod;
+    data: CpvReportOutput;
+  }): Promise<Buffer> {
+    return this.toBuffer((doc) => {
+      this.writeHeader(doc, input.company, 'Relatório de CPV', input.period);
+
+      this.writeSummaryLine(doc, 'Receita total', formatCurrency(input.data.totalRevenue));
+      this.writeSummaryLine(doc, 'CPV total', formatCurrency(input.data.totalCpv));
+      this.writeSummaryLine(doc, 'Lucro bruto', formatCurrency(input.data.grossProfit));
+      doc.moveDown(1);
+
+      this.drawTable(
+        doc,
+        [
+          { label: 'Produto', flex: 4 },
+          { label: 'Qtd. vendida', flex: 1.5, align: 'right' },
+          { label: 'Receita', flex: 2, align: 'right' },
+          { label: 'CPV', flex: 2, align: 'right' },
+          { label: 'Lucro bruto', flex: 2, align: 'right' },
+        ],
+        input.data.items.map((item) => [
+          item.productName,
+          item.quantitySold.toString(),
+          formatCurrency(item.revenue),
+          formatCurrency(item.cpv),
+          formatCurrency(item.grossProfit),
+        ]),
+      );
+    });
+  }
+
+  static generateContributionMarginReport(input: {
+    company: ReportCompany;
+    period: ReportPeriod;
+    data: ContributionMarginReportOutput;
+  }): Promise<Buffer> {
+    return this.toBuffer((doc) => {
+      this.writeHeader(
+        doc,
+        input.company,
+        'Relatório de Margem de Contribuição',
+        input.period,
+      );
+
+      this.writeSummaryLine(doc, 'Receita total', formatCurrency(input.data.totalRevenue));
+      this.writeSummaryLine(
+        doc,
+        'Custo variável total',
+        formatCurrency(input.data.totalVariableCost),
+      );
+      this.writeSummaryLine(
+        doc,
+        'Margem de contribuição total',
+        formatCurrency(input.data.totalContributionMargin),
+      );
+      doc.moveDown(1);
+
+      this.drawTable(
+        doc,
+        [
+          { label: 'Produto', flex: 4 },
+          { label: 'Receita', flex: 2, align: 'right' },
+          { label: 'Custo variável', flex: 2, align: 'right' },
+          { label: 'Margem', flex: 2, align: 'right' },
+          { label: 'Margem %', flex: 1.5, align: 'right' },
+        ],
+        input.data.items.map((item) => [
+          item.productName,
+          formatCurrency(item.revenue),
+          formatCurrency(item.variableCost),
+          formatCurrency(item.contributionMargin),
+          `${item.contributionMarginPercent.toFixed(1)}%`,
+        ]),
+      );
+    });
+  }
+
+  static generateAbcCurveReport(input: {
+    company: ReportCompany;
+    period: ReportPeriod;
+    data: AbcCurveReportOutput;
+  }): Promise<Buffer> {
+    return this.toBuffer((doc) => {
+      this.writeHeader(doc, input.company, 'Relatório de Curva ABC', input.period);
+
+      this.writeSummaryLine(doc, 'Receita total', formatCurrency(input.data.totalRevenue));
+      doc.moveDown(1);
+
+      this.drawTable(
+        doc,
+        [
+          { label: 'Produto', flex: 4 },
+          { label: 'Receita', flex: 2, align: 'right' },
+          { label: '% Individual', flex: 1.5, align: 'right' },
+          { label: '% Acumulado', flex: 1.5, align: 'right' },
+          { label: 'Classe', flex: 1, align: 'center' },
+        ],
+        input.data.items.map((item) => [
+          item.productName,
+          formatCurrency(item.revenue),
+          `${item.revenuePercent.toFixed(1)}%`,
+          `${item.cumulativePercent.toFixed(1)}%`,
+          item.classification,
         ]),
       );
     });

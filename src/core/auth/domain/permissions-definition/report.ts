@@ -15,4 +15,16 @@ export const PermissionReport = {
     action: 'expense_reader',
     resource: 'report',
   },
+  REPORT_CPV_READER: {
+    action: 'cpv_reader',
+    resource: 'report',
+  },
+  REPORT_CONTRIBUTION_MARGIN_READER: {
+    action: 'contribution_margin_reader',
+    resource: 'report',
+  },
+  REPORT_ABC_CURVE_READER: {
+    action: 'abc_curve_reader',
+    resource: 'report',
+  },
 } as const;

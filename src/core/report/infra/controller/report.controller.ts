@@ -8,6 +8,9 @@ import { WasteReportPresenter } from '@/shared/infra/presenter/report/waste-repo
 import { CashRegisterReportPresenter } from '@/shared/infra/presenter/report/cash-register-report.presenter';
 import { ProductionReportPresenter } from '@/shared/infra/presenter/report/production-report.presenter';
 import { ExpenseReportPresenter } from '@/shared/infra/presenter/report/expense-report.presenter';
+import { CpvReportPresenter } from '@/shared/infra/presenter/report/cpv-report.presenter';
+import { ContributionMarginReportPresenter } from '@/shared/infra/presenter/report/contribution-margin-report.presenter';
+import { AbcCurveReportPresenter } from '@/shared/infra/presenter/report/abc-curve-report.presenter';
 import { DailyRevenueSeriesPointPresenter } from '@/shared/infra/presenter/report/daily-revenue-series.presenter';
 import { CostComparisonSeriesPointPresenter } from '@/shared/infra/presenter/report/cost-comparison-series.presenter';
 import { PaymentMethodBreakdownPresenter } from '@/shared/infra/presenter/report/payment-method-breakdown.presenter';
@@ -24,6 +27,12 @@ import { GenerateWasteReportPdfUseCase } from '../../application/usecase/generat
 import { GenerateCashRegisterReportPdfUseCase } from '../../application/usecase/generate-cash-register-report-pdf.usecase';
 import { GenerateProductionReportPdfUseCase } from '../../application/usecase/generate-production-report-pdf.usecase';
 import { GenerateExpenseReportPdfUseCase } from '../../application/usecase/generate-expense-report-pdf.usecase';
+import { FindCpvReportUseCase } from '../../application/usecase/find-cpv-report.usecase';
+import { FindContributionMarginReportUseCase } from '../../application/usecase/find-contribution-margin-report.usecase';
+import { FindAbcCurveReportUseCase } from '../../application/usecase/find-abc-curve-report.usecase';
+import { GenerateCpvReportPdfUseCase } from '../../application/usecase/generate-cpv-report-pdf.usecase';
+import { GenerateContributionMarginReportPdfUseCase } from '../../application/usecase/generate-contribution-margin-report-pdf.usecase';
+import { GenerateAbcCurveReportPdfUseCase } from '../../application/usecase/generate-abc-curve-report-pdf.usecase';
 
 const parseReportDateRange = (
   dateFrom: string,
@@ -52,6 +61,12 @@ export class ReportController {
     private readonly generateCashRegisterReportPdfUseCase: GenerateCashRegisterReportPdfUseCase,
     private readonly generateProductionReportPdfUseCase: GenerateProductionReportPdfUseCase,
     private readonly generateExpenseReportPdfUseCase: GenerateExpenseReportPdfUseCase,
+    private readonly findCpvReportUseCase: FindCpvReportUseCase,
+    private readonly findContributionMarginReportUseCase: FindContributionMarginReportUseCase,
+    private readonly findAbcCurveReportUseCase: FindAbcCurveReportUseCase,
+    private readonly generateCpvReportPdfUseCase: GenerateCpvReportPdfUseCase,
+    private readonly generateContributionMarginReportPdfUseCase: GenerateContributionMarginReportPdfUseCase,
+    private readonly generateAbcCurveReportPdfUseCase: GenerateAbcCurveReportPdfUseCase,
   ) {}
 
   @Get('waste')
@@ -191,6 +206,111 @@ export class ReportController {
     return reply
       .type('application/pdf')
       .header('Content-Disposition', 'attachment; filename="relatorio-despesas.pdf"')
+      .send(buffer);
+  }
+
+  @Get('cpv')
+  @Permission(PermissionReport.REPORT_CPV_READER)
+  @ApiOperation({ summary: 'Relatório de CPV (Custo dos Produtos Vendidos) por período' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  @ApiOkResponse({ type: CpvReportPresenter })
+  async cpv(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+  ): Promise<CpvReportPresenter> {
+    return await this.findCpvReportUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+  }
+
+  @Get('cpv/pdf')
+  @Permission(PermissionReport.REPORT_CPV_READER)
+  @ApiOperation({ summary: 'Exporta o relatório de CPV em PDF' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  async cpvPdf(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+    @Res() reply: FastifyReply,
+  ) {
+    const buffer = await this.generateCpvReportPdfUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+
+    return reply
+      .type('application/pdf')
+      .header('Content-Disposition', 'attachment; filename="relatorio-cpv.pdf"')
+      .send(buffer);
+  }
+
+  @Get('contribution-margin')
+  @Permission(PermissionReport.REPORT_CONTRIBUTION_MARGIN_READER)
+  @ApiOperation({ summary: 'Relatório de Margem de Contribuição por produto no período' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  @ApiOkResponse({ type: ContributionMarginReportPresenter })
+  async contributionMargin(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+  ): Promise<ContributionMarginReportPresenter> {
+    return await this.findContributionMarginReportUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+  }
+
+  @Get('contribution-margin/pdf')
+  @Permission(PermissionReport.REPORT_CONTRIBUTION_MARGIN_READER)
+  @ApiOperation({ summary: 'Exporta o relatório de Margem de Contribuição em PDF' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  async contributionMarginPdf(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+    @Res() reply: FastifyReply,
+  ) {
+    const buffer = await this.generateContributionMarginReportPdfUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+
+    return reply
+      .type('application/pdf')
+      .header('Content-Disposition', 'attachment; filename="relatorio-margem-contribuicao.pdf"')
+      .send(buffer);
+  }
+
+  @Get('abc-curve')
+  @Permission(PermissionReport.REPORT_ABC_CURVE_READER)
+  @ApiOperation({ summary: 'Relatório de Curva ABC de produtos por receita no período' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  @ApiOkResponse({ type: AbcCurveReportPresenter })
+  async abcCurve(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+  ): Promise<AbcCurveReportPresenter> {
+    return await this.findAbcCurveReportUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+  }
+
+  @Get('abc-curve/pdf')
+  @Permission(PermissionReport.REPORT_ABC_CURVE_READER)
+  @ApiOperation({ summary: 'Exporta o relatório de Curva ABC em PDF' })
+  @ApiQuery({ name: 'dateFrom', required: true })
+  @ApiQuery({ name: 'dateTo', required: true })
+  async abcCurvePdf(
+    @Query('dateFrom') dateFrom: string,
+    @Query('dateTo') dateTo: string,
+    @Res() reply: FastifyReply,
+  ) {
+    const buffer = await this.generateAbcCurveReportPdfUseCase.execute(
+      parseReportDateRange(dateFrom, dateTo),
+    );
+
+    return reply
+      .type('application/pdf')
+      .header('Content-Disposition', 'attachment; filename="relatorio-curva-abc.pdf"')
       .send(buffer);
   }
 

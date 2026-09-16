@@ -182,6 +182,25 @@ export class ProductRepositoryImpl implements ProductRepository {
     return productsSchema.map((product) => ProductMapper.toEntity(product));
   }
 
+  async findExpiringSoonByCompanyId(companyId: string): Promise<Product[]> {
+    const productsSchema = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.company', 'company')
+      .where('company.id = :companyId', { companyId })
+      .andWhere('product.active = :active', { active: true })
+      .andWhere('product.stockManagement = :stockManagement', {
+        stockManagement: true,
+      })
+      .andWhere('product.currentStock IS NOT NULL')
+      .andWhere('product.currentStock > 0')
+      .andWhere("product.expirationDateInDays IS NOT NULL AND product.expirationDateInDays != ''")
+      .orderBy('product.name', 'ASC')
+      .getMany();
+
+    return productsSchema.map((product) => ProductMapper.toEntity(product));
+  }
+
   async findProductByNameAndCompanyId(
     name: string,
     companyId: string,

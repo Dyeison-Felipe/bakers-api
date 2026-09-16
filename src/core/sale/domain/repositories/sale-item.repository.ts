@@ -6,6 +6,14 @@ export type SalesCostSummary = {
   totalCost: number;
 };
 
+export type ProductRevenueAndCost = {
+  productId: string;
+  productName: string;
+  quantitySold: number;
+  revenue: number;
+  cost: number;
+};
+
 export interface SaleItemRepository extends BaseRepository<SaleItem> {
   saveMany(entities: SaleItem[]): Promise<SaleItem[]>;
 
@@ -20,4 +28,14 @@ export interface SaleItemRepository extends BaseRepository<SaleItem> {
   sumRevenueAndCostByCashRegisterSessionId(
     cashRegisterSessionId: string,
   ): Promise<SalesCostSummary>;
+
+  /** Receita e custo (CPV) agregados por produto vendido no período — base
+   * para os relatórios de CPV, Margem de Contribuição e Curva ABC. Só
+   * considera itens com produto vinculado (ignora vendas de produto já
+   * excluído, que não têm mais um id agrupável). */
+  findRevenueAndCostByProductAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+  ): Promise<ProductRevenueAndCost[]>;
 }
