@@ -34,13 +34,15 @@ export class ProductionReportDailyPointPresenter {
   @ApiProperty({ description: 'Dia (YYYY-MM-DD)' })
   readonly day: string;
 
-  @ApiProperty({ description: 'Custo total de produção no dia' })
+  @ApiProperty({ description: 'Custo real de produção no dia (itens já confirmados)' })
   readonly total: number;
 }
 
 export class ProductionReportPresenter {
-  @ApiProperty({ description: 'Custo total de produção no período' })
-  readonly totalPlannedCost: number;
+  @ApiProperty({
+    description: 'Custo real de produção no período (soma dos itens já confirmados)',
+  })
+  readonly totalProducedCost: number;
 
   @ApiProperty({ type: [ProductionReportDailyPointPresenter] })
   readonly dailySeries: ProductionReportDailyPointPresenter[];

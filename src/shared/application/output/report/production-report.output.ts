@@ -17,7 +17,7 @@ export type ProductionReportDailyPoint = {
 };
 
 export type ProductionReportOutput = {
-  totalPlannedCost: number;
+  totalProducedCost: number;
   dailySeries: ProductionReportDailyPoint[];
   items: ProductionReportItem[];
 };

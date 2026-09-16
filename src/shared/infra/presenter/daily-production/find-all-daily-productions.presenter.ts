@@ -14,6 +14,11 @@ export class FindAllDailyProductionsPresenter {
   @ApiProperty({ description: 'Custo total planejado da produção' })
   readonly totalPlannedCost: number;
 
+  @ApiProperty({
+    description: 'Custo real da produção (soma dos itens já confirmados)',
+  })
+  readonly totalProducedCost: number;
+
   @ApiProperty({ description: 'Quantidade de itens da produção' })
   readonly itemCount: number;
 }

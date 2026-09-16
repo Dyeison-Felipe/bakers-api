@@ -30,7 +30,6 @@ import { MarkItemAsProducedPresenter } from '@/shared/infra/presenter/daily-prod
 import { CreateDailyProductionDto } from '../dtos/create-daily-production.dto';
 import { AddDailyProductionItemDto } from '../dtos/add-daily-production-item.dto';
 import { AddDailyProductionItemsDto } from '../dtos/add-daily-production-items.dto';
-import { MarkItemProducedDto } from '../dtos/mark-item-produced.dto';
 import { UpdateDailyProductionItemDto } from '../dtos/update-daily-production-item.dto';
 import { CreateDailyProductionUseCase } from '../../application/usecase/create-daily-production.usecase';
 import { AddDailyProductionItemUseCase } from '../../application/usecase/add-daily-production-item.usecase';
@@ -207,17 +206,15 @@ export class DailyProductionController {
   @ApiOperation({
     summary: 'Marca um item como produzido',
     description:
-      'Marca o item como produzido e dá entrada no estoque do produto; para produtos em KG, exige o peso real produzido.',
+      'Marca o item como produzido e dá entrada no estoque do produto, usando a quantidade/peso planejado.',
   })
   @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
   @ApiOkResponse({ type: MarkItemAsProducedPresenter })
   async produceItem(
     @Param('itemId') itemId: string,
-    @Body() dto: MarkItemProducedDto,
   ): Promise<MarkItemAsProducedPresenter> {
     return await this.markDailyProductionItemAsProducedUseCase.execute({
       id: itemId,
-      actualWeight: dto.actualWeight,
     });
   }
 }

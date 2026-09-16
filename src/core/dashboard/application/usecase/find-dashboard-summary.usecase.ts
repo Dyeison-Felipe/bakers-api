@@ -11,6 +11,7 @@ import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
 import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
 import { getBusinessTodayRange } from '@/shared/infra/utils/get-business-today-range';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 
 type Input = void;
 type Output = DashboardSummaryOutput;
@@ -92,6 +93,7 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
     const productionCostToday = round2(
       productionItemsByProduction
         .flat()
+        .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
         .reduce((sum, item) => sum + item.plannedCost, 0),
     );
 

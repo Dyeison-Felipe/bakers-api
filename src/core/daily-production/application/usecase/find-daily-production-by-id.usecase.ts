@@ -4,6 +4,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { DailyProductionOutput } from '@/shared/application/output/daily-production/daily-production.output';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { DailyProductionRepository } from '../../domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
 
@@ -44,6 +45,9 @@ export class FindDailyProductionByIdUseCase implements UseCase<Input, Output> {
       productionDate: dailyProduction.productionDate,
       status: dailyProduction.status,
       totalPlannedCost: items.reduce((sum, item) => sum + item.plannedCost, 0),
+      totalProducedCost: items
+        .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
+        .reduce((sum, item) => sum + item.plannedCost, 0),
       items: items.map((item) => ({
         id: item.id,
         product: {

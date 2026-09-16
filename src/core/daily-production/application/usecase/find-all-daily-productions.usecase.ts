@@ -4,7 +4,10 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { PaginationOutput } from '@/shared/application/output/pagination/pagination.output';
 import { FindAllDailyProductionsOutput } from '@/shared/application/output/daily-production/find-all-daily-productions.output';
-import { TypeDailyProductionStatus } from '@/shared/infra/enums/daily-production';
+import {
+  TypeDailyProductionItemStatus,
+  TypeDailyProductionStatus,
+} from '@/shared/infra/enums/daily-production';
 import { DailyProductionRepository } from '../../domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
 
@@ -57,6 +60,9 @@ export class FindAllDailyProductionsUseCase implements UseCase<Input, Output> {
             (sum, item) => sum + item.plannedCost,
             0,
           ),
+          totalProducedCost: productionItems
+            .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
+            .reduce((sum, item) => sum + item.plannedCost, 0),
           itemCount: productionItems.length,
         };
       }),

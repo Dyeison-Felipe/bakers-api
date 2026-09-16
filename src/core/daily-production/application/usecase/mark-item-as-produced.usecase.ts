@@ -24,7 +24,6 @@ import { DailyProductionItem } from '../../domain/entities/daily-production-item
 
 type Input = {
   id: string;
-  actualWeight?: number;
 };
 
 type Output = MarkItemAsProducedOutput;
@@ -69,12 +68,8 @@ export class MarkDailyProductionItemAsProducedUseCase
     let quantityProduced: number;
 
     if (item.unitOfMeasurement === TypeUnitOfMeasurement.KG) {
-      if (!input.actualWeight || input.actualWeight <= 0) {
-        throw new BadRequestError('Informe o peso real produzido');
-      }
-
-      actualWeight = input.actualWeight;
-      quantityProduced = input.actualWeight;
+      actualWeight = item.plannedWeight!;
+      quantityProduced = item.plannedWeight!;
     } else {
       actualQuantity = item.plannedQuantity!;
       quantityProduced = item.plannedQuantity!;

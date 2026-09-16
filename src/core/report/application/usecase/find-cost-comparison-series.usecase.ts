@@ -7,6 +7,7 @@ import { DailyProductionItemRepository } from '@/core/daily-production/domain/re
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { CostComparisonSeriesOutput } from '@/shared/application/output/report/cost-comparison-series.output';
 
 type Input = {
@@ -67,6 +68,7 @@ export class FindCostComparisonSeriesUseCase implements UseCase<Input, Output> {
 
     const productionCostByDay = new Map<string, number>();
     for (const { item, production } of itemsByProduction.flat()) {
+      if (item.status !== TypeDailyProductionItemStatus.PRODUCED) continue;
       const day = toDayKey(production.productionDate);
       productionCostByDay.set(
         day,

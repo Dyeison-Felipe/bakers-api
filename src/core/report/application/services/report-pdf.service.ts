@@ -366,8 +366,8 @@ export class ReportPdfService {
 
       this.writeSummaryLine(
         doc,
-        'Custo total de produção',
-        formatCurrency(input.data.totalPlannedCost),
+        'Custo real de produção',
+        formatCurrency(input.data.totalProducedCost),
       );
       doc.moveDown(1);
 

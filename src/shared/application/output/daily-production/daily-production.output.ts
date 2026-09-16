@@ -6,5 +6,6 @@ export type DailyProductionOutput = {
   productionDate: Date;
   status: TypeDailyProductionStatus;
   totalPlannedCost: number;
+  totalProducedCost: number;
   items: DailyProductionItemOutput[];
 };

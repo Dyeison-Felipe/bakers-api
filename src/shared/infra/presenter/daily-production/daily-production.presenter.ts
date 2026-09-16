@@ -16,6 +16,11 @@ export class DailyProductionPresenter {
   readonly totalPlannedCost: number;
 
   @ApiProperty({
+    description: 'Custo real da produção (soma dos itens já confirmados)',
+  })
+  readonly totalProducedCost: number;
+
+  @ApiProperty({
     description: 'Itens da produção',
     type: () => DailyProductionItemPresenter,
     isArray: true,

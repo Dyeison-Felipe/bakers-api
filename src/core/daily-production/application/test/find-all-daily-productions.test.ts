@@ -1,4 +1,5 @@
 import { FindAllDailyProductionsUseCase } from '../usecase/find-all-daily-productions.usecase';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { makeDailyProduction, makeItem, makeLoggedUser, makePagination } from './fixtures';
 import type { DailyProductionRepository } from '../../domain/repositories/daily-production.repository';
 import type { DailyProductionItemRepository } from '../../domain/repositories/daily-production-item.repository';
@@ -54,6 +55,7 @@ describe('FindAllDailyProductionsUseCase', () => {
     expect(output.items[0]).toMatchObject({
       id: 'dp-1',
       totalPlannedCost: 25,
+      totalProducedCost: 0,
       itemCount: 2,
     });
   });
@@ -66,6 +68,21 @@ describe('FindAllDailyProductionsUseCase', () => {
     const output = await sut.execute({});
 
     expect(output.items[0].totalPlannedCost).toBe(0);
+    expect(output.items[0].totalProducedCost).toBe(0);
     expect(output.items[0].itemCount).toBe(0);
+  });
+
+  it('should sum totalProducedCost only for items already produced', async () => {
+    dailyProductionRepository.findAllByCompanyId.mockResolvedValue(
+      makePagination([makeDailyProduction({ id: 'dp-1' })]),
+    );
+    dailyProductionItemRepository.findAllByDailyProductionId.mockResolvedValue([
+      makeItem({ plannedCost: 10, status: TypeDailyProductionItemStatus.PRODUCED }),
+      makeItem({ plannedCost: 15, status: TypeDailyProductionItemStatus.PLANNED }),
+    ]);
+
+    const output = await sut.execute({});
+
+    expect(output.items[0]).toMatchObject({ totalPlannedCost: 25, totalProducedCost: 10 });
   });
 });

@@ -9,6 +9,7 @@ import {
   ProductionReportItem,
   ProductionReportOutput,
 } from '@/shared/application/output/report/production-report.output';
+import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 
 type Input = {
   dateFrom: Date;
@@ -64,12 +65,16 @@ export class FindProductionReportUseCase implements UseCase<Input, Output> {
       }),
     );
 
-    const totalPlannedCost = round2(
-      items.reduce((sum, item) => sum + item.plannedCost, 0),
+    const producedItems = items.filter(
+      (item) => item.status === TypeDailyProductionItemStatus.PRODUCED,
+    );
+
+    const totalProducedCost = round2(
+      producedItems.reduce((sum, item) => sum + item.plannedCost, 0),
     );
 
     const dailyMap = new Map<string, number>();
-    for (const item of items) {
+    for (const item of producedItems) {
       const day = toDayKey(item.productionDate);
       dailyMap.set(day, round2((dailyMap.get(day) ?? 0) + item.plannedCost));
     }
@@ -80,7 +85,7 @@ export class FindProductionReportUseCase implements UseCase<Input, Output> {
       .sort((a, b) => a.day.localeCompare(b.day));
 
     return {
-      totalPlannedCost,
+      totalProducedCost,
       dailySeries,
       items,
     };

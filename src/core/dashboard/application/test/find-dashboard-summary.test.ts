@@ -82,20 +82,23 @@ describe('FindDashboardSummaryUseCase', () => {
     expect(output.salesRevenueCardToday).toBe(30);
   });
 
-  it('should sum plannedCost across every item of every daily production', async () => {
+  it('should sum plannedCost only for items already produced, across every daily production', async () => {
     dailyProductionRepository.findAllByCompanyId.mockResolvedValue(
       makePagination([{ id: 'dp-1' } as never, { id: 'dp-2' } as never]),
     );
     dailyProductionItemRepository.findAllByDailyProductionId.mockImplementation(
       async (dailyProductionId) =>
         dailyProductionId === 'dp-1'
-          ? ([{ plannedCost: 10 }] as never)
-          : ([{ plannedCost: 5 }, { plannedCost: 2.5 }] as never),
+          ? ([{ plannedCost: 10, status: 'PRODUCED' }] as never)
+          : ([
+              { plannedCost: 5, status: 'PRODUCED' },
+              { plannedCost: 2.5, status: 'PLANNED' },
+            ] as never),
     );
 
     const output = await sut.execute();
 
-    expect(output.productionCostToday).toBe(17.5);
+    expect(output.productionCostToday).toBe(15);
   });
 
   it('should sum expense values for the day', async () => {

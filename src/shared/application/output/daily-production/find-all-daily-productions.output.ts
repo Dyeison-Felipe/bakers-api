@@ -5,5 +5,6 @@ export type FindAllDailyProductionsOutput = {
   productionDate: Date;
   status: TypeDailyProductionStatus;
   totalPlannedCost: number;
+  totalProducedCost: number;
   itemCount: number;
 };

@@ -72,19 +72,11 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     await expect(sut.execute({ id: 'item-1' })).rejects.toThrow(BadRequestError);
   });
 
-  it('should throw BadRequestError for a weight-based item without an actual weight', async () => {
-    dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(
-      makeItem({ unitOfMeasurement: TypeUnitOfMeasurement.KG }),
-    );
-
-    await expect(sut.execute({ id: 'item-1' })).rejects.toThrow(BadRequestError);
-  });
-
-  it('should register a stock entry with the actual weight for weight-based items', async () => {
-    const item = makeItem({ unitOfMeasurement: TypeUnitOfMeasurement.KG });
+  it('should register a stock entry with the planned weight for weight-based items, without requiring any input', async () => {
+    const item = makeItem({ unitOfMeasurement: TypeUnitOfMeasurement.KG, plannedWeight: 4.5 });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
 
-    await sut.execute({ id: item.id, actualWeight: 4.5 });
+    await sut.execute({ id: item.id });
 
     expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ quantity: 4.5, type: 'ENTRY', reason: 'PRODUCTION' }),
@@ -158,6 +150,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     const item = makeItem({
       unitOfMeasurement: TypeUnitOfMeasurement.KG,
       recipeMultiplier: 2,
+      plannedWeight: 4.5,
     });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
     productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
@@ -167,7 +160,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
       { quantity: 100, material: { id: 'mat-1', stockManagement: true } } as never,
     ]);
 
-    await sut.execute({ id: item.id, actualWeight: 4.5 });
+    await sut.execute({ id: item.id });
 
     expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ productId: 'mat-1', quantity: 200, type: 'EXIT' }),
@@ -203,6 +196,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
     const item = makeItem({
       unitOfMeasurement: TypeUnitOfMeasurement.KG,
       recipeMultiplier: 1,
+      plannedWeight: 1,
     });
     dailyProductionItemRepository.findByIdWithDailyProduction.mockResolvedValue(item);
     productRecipeLinkRepository.findAllByProductId.mockResolvedValue([
@@ -214,7 +208,7 @@ describe('MarkDailyProductionItemAsProducedUseCase', () => {
       { quantity: 20, material: { id: 'mat-1', stockManagement: true } } as never,
     ]);
 
-    await sut.execute({ id: item.id, actualWeight: 1 });
+    await sut.execute({ id: item.id });
 
     expect(recipeItemRepository.findAllByRecipeIds).toHaveBeenCalledWith(['recipe-1', 'recipe-2']);
     expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
