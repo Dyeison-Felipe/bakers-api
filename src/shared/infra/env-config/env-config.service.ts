@@ -16,15 +16,24 @@ export class EnvConfigService implements EnvConfig {
     return this.envConfigService.get<string>('SUPABASE_STORAGE_BUCKET') as string;
   }
 
+  // Aceita segundos puros ("900") ou duração com unidade ("15m", "1h", "2d"),
+  // sempre devolvendo segundos. Valor ausente/inválido vira NaN (barrado no boot).
+  private toSeconds(raw: string | undefined): number {
+    const match = /^\s*(\d+)\s*(s|m|h|d)?\s*$/i.exec((raw ?? '').replace(/^["']|["']$/g, ''));
+    if (!match) return NaN;
+    const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
+    return Number(match[1]) * multipliers[(match[2] ?? 's').toLowerCase()];
+  }
+
   getExpiresInSecondsForgotPassword(): number {
-    return +(this.envConfigService.get<string>('JWT_EXPIRES_IN_FORGOT_PASSWORD') as string);
+    return this.toSeconds(this.envConfigService.get<string>('JWT_EXPIRES_IN_FORGOT_PASSWORD'));
   }
   getJwtSecretForgotPassword(): string {
     return this.envConfigService.get<string>('JWT_SECRET_FORGOT_PASSWORD') as string;
   }
 
   getExpiresInSecondsEmailVerification(): number {
-    return +(this.envConfigService.get<string>('JWT_EXPIRES_IN_EMAIL_VERIFICATION') as string);
+    return this.toSeconds(this.envConfigService.get<string>('JWT_EXPIRES_IN_EMAIL_VERIFICATION'));
   }
   getJwtSecretEmailVerification(): string {
     return this.envConfigService.get<string>('JWT_SECRET_EMAIL_VERIFICATION') as string;

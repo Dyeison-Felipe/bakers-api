@@ -1,3 +1,6 @@
+# Nome fixo do projeto: mantém banco e Mailpit no mesmo grupo do Docker.
+name: bakers_bill_back
+
 services:
   postgres:
     image: postgres:16
@@ -13,7 +16,16 @@ services:
       - "5431:5432"
     volumes:
       - db_data_bakers_bill:/var/lib/postgresql/data
-      
-  
+
+  # Servidor SMTP de desenvolvimento: recebe os e-mails da API e os mostra numa
+  # caixa de entrada web (http://localhost:8025) sem enviar nada pra fora.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit_bakers_bill
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP (a API envia por aqui)
+      - "8025:8025" # Interface web (caixa de entrada)
+
 volumes:
   db_data_bakers_bill:

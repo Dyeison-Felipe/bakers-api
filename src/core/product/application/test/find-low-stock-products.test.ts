@@ -41,6 +41,7 @@ describe('FindLowStockProductsUseCase', () => {
         currentStock: 2,
         stockMin: 5,
         unitOfMeasurement: 'un',
+        consumerUnit: null,
       },
     ]);
   });

@@ -1,4 +1,5 @@
 import { BaseRepository } from '@/shared/domain/repository/base-repository';
+import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { SaleItem } from '../entities/sale-item.entity';
 
 export type SalesCostSummary = {
@@ -12,6 +13,13 @@ export type ProductRevenueAndCost = {
   quantitySold: number;
   revenue: number;
   cost: number;
+};
+
+export type TopSoldProduct = {
+  productId: string;
+  productName: string;
+  unitOfMeasurement: TypeUnitOfMeasurement;
+  quantitySold: number;
 };
 
 export interface SaleItemRepository extends BaseRepository<SaleItem> {
@@ -38,4 +46,14 @@ export interface SaleItemRepository extends BaseRepository<SaleItem> {
     dateFrom: Date,
     dateTo: Date,
   ): Promise<ProductRevenueAndCost[]>;
+
+  /** Produtos mais vendidos no período (soma de quantidade em un ou kg),
+   * em ordem decrescente, limitados a `limit`. Ignora itens sem produto
+   * vinculado (produto já excluído). */
+  findTopSoldByCompanyAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    limit: number,
+  ): Promise<TopSoldProduct[]>;
 }

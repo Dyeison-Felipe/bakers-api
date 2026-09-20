@@ -12,23 +12,37 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (config: ConfigService) => ({
-        transport: {
-          service: 'gmail',
-          auth: {
-            user: config.get('EMAIL'),
-            pass: config.get('EMAIL_SEND_PASSWORD'),
+      useFactory: async (config: ConfigService) => {
+        // Mailpit (SMTP local sem autenticação) só em desenvolvimento e com
+        // MAIL_HOST definido; em qualquer outro ambiente usa o Gmail normal.
+        const useMailpit =
+          config.get('NODE_ENV') === 'development' && !!config.get('MAIL_HOST');
+
+        return {
+          transport: useMailpit
+            ? {
+                host: config.get('MAIL_HOST'),
+                port: Number(config.get('MAIL_PORT') ?? 1025),
+                secure: false,
+                ignoreTLS: true,
+              }
+            : {
+                service: 'gmail',
+                auth: {
+                  user: config.get('EMAIL'),
+                  pass: config.get('EMAIL_SEND_PASSWORD'),
+                },
+              },
+          defaults: {
+            from: `"Baker's Bill" <${config.get('EMAIL') ?? 'no-reply@bakersbill.local'}>`,
           },
-        },
-        defaults: {
-          from: `"Baker's Bill" <${config.get('EMAIL')}>`,
-        },
-        template: {
-          dir: join(__dirname, 'templates'),
-          adapter: new HandlebarsAdapter(),
-          options: { strict: true },
-        },
-      }),
+          template: {
+            dir: join(__dirname, 'templates'),
+            adapter: new HandlebarsAdapter(),
+            options: { strict: true },
+          },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

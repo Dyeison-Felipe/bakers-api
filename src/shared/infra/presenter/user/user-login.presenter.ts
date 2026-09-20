@@ -16,6 +16,11 @@ export class UserLoginPresenter {
   readonly id: string;
 
   @ApiProperty({
+    description: 'Nome do usuário',
+  })
+  readonly name: string;
+
+  @ApiProperty({
     description: 'Cargo do usuário que realizou a autenticação',
   })
   readonly role: string;
@@ -26,7 +31,7 @@ export class UserLoginPresenter {
   readonly username: string;
 
   @ApiProperty({
-    description: 'Username do usuário',
+    description: 'E-mail do usuário',
   })
   readonly email: string;
 

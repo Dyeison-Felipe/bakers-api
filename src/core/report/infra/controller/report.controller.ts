@@ -11,18 +11,10 @@ import { ExpenseReportPresenter } from '@/shared/infra/presenter/report/expense-
 import { CpvReportPresenter } from '@/shared/infra/presenter/report/cpv-report.presenter';
 import { ContributionMarginReportPresenter } from '@/shared/infra/presenter/report/contribution-margin-report.presenter';
 import { AbcCurveReportPresenter } from '@/shared/infra/presenter/report/abc-curve-report.presenter';
-import { DailyRevenueSeriesPointPresenter } from '@/shared/infra/presenter/report/daily-revenue-series.presenter';
-import { CostComparisonSeriesPointPresenter } from '@/shared/infra/presenter/report/cost-comparison-series.presenter';
-import { PaymentMethodBreakdownPresenter } from '@/shared/infra/presenter/report/payment-method-breakdown.presenter';
-import { TopWastedProductPointPresenter } from '@/shared/infra/presenter/report/top-wasted-products.presenter';
 import { FindWasteReportUseCase } from '../../application/usecase/find-waste-report.usecase';
 import { FindCashRegisterReportUseCase } from '../../application/usecase/find-cash-register-report.usecase';
 import { FindProductionReportUseCase } from '../../application/usecase/find-production-report.usecase';
 import { FindExpenseReportUseCase } from '../../application/usecase/find-expense-report.usecase';
-import { FindDailyRevenueSeriesUseCase } from '../../application/usecase/find-daily-revenue-series.usecase';
-import { FindCostComparisonSeriesUseCase } from '../../application/usecase/find-cost-comparison-series.usecase';
-import { FindPaymentMethodBreakdownUseCase } from '../../application/usecase/find-payment-method-breakdown.usecase';
-import { FindTopWastedProductsUseCase } from '../../application/usecase/find-top-wasted-products.usecase';
 import { GenerateWasteReportPdfUseCase } from '../../application/usecase/generate-waste-report-pdf.usecase';
 import { GenerateCashRegisterReportPdfUseCase } from '../../application/usecase/generate-cash-register-report-pdf.usecase';
 import { GenerateProductionReportPdfUseCase } from '../../application/usecase/generate-production-report-pdf.usecase';
@@ -53,10 +45,6 @@ export class ReportController {
     private readonly findCashRegisterReportUseCase: FindCashRegisterReportUseCase,
     private readonly findProductionReportUseCase: FindProductionReportUseCase,
     private readonly findExpenseReportUseCase: FindExpenseReportUseCase,
-    private readonly findDailyRevenueSeriesUseCase: FindDailyRevenueSeriesUseCase,
-    private readonly findCostComparisonSeriesUseCase: FindCostComparisonSeriesUseCase,
-    private readonly findPaymentMethodBreakdownUseCase: FindPaymentMethodBreakdownUseCase,
-    private readonly findTopWastedProductsUseCase: FindTopWastedProductsUseCase,
     private readonly generateWasteReportPdfUseCase: GenerateWasteReportPdfUseCase,
     private readonly generateCashRegisterReportPdfUseCase: GenerateCashRegisterReportPdfUseCase,
     private readonly generateProductionReportPdfUseCase: GenerateProductionReportPdfUseCase,
@@ -312,70 +300,5 @@ export class ReportController {
       .type('application/pdf')
       .header('Content-Disposition', 'attachment; filename="relatorio-curva-abc.pdf"')
       .send(buffer);
-  }
-
-  @Get('series/daily-revenue')
-  @ApiOperation({
-    summary: 'Série diária de receita por forma de pagamento (para gráficos)',
-  })
-  @ApiQuery({ name: 'dateFrom', required: true })
-  @ApiQuery({ name: 'dateTo', required: true })
-  @ApiOkResponse({ type: DailyRevenueSeriesPointPresenter, isArray: true })
-  async dailyRevenueSeries(
-    @Query('dateFrom') dateFrom: string,
-    @Query('dateTo') dateTo: string,
-  ): Promise<DailyRevenueSeriesPointPresenter[]> {
-    return await this.findDailyRevenueSeriesUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
-  }
-
-  @Get('series/cost-comparison')
-  @ApiOperation({
-    summary:
-      'Série diária comparando custo de produção, despesas e desperdício (para gráficos)',
-  })
-  @ApiQuery({ name: 'dateFrom', required: true })
-  @ApiQuery({ name: 'dateTo', required: true })
-  @ApiOkResponse({ type: CostComparisonSeriesPointPresenter, isArray: true })
-  async costComparisonSeries(
-    @Query('dateFrom') dateFrom: string,
-    @Query('dateTo') dateTo: string,
-  ): Promise<CostComparisonSeriesPointPresenter[]> {
-    return await this.findCostComparisonSeriesUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
-  }
-
-  @Get('series/payment-method-breakdown')
-  @ApiOperation({
-    summary: 'Receita total por forma de pagamento no período (para gráficos)',
-  })
-  @ApiQuery({ name: 'dateFrom', required: true })
-  @ApiQuery({ name: 'dateTo', required: true })
-  @ApiOkResponse({ type: PaymentMethodBreakdownPresenter })
-  async paymentMethodBreakdown(
-    @Query('dateFrom') dateFrom: string,
-    @Query('dateTo') dateTo: string,
-  ): Promise<PaymentMethodBreakdownPresenter> {
-    return await this.findPaymentMethodBreakdownUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
-  }
-
-  @Get('series/top-wasted-products')
-  @ApiOperation({
-    summary: 'Produtos com maior valor desperdiçado no período (para gráficos)',
-  })
-  @ApiQuery({ name: 'dateFrom', required: true })
-  @ApiQuery({ name: 'dateTo', required: true })
-  @ApiOkResponse({ type: TopWastedProductPointPresenter, isArray: true })
-  async topWastedProducts(
-    @Query('dateFrom') dateFrom: string,
-    @Query('dateTo') dateTo: string,
-  ): Promise<TopWastedProductPointPresenter[]> {
-    return await this.findTopWastedProductsUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
   }
 }

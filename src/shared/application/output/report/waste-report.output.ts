@@ -1,5 +1,5 @@
 import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export type WasteReportItem = {
   id: string;
@@ -7,7 +7,8 @@ export type WasteReportItem = {
   productId: string;
   productName: string;
   quantity: number;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
   unitCost: number | null;
   totalCost: number;
   reason: TypeStockMovementReason;

@@ -7,6 +7,7 @@ export type Permissions = {
 
 export type UserByLogin = {
   id: string;
+  name: string;
   username: string;
   password: string;
   email: string;

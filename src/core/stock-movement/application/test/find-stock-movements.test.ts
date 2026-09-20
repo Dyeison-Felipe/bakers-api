@@ -22,6 +22,7 @@ describe('FindStockMovementsUseCase', () => {
     productName: 'Farinha',
     quantity: 5,
     unitOfMeasurement: 'KG' as never,
+    consumerUnit: null,
     unitCostSnapshot: 2,
     totalCost: 10,
     type: TypeStockMovement.EXIT,

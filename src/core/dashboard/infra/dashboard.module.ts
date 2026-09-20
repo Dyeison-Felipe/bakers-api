@@ -9,6 +9,8 @@ import { DailyProductionItemRepository } from '@/core/daily-production/domain/re
 import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persistence.module';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { DashboardController } from './controller/dashboard.controller';
+import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
+import { FindTopSellingProductsUseCase } from '../application/usecase/find-top-selling-products.usecase';
 import { FindDashboardSummaryUseCase } from '../application/usecase/find-dashboard-summary.usecase';
 
 @Module({
@@ -42,6 +44,15 @@ import { FindDashboardSummaryUseCase } from '../application/usecase/find-dashboa
         PROVIDERS.EXPENSE_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
+    },
+    {
+      provide: FindTopSellingProductsUseCase,
+      useFactory: (
+        saleItemRepository: SaleItemRepository,
+        loggedUserService: LoggedUserService,
+      ) =>
+        new FindTopSellingProductsUseCase(saleItemRepository, loggedUserService),
+      inject: [PROVIDERS.SALE_ITEM_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [],

@@ -110,6 +110,7 @@ export class LoginUseCase implements UseCase<Input, Output> {
     const output: Output = {
       user: {
         id: user.id,
+        name: user.name,
         username: user.username,
         email: user.email,
         role: user.role,

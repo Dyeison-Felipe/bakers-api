@@ -1,6 +1,6 @@
 import { BaseRepository } from '@/shared/domain/repository/base-repository';
 import { TypeStockMovement, TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { StockMovement } from '../entities/stock-movement.entity';
 
 export type StockMovementReportItem = {
@@ -9,7 +9,9 @@ export type StockMovementReportItem = {
   productId: string;
   productName: string;
   quantity: number;
-  unitOfMeasurement: TypeUnitOfMeasurement;
+  // Matéria-prima não tem unidade de venda: a unidade dela é a de consumo.
+  unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
   unitCostSnapshot: number | null;
   totalCost: number;
   type: TypeStockMovement;

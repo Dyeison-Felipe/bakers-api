@@ -11,6 +11,7 @@ import type { SessionNotifierService } from '@/shared/application/session/sessio
 
 const makeUserByLogin = (overrides: Partial<UserByLogin> = {}): UserByLogin => ({
   id: 'user-1',
+  name: 'Joana Silva',
   username: 'joana',
   password: 'hashed-password',
   email: 'joana@example.com',

@@ -80,6 +80,7 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
       .addSelect('product.name', 'productName')
       .addSelect('movement.quantity', 'quantity')
       .addSelect('product.unitOfMeasurement', 'unitOfMeasurement')
+      .addSelect('product.consumerUnit', 'consumerUnit')
       .addSelect('movement.unitCostSnapshot', 'unitCostSnapshot')
       .addSelect(
         'COALESCE(movement.quantity * movement.unitCostSnapshot, 0)',
@@ -102,6 +103,7 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
         productName: string;
         quantity: string;
         unitOfMeasurement: StockMovementReportItem['unitOfMeasurement'];
+        consumerUnit: StockMovementReportItem['consumerUnit'];
         unitCostSnapshot: string | null;
         totalCost: string;
         type: TypeStockMovement;
@@ -116,6 +118,7 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
       productName: row.productName,
       quantity: Number(row.quantity),
       unitOfMeasurement: row.unitOfMeasurement,
+      consumerUnit: row.consumerUnit,
       unitCostSnapshot:
         row.unitCostSnapshot === null ? null : Number(row.unitCostSnapshot),
       totalCost: Number(row.totalCost),

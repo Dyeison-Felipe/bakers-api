@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TypeStockMovement, TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export class StockMovementItemPresenter {
   @ApiProperty({ description: 'Id do movimento' })
@@ -18,8 +18,19 @@ export class StockMovementItemPresenter {
   @ApiProperty({ description: 'Quantidade movimentada' })
   readonly quantity: number;
 
-  @ApiProperty({ description: 'Unidade de medida', enum: TypeUnitOfMeasurement })
-  readonly unitOfMeasurement: TypeUnitOfMeasurement;
+  @ApiProperty({
+    description: 'Unidade de medida (venda) — nula para matéria-prima',
+    enum: TypeUnitOfMeasurement,
+    nullable: true,
+  })
+  readonly unitOfMeasurement: TypeUnitOfMeasurement | null;
+
+  @ApiProperty({
+    description: 'Unidade de consumo — usada quando não há unidade de venda',
+    enum: TypeConsumptionUnit,
+    nullable: true,
+  })
+  readonly consumerUnit: TypeConsumptionUnit | null;
 
   @ApiProperty({ description: 'Custo unitário no momento do movimento' })
   readonly unitCostSnapshot: number | null;

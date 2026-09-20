@@ -109,6 +109,7 @@ export class UserQueryImpl implements UserQuery {
       .leftJoin('planPermission.permission', 'planPerm')
       .select([
         'user.id',
+        'user.name',
         'user.email',
         'user.password',
         'user.username',
@@ -144,6 +145,7 @@ export class UserQueryImpl implements UserQuery {
 
     const user: UserByLogin = {
       id: queryBuilder.id,
+      name: queryBuilder.name,
       username: queryBuilder.username,
       email: queryBuilder.email,
       password: queryBuilder.password,

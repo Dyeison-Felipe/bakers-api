@@ -1,4 +1,4 @@
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export type LowStockProductOutput = {
   id: string;
@@ -6,4 +6,5 @@ export type LowStockProductOutput = {
   currentStock: number | null;
   stockMin: number | null;
   unitOfMeasurement: TypeUnitOfMeasurement | null;
+  consumerUnit: TypeConsumptionUnit | null;
 };

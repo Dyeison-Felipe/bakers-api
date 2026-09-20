@@ -29,6 +29,7 @@ export class FindLowStockProductsUseCase implements UseCase<Input, Output> {
       currentStock: product.currentStock,
       stockMin: product.stockMin,
       unitOfMeasurement: product.unitOfMeasurement,
+      consumerUnit: product.consumerUnit,
     }));
   }
 }

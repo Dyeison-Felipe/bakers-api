@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export class WasteReportItemPresenter {
   @ApiProperty({ description: 'Id do movimento' })
@@ -18,8 +18,19 @@ export class WasteReportItemPresenter {
   @ApiProperty({ description: 'Quantidade descartada' })
   readonly quantity: number;
 
-  @ApiProperty({ description: 'Unidade de medida', enum: TypeUnitOfMeasurement })
-  readonly unitOfMeasurement: TypeUnitOfMeasurement;
+  @ApiProperty({
+    description: 'Unidade de medida (venda) — nula para matéria-prima',
+    enum: TypeUnitOfMeasurement,
+    nullable: true,
+  })
+  readonly unitOfMeasurement: TypeUnitOfMeasurement | null;
+
+  @ApiProperty({
+    description: 'Unidade de consumo — usada quando não há unidade de venda',
+    enum: TypeConsumptionUnit,
+    nullable: true,
+  })
+  readonly consumerUnit: TypeConsumptionUnit | null;
 
   @ApiProperty({ description: 'Custo unitário no momento do movimento' })
   readonly unitCost: number | null;

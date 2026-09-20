@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeConsumptionUnit, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 
 export class LowStockProductPresenter {
   @ApiProperty({ description: 'Id do produto' })
@@ -16,4 +16,11 @@ export class LowStockProductPresenter {
 
   @ApiProperty({ description: 'Unidade de medida', enum: TypeUnitOfMeasurement })
   readonly unitOfMeasurement: TypeUnitOfMeasurement | null;
+
+  @ApiProperty({
+    description: 'Unidade de consumo — usada quando não há unidade de venda',
+    enum: TypeConsumptionUnit,
+    nullable: true,
+  })
+  readonly consumerUnit: TypeConsumptionUnit | null;
 }

@@ -2,7 +2,7 @@ import { CreateProductUseCase } from '../usecase/create-product.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
-import { TypeProduct, TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { TypeProduct, TypeUnitOfMeasurement, TypeConsumptionUnit } from '@/shared/infra/enums/product';
 import {
   makeAdditionalCost,
   makeCategory,
@@ -226,6 +226,22 @@ describe('CreateProductUseCase', () => {
     await expect(
       sut.execute({ ...ownProductionInput, currentStock: 10 }),
     ).rejects.toThrow(BadRequestError);
+  });
+
+  it('should register the initial stock of a raw material that only has a consumer unit', async () => {
+    await sut.execute({
+      ...ownProductionInput,
+      typeProduct: TypeProduct.RAW_MATERIAL,
+      expirationDateInDays: undefined,
+      unitOfMeasurement: undefined,
+      consumerUnit: TypeConsumptionUnit.KG,
+      stockManagement: true,
+      currentStock: 5,
+    });
+
+    expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ quantity: 5, type: 'ENTRY' }),
+    );
   });
 
   it('should force stockManagement to false for a kg product even when input requests true', async () => {

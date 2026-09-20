@@ -12,6 +12,8 @@ export function validateRequiredEnvVars(envConfig: EnvConfig): void {
   if (!envConfig.getJwtSecret()) missing.push('JWT_SECRET');
   if (!envConfig.getJwtSecretForgotPassword()) missing.push('JWT_SECRET_FORGOT_PASSWORD');
   if (!envConfig.getJwtSecretEmailVerification()) missing.push('JWT_SECRET_EMAIL_VERIFICATION');
+  if (Number.isNaN(envConfig.getExpiresInSecondsForgotPassword())) missing.push('JWT_EXPIRES_IN_FORGOT_PASSWORD');
+  if (Number.isNaN(envConfig.getExpiresInSecondsEmailVerification())) missing.push('JWT_EXPIRES_IN_EMAIL_VERIFICATION');
   if (!envConfig.getCookieSecret()) missing.push('COOKIE_SECRET');
   if (Number.isNaN(envConfig.getSalts())) missing.push('SALTS');
   if (!envConfig.getDbHost()) missing.push('DB_HOST');

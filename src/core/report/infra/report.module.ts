@@ -13,17 +13,12 @@ import { DailyProductionItemRepository } from '@/core/daily-production/domain/re
 import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persistence.module';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { SalePersistenceModule } from '@/core/sale/infra/sale-persistence.module';
-import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import { ReportController } from './controller/report.controller';
 import { FindWasteReportUseCase } from '../application/usecase/find-waste-report.usecase';
 import { FindCashRegisterReportUseCase } from '../application/usecase/find-cash-register-report.usecase';
 import { FindProductionReportUseCase } from '../application/usecase/find-production-report.usecase';
 import { FindExpenseReportUseCase } from '../application/usecase/find-expense-report.usecase';
-import { FindDailyRevenueSeriesUseCase } from '../application/usecase/find-daily-revenue-series.usecase';
-import { FindCostComparisonSeriesUseCase } from '../application/usecase/find-cost-comparison-series.usecase';
-import { FindPaymentMethodBreakdownUseCase } from '../application/usecase/find-payment-method-breakdown.usecase';
-import { FindTopWastedProductsUseCase } from '../application/usecase/find-top-wasted-products.usecase';
 import { GenerateWasteReportPdfUseCase } from '../application/usecase/generate-waste-report-pdf.usecase';
 import { GenerateCashRegisterReportPdfUseCase } from '../application/usecase/generate-cash-register-report-pdf.usecase';
 import { GenerateProductionReportPdfUseCase } from '../application/usecase/generate-production-report-pdf.usecase';
@@ -97,59 +92,6 @@ import { GenerateAbcCurveReportPdfUseCase } from '../application/usecase/generat
         loggedUserService: LoggedUserService,
       ) => new FindExpenseReportUseCase(expenseRepository, loggedUserService),
       inject: [PROVIDERS.EXPENSE_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
-    },
-    {
-      provide: FindDailyRevenueSeriesUseCase,
-      useFactory: (
-        saleRepository: SaleRepository,
-        loggedUserService: LoggedUserService,
-      ) => new FindDailyRevenueSeriesUseCase(saleRepository, loggedUserService),
-      inject: [PROVIDERS.SALE_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
-    },
-    {
-      provide: FindCostComparisonSeriesUseCase,
-      useFactory: (
-        dailyProductionRepository: DailyProductionRepository,
-        dailyProductionItemRepository: DailyProductionItemRepository,
-        expenseRepository: ExpenseRepository,
-        stockMovementRepository: StockMovementRepository,
-        loggedUserService: LoggedUserService,
-      ) =>
-        new FindCostComparisonSeriesUseCase(
-          dailyProductionRepository,
-          dailyProductionItemRepository,
-          expenseRepository,
-          stockMovementRepository,
-          loggedUserService,
-        ),
-      inject: [
-        PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
-        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
-        PROVIDERS.EXPENSE_REPOSITORY,
-        PROVIDERS.STOCK_MOVEMENT_REPOSITORY,
-        PROVIDERS.LOGGED_USER_SERVICE,
-      ],
-    },
-    {
-      provide: FindPaymentMethodBreakdownUseCase,
-      useFactory: (
-        saleRepository: SaleRepository,
-        loggedUserService: LoggedUserService,
-      ) =>
-        new FindPaymentMethodBreakdownUseCase(saleRepository, loggedUserService),
-      inject: [PROVIDERS.SALE_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
-    },
-    {
-      provide: FindTopWastedProductsUseCase,
-      useFactory: (
-        stockMovementRepository: StockMovementRepository,
-        loggedUserService: LoggedUserService,
-      ) =>
-        new FindTopWastedProductsUseCase(
-          stockMovementRepository,
-          loggedUserService,
-        ),
-      inject: [PROVIDERS.STOCK_MOVEMENT_REPOSITORY, PROVIDERS.LOGGED_USER_SERVICE],
     },
     {
       provide: GenerateWasteReportPdfUseCase,

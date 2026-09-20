@@ -4,7 +4,9 @@ import {
   SaleItemRepository,
   SalesCostSummary,
   ProductRevenueAndCost,
+  TopSoldProduct,
 } from '@/core/sale/domain/repositories/sale-item.repository';
+import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import { SaleItem } from '@/core/sale/domain/entities/sale-item.entity';
 import { SaleItemSchema } from '../schema/sale-item.schema';
 import { SaleItemMapper } from './mappers/sale-item.mapper';
@@ -145,6 +147,49 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
       quantitySold: Number(row.quantitySold),
       revenue: Number(row.revenue),
       cost: Number(row.cost),
+    }));
+  }
+
+  async findTopSoldByCompanyAndDateRange(
+    companyId: string,
+    dateFrom: Date,
+    dateTo: Date,
+    limit: number,
+  ): Promise<TopSoldProduct[]> {
+    const rows = await this.saleItemRepository
+      .createQueryBuilder('saleItem')
+      .innerJoin('saleItem.sale', 'sale')
+      .innerJoin('sale.company', 'company')
+      .innerJoin('saleItem.product', 'product')
+      .select('product.id', 'productId')
+      .addSelect('product.name', 'productName')
+      .addSelect('saleItem.unitOfMeasurement', 'unitOfMeasurement')
+      .addSelect(
+        'COALESCE(SUM(COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'quantitySold',
+      )
+      .where('company.id = :companyId', { companyId })
+      .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
+        dateFrom,
+        dateTo,
+      })
+      .groupBy('product.id')
+      .addGroupBy('product.name')
+      .addGroupBy('saleItem.unitOfMeasurement')
+      .orderBy('"quantitySold"', 'DESC')
+      .limit(limit)
+      .getRawMany<{
+        productId: string;
+        productName: string;
+        unitOfMeasurement: TypeUnitOfMeasurement;
+        quantitySold: string;
+      }>();
+
+    return rows.map((row) => ({
+      productId: row.productId,
+      productName: row.productName,
+      unitOfMeasurement: row.unitOfMeasurement,
+      quantitySold: Number(row.quantitySold),
     }));
   }
 

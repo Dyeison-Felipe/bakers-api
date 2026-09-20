@@ -121,7 +121,11 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
 
     const initialStock = input.currentStock ?? 0;
 
-    if (input.stockManagement && initialStock > 0 && !input.unitOfMeasurement) {
+    // Matéria-prima não tem unidade de venda (`unitOfMeasurement`) — a unidade
+    // dela é a de consumo (`consumerUnit`), então qualquer uma das duas serve.
+    const hasStockUnit = !!(input.unitOfMeasurement || input.consumerUnit);
+
+    if (input.stockManagement && initialStock > 0 && !hasStockUnit) {
       throw new BadRequestError(
         'Informe a unidade de medida para lançar o estoque inicial',
       );
@@ -260,7 +264,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
 
     const saveProduct = await this.productRepository.save(newProduct);
 
-    if (input.stockManagement && initialStock > 0 && input.unitOfMeasurement) {
+    if (input.stockManagement && initialStock > 0 && hasStockUnit) {
       await this.adjustProductStockUseCase.execute({
         productId: saveProduct.id,
         quantity: initialStock,
