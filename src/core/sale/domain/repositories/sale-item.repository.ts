@@ -1,5 +1,6 @@
 import { BaseRepository } from '@/shared/domain/repository/base-repository';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 import { SaleItem } from '../entities/sale-item.entity';
 
 export type SalesCostSummary = {
@@ -37,6 +38,12 @@ export interface SaleItemRepository extends BaseRepository<SaleItem> {
     cashRegisterSessionId: string,
   ): Promise<SalesCostSummary>;
 
+  /** Versão em lote de `sumRevenueAndCostByCashRegisterSessionId`: uma única
+   * query agrupada por sessão. Sessão sem vendas não aparece no Map. */
+  sumRevenueAndCostByCashRegisterSessionIds(
+    cashRegisterSessionIds: string[],
+  ): Promise<Map<string, SalesCostSummary>>;
+
   /** Receita e custo (CPV) agregados por produto vendido no período — base
    * para os relatórios de CPV, Margem de Contribuição e Curva ABC. Só
    * considera itens com produto vinculado (ignora vendas de produto já
@@ -45,6 +52,7 @@ export interface SaleItemRepository extends BaseRepository<SaleItem> {
     companyId: string,
     dateFrom: Date,
     dateTo: Date,
+    filters?: ReportProductFilters,
   ): Promise<ProductRevenueAndCost[]>;
 
   /** Produtos mais vendidos no período (soma de quantidade em un ou kg),

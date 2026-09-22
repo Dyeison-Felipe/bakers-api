@@ -20,6 +20,7 @@ import { InactivateUserUseCase } from '../../application/usecase/inactivate-user
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { PermissionUser } from '@/core/auth/domain/permissions-definition/user';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Users')
 @Controller('/v1/user')
@@ -74,7 +75,7 @@ export class UserController {
     @Query('limit') limit = 10,
   ): Promise<Pagination<FindAllUsersPresenter>> {
     const output = await this.findAllUsersUseCase.execute({
-      pagination: { page, direction, limit },
+      pagination: { page, direction, limit: clampLimit(limit) ?? 10 },
     });
 
     return ConvertPresenter.toPaginationPresenter(

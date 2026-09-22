@@ -3,10 +3,12 @@ import { Repository } from 'typeorm';
 import {
   StockMovementRepository,
   StockMovementReportItem,
+  StockMovementTimeWindow,
   ProductLastEntryDate,
 } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { StockMovement } from '@/core/stock-movement/domain/entities/stock-movement.entity';
 import { TypeStockMovement, TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 import { StockMovementSchema } from '../schema/stock-movement.schema';
 import { StockMovementMapper } from './mappers/stock-movement.mapper';
 
@@ -64,16 +66,64 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
     return Number(result?.total ?? 0);
   }
 
+  async sumUnitCostByCompanyAndWindowsAndReason(
+    companyId: string,
+    windows: StockMovementTimeWindow[],
+    reasons: TypeStockMovementReason[],
+  ): Promise<Map<string, number>> {
+    const totals = new Map<string, number>();
+
+    if (windows.length === 0) return totals;
+
+    // As janelas entram como uma tabela derivada (VALUES). Os limites são
+    // convertidos para `timestamp` (sem fuso) exatamente como o parâmetro Date
+    // do `BETWEEN` da versão individual é comparado com a coluna `created_at`.
+    const parameters: Record<string, unknown> = { companyId, reasons };
+    const rowsSql = windows.map((window, index) => {
+      parameters[`windowId${index}`] = window.id;
+      parameters[`windowFrom${index}`] = window.dateFrom;
+      parameters[`windowTo${index}`] = window.dateTo;
+
+      return `(CAST(:windowId${index} AS uuid), CAST(:windowFrom${index} AS timestamp), CAST(:windowTo${index} AS timestamp))`;
+    });
+
+    const rows = await this.stockMovementRepository
+      .createQueryBuilder('movement')
+      .leftJoin('movement.product', 'product')
+      .leftJoin('product.company', 'company')
+      .innerJoin(
+        `(SELECT w.id, w.date_from, w.date_to FROM (VALUES ${rowsSql.join(', ')}) AS w(id, date_from, date_to))`,
+        'win',
+        'movement.createdAt BETWEEN win.date_from AND win.date_to',
+      )
+      .select('win.id', 'windowId')
+      .addSelect(
+        'COALESCE(SUM(movement.quantity * movement.unitCostSnapshot), 0)',
+        'total',
+      )
+      .where('company.id = :companyId')
+      .andWhere('movement.reason IN (:...reasons)')
+      .setParameters(parameters)
+      .groupBy('win.id')
+      .getRawMany<{ windowId: string; total: string }>();
+
+    rows.forEach((row) => totals.set(row.windowId, Number(row.total)));
+
+    return totals;
+  }
+
   async findAllByCompanyAndDateAndReason(
     companyId: string,
     dateFrom: Date,
     dateTo: Date,
     reasons: TypeStockMovementReason[],
+    filters?: ReportProductFilters,
   ): Promise<StockMovementReportItem[]> {
-    const rows = await this.stockMovementRepository
+    const query = this.stockMovementRepository
       .createQueryBuilder('movement')
       .leftJoin('movement.product', 'product')
       .leftJoin('product.company', 'company')
+      .leftJoin('product.category', 'category')
       .select('movement.id', 'id')
       .addSelect('movement.createdAt', 'createdAt')
       .addSelect('product.id', 'productId')
@@ -94,7 +144,21 @@ export class StockMovementRepositoryImpl implements StockMovementRepository {
       .andWhere('movement.createdAt BETWEEN :dateFrom AND :dateTo', {
         dateFrom,
         dateTo,
-      })
+      });
+
+    if (filters?.productId) {
+      query.andWhere('product.id = :productId', { productId: filters.productId });
+    }
+    if (filters?.categoryId) {
+      query.andWhere('category.id = :categoryId', { categoryId: filters.categoryId });
+    }
+    if (filters?.typeProduct) {
+      query.andWhere('product.typeProduct = :typeProduct', {
+        typeProduct: filters.typeProduct,
+      });
+    }
+
+    const rows = await query
       .orderBy('movement.createdAt', 'DESC')
       .getRawMany<{
         id: string;

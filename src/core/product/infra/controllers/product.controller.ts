@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Put,
@@ -60,6 +61,7 @@ import { LowStockProductPresenter } from '@/shared/infra/presenter/product/low-s
 import { FindLowStockProductsUseCase } from '../../application/usecase/find-low-stock-products.usecase';
 import { NearExpiryProductPresenter } from '@/shared/infra/presenter/product/near-expiry-product.presenter';
 import { FindNearExpiryProductsUseCase } from '../../application/usecase/find-near-expiry-products.usecase';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @Controller('v1/product')
 export class ProductController {
@@ -203,7 +205,7 @@ export class ProductController {
       typeProduct,
       name,
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
     });
   }
 
@@ -275,10 +277,27 @@ export class ProductController {
   }
 
   @Get(':id/image')
-  async getImage(@Param('id') id: string, @Res() reply: FastifyReply) {
-    const { buffer, mimetype } = await this.getProductImageUseCase.execute({
-      productId: id,
-    });
+  async getImage(
+    @Param('id') id: string,
+    @Headers('if-none-match') ifNoneMatch: string | undefined,
+    @Res() reply: FastifyReply,
+  ) {
+    const { buffer, mimetype, etag, notModified } =
+      await this.getProductImageUseCase.execute({
+        productId: id,
+        ifNoneMatch: ifNoneMatch ?? null,
+      });
+
+    // A chave da imagem muda a cada upload, então o conteúdo por URL é
+    // imutável: o navegador reaproveita do cache local em vez de rebaixar do
+    // Storage a cada listagem/render.
+    reply
+      .header('Cache-Control', 'private, max-age=31536000, immutable')
+      .header('ETag', etag);
+
+    if (notModified || buffer === null) {
+      return reply.status(304).send();
+    }
 
     return reply.type(mimetype).send(buffer);
   }

@@ -7,11 +7,12 @@ import {
   ContributionMarginReportItem,
   ContributionMarginReportOutput,
 } from '@/shared/application/output/report/contribution-margin-report.output';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 
 type Input = {
   dateFrom: Date;
   dateTo: Date;
-};
+} & ReportProductFilters;
 
 type Output = ContributionMarginReportOutput;
 
@@ -27,7 +28,13 @@ export class FindContributionMarginReportUseCase
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ dateFrom, dateTo }: Input): Promise<Output> {
+  async execute({
+    dateFrom,
+    dateTo,
+    productId,
+    categoryId,
+    typeProduct,
+  }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
 
@@ -35,6 +42,7 @@ export class FindContributionMarginReportUseCase
       companyId,
       dateFrom,
       dateTo,
+      { productId, categoryId, typeProduct },
     );
 
     const items: ContributionMarginReportItem[] = rows

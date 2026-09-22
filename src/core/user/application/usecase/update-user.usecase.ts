@@ -8,6 +8,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { validatePermissionDependencies } from '@/core/auth/domain/permissions-definition/permission-dependencies';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { Transactional } from '@/shared/infra/database/typeorm/decorators/transactional.decorator';
 import { UpdateUserInput } from '@/shared/application/input/users/update-user.input';
@@ -83,6 +84,10 @@ export class UpdateUserUseCase implements UseCase<Input, Output> {
 
     if (!permissions.length)
       throw new NotFoundError(`Permissão não encontrada`);
+
+    validatePermissionDependencies(
+      permissions.map((p) => ({ action: p.action, resource: p.subject })),
+    );
 
     if (input.password) {
       const hashNewPassword = await this.hashService.hash(input.password);

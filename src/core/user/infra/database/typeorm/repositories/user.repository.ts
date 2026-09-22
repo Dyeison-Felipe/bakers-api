@@ -5,8 +5,26 @@ import { FindOptionsRelations, Repository } from 'typeorm';
 import { UserRepositoryMapper } from './mapper/user-mapper';
 import { UserEntity } from '@/core/user/domain/entities/user.entity';
 import { Pagination, PaginationInput } from '@/shared/domain/pagination/pagination';
+import { TtlCache } from '@/shared/infra/cache/ttl-cache';
+
+// Cache do usuário carregado pelo PermissionGuard (uma leitura por requisição).
+// Guarda o schema cru — cada leitura mapeia uma entidade nova, então nenhum
+// chamador compartilha (nem muta) a mesma instância. TTL curto: mudanças em
+// empresa/plano/role/permissões feitas por outros repositórios propagam em até
+// 30 s; escritas de usuário invalidam na hora.
+const AUTH_USER_CACHE_TTL_MS = 30_000;
+const AUTH_USER_CACHE_MAX_ENTRIES = 500;
 
 export class UserRepositoryImpl implements UserRepository {
+  private static readonly authUserCache = new TtlCache<UserSchema>(
+    AUTH_USER_CACHE_TTL_MS,
+    AUTH_USER_CACHE_MAX_ENTRIES,
+  );
+
+  static clearAuthUserCache(): void {
+    UserRepositoryImpl.authUserCache.clear();
+  }
+
   constructor(
     @InjectRepository(UserSchema)
     private readonly userRepository: Repository<UserSchema>,
@@ -26,12 +44,23 @@ export class UserRepositoryImpl implements UserRepository {
   }
 
   async findByIdWithPermissions(id: string): Promise<UserEntity | null> {
+    // Chamado pelo PermissionGuard em toda requisição autenticada. Com JOIN
+    // único, `planPermission` × `userPermissions` (duas relações 1:N) gera
+    // produto cartesiano; carregando cada relação em query própria o volume
+    // trafegado cai de N×M linhas largas para N+M.
+    const cached = UserRepositoryImpl.authUserCache.get(id);
+
+    if (cached) return UserRepositoryMapper.toEntity(cached);
+
     const userSchema = await this.userRepository.findOne({
       where: { id },
       relations: this.getRelations(),
+      relationLoadStrategy: 'query',
     });
 
     if (!userSchema) return null;
+
+    UserRepositoryImpl.authUserCache.set(id, userSchema);
 
     const entity = UserRepositoryMapper.toEntity(userSchema);
 
@@ -42,6 +71,8 @@ export class UserRepositoryImpl implements UserRepository {
     const userSchema = UserRepositoryMapper.toSchema(entity);
 
     const saveUser = await this.userRepository.save(userSchema);
+
+    UserRepositoryImpl.authUserCache.delete(saveUser.id);
 
     const userEntity = UserRepositoryMapper.toEntity(saveUser);
 
@@ -127,6 +158,8 @@ export class UserRepositoryImpl implements UserRepository {
 
     const saveUser = await this.userRepository.save(userSchema);
 
+    UserRepositoryImpl.authUserCache.delete(saveUser.id);
+
     const userEntity = UserRepositoryMapper.toEntity(saveUser);
 
     return userEntity;
@@ -134,6 +167,8 @@ export class UserRepositoryImpl implements UserRepository {
 
   async delete(id: string): Promise<void> {
     await this.userRepository.softDelete(id);
+
+    UserRepositoryImpl.authUserCache.delete(id);
   }
 
   async countActiveByCompany(companyId: string): Promise<number> {
@@ -147,6 +182,8 @@ export class UserRepositoryImpl implements UserRepository {
     sessionId: string | null,
   ): Promise<void> {
     await this.userRepository.update(userId, { activeSessionId: sessionId });
+
+    UserRepositoryImpl.authUserCache.delete(userId);
   }
 
   private getRelations(): FindOptionsRelations<UserSchema> {

@@ -66,6 +66,31 @@ export class CashRegisterMovementRepositoryImpl
     return Number(result?.total ?? 0);
   }
 
+  async sumAmountByCashRegisterSessionIdsAndType(
+    cashRegisterSessionIds: string[],
+    type: TypeCashRegisterMovement,
+  ): Promise<Map<string, number>> {
+    const totals = new Map<string, number>();
+
+    if (cashRegisterSessionIds.length === 0) return totals;
+
+    const rows = await this.cashRegisterMovementRepository
+      .createQueryBuilder('movement')
+      .leftJoin('movement.cashRegisterSession', 'cashRegisterSession')
+      .select('cashRegisterSession.id', 'sessionId')
+      .addSelect('COALESCE(SUM(movement.amount), 0)', 'total')
+      .where('cashRegisterSession.id IN (:...cashRegisterSessionIds)', {
+        cashRegisterSessionIds,
+      })
+      .andWhere('movement.type = :type', { type })
+      .groupBy('cashRegisterSession.id')
+      .getRawMany<{ sessionId: string; total: string }>();
+
+    rows.forEach((row) => totals.set(row.sessionId, Number(row.total)));
+
+    return totals;
+  }
+
   async update(): Promise<void> {
     throw new Error(
       'CashRegisterMovement é um registro imutável e não pode ser atualizado',

@@ -11,6 +11,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { validatePermissionDependencies } from '@/core/auth/domain/permissions-definition/permission-dependencies';
 import { Transactional } from '@/shared/infra/database/typeorm/decorators/transactional.decorator';
 import { RoleRepository } from '@/core/role/domain/repositories/role.repository';
 import { Role } from '@/core/role/domain/entities/role.entity';
@@ -91,6 +92,10 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
 
     if (!permissions.length)
       throw new NotFoundError(`Permissão não encontrada`);
+
+    validatePermissionDependencies(
+      permissions.map((p) => ({ action: p.action, resource: p.subject })),
+    );
 
     const hashedPassword = await this.hashService.hash(input.password);
 

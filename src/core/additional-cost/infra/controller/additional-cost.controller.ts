@@ -19,7 +19,7 @@ import { FindAllAdditionalCostsByCompanyUseCase } from '../../application/usecas
 import { AdditionalCostPresenter } from '@/shared/infra/presenter/additional-cost/additional-cost.presenter';
 import { CreateAdditionalCostDto } from '../dtos/create-additional-cost.dto';
 import { UpdateAdditionalCostDto } from '../dtos/update-additional-cost.dto';
-import { PermissionProduct } from '@/core/auth/domain/permissions-definition/product';
+import { PermissionAdditionalCost } from '@/core/auth/domain/permissions-definition/additional-cost';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
 
 @ApiTags('Additional Costs')
@@ -34,7 +34,7 @@ export class AdditionalCostController {
   ) {}
 
   @Post()
-  @Permission(PermissionProduct.PRODUCT_CREATE)
+  @Permission(PermissionAdditionalCost.ADDITIONAL_COST_CREATE)
   @ApiOperation({ summary: 'Cria um novo gasto adicional' })
   @ApiResponse({ status: 201, type: AdditionalCostPresenter })
   async create(@Body() dto: CreateAdditionalCostDto) {
@@ -42,7 +42,7 @@ export class AdditionalCostController {
   }
 
   @Put(':id')
-  @Permission(PermissionProduct.PRODUCT_UPDATE)
+  @Permission(PermissionAdditionalCost.ADDITIONAL_COST_UPDATE)
   @ApiOperation({ summary: 'Atualiza um gasto adicional' })
   @ApiParam({ name: 'id', description: 'Id do gasto adicional' })
   @ApiResponse({ status: 200, type: AdditionalCostPresenter })
@@ -54,7 +54,7 @@ export class AdditionalCostController {
   }
 
   @Delete(':id')
-  @Permission(PermissionProduct.PRODUCT_DELETE)
+  @Permission(PermissionAdditionalCost.ADDITIONAL_COST_DELETE)
   @HttpCode(204)
   @ApiOperation({ summary: 'Remove um gasto adicional' })
   @ApiParam({ name: 'id', description: 'Id do gasto adicional' })
@@ -64,7 +64,7 @@ export class AdditionalCostController {
   }
 
   @Get(':id')
-  @Permission(PermissionProduct.PRODUCT_READER)
+  @Permission(PermissionAdditionalCost.ADDITIONAL_COST_READER)
   @ApiOperation({ summary: 'Busca um gasto adicional pelo id' })
   @ApiParam({ name: 'id', description: 'Id do gasto adicional' })
   @ApiResponse({ status: 200, type: AdditionalCostPresenter })
@@ -73,7 +73,7 @@ export class AdditionalCostController {
   }
 
   @Get()
-  @Permission(PermissionProduct.PRODUCT_READER)
+  @Permission(PermissionAdditionalCost.ADDITIONAL_COST_READER)
   @ApiOperation({ summary: 'Lista os gastos adicionais da empresa logada' })
   @ApiResponse({ status: 200, type: AdditionalCostPresenter })
   async findAll(): Promise<AdditionalCostPresenter[]> {

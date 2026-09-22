@@ -24,6 +24,7 @@ import { PermissionCategory } from '@/core/auth/domain/permissions-definition/ca
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { DeleteCategoryByCompanyUseCase } from '../../application/usecase/delete-category.usecase';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @Controller('v1/category')
 export class CategoryController {
@@ -58,7 +59,7 @@ export class CategoryController {
       pagination: {
         page: page ? Number(page) : undefined,
         direction,
-        limit: limit ? Number(limit) : undefined,
+        limit: clampLimit(limit),
       },
     });
   }

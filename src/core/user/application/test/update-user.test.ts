@@ -199,6 +199,24 @@ describe('UpdateUserUseCase', () => {
     expect(userRepository.update).toHaveBeenCalledWith(user);
   });
 
+  it('should reject a permission that requires another one absent from the same request', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+    ]);
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(BadRequestError);
+    expect(userRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('should accept a permission together with the one it requires', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+      makePermission({ id: 'p2', action: 'waste_reader', subject: 'stock_movement' }),
+    ]);
+
+    await expect(sut.execute(baseInput)).resolves.toBeDefined();
+  });
+
   it('should add newly granted permissions and remove ones no longer selected', async () => {
     const keptPermission = makePermission({ id: 'kept' });
     const removedPermission = makePermission({ id: 'removed' });

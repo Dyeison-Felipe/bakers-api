@@ -17,6 +17,7 @@ import { PermissionCompany } from '@/core/auth/domain/permissions-definition/com
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Pagination } from '@/shared/domain/pagination/pagination';
 import { CompanyListItemOutput } from '@/shared/application/output/company/company-list-item.output';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @Controller('v1/company')
 export class CompanyController {
@@ -122,7 +123,7 @@ export class CompanyController {
     return await this.findAllCompaniesUseCase.execute({
       search,
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
     });
   }
 

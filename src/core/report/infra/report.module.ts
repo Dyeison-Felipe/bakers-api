@@ -14,6 +14,7 @@ import { ExpensePersistenceModule } from '@/core/expense/infra/expense-persisten
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { SalePersistenceModule } from '@/core/sale/infra/sale-persistence.module';
 import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
+import { CashRegisterMovementRepository } from '@/core/cash-register/domain/repositories/cash-register-movement.repository';
 import { ReportController } from './controller/report.controller';
 import { FindWasteReportUseCase } from '../application/usecase/find-waste-report.usecase';
 import { FindCashRegisterReportUseCase } from '../application/usecase/find-cash-register-report.usecase';
@@ -53,17 +54,29 @@ import { GenerateAbcCurveReportPdfUseCase } from '../application/usecase/generat
       provide: FindCashRegisterReportUseCase,
       useFactory: (
         cashRegisterSessionRepository: CashRegisterSessionRepository,
-        findCashRegisterSessionDetailUseCase: FindCashRegisterSessionDetailUseCase,
+        cashRegisterMovementRepository: CashRegisterMovementRepository,
+        saleItemRepository: SaleItemRepository,
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        expenseRepository: ExpenseRepository,
+        stockMovementRepository: StockMovementRepository,
         loggedUserService: LoggedUserService,
       ) =>
         new FindCashRegisterReportUseCase(
           cashRegisterSessionRepository,
-          findCashRegisterSessionDetailUseCase,
+          cashRegisterMovementRepository,
+          saleItemRepository,
+          dailyProductionItemRepository,
+          expenseRepository,
+          stockMovementRepository,
           loggedUserService,
         ),
       inject: [
         PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
-        FindCashRegisterSessionDetailUseCase,
+        PROVIDERS.CASH_REGISTER_MOVEMENT_REPOSITORY,
+        PROVIDERS.SALE_ITEM_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.EXPENSE_REPOSITORY,
+        PROVIDERS.STOCK_MOVEMENT_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
       ],
     },

@@ -7,6 +7,7 @@ import {
   TopSoldProduct,
 } from '@/core/sale/domain/repositories/sale-item.repository';
 import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 import { SaleItem } from '@/core/sale/domain/entities/sale-item.entity';
 import { SaleItemSchema } from '../schema/sale-item.schema';
 import { SaleItemMapper } from './mappers/sale-item.mapper';
@@ -105,16 +106,55 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
     };
   }
 
+  async sumRevenueAndCostByCashRegisterSessionIds(
+    cashRegisterSessionIds: string[],
+  ): Promise<Map<string, SalesCostSummary>> {
+    const summaries = new Map<string, SalesCostSummary>();
+
+    if (cashRegisterSessionIds.length === 0) return summaries;
+
+    const rows = await this.saleItemRepository
+      .createQueryBuilder('saleItem')
+      .leftJoin('saleItem.sale', 'sale')
+      .leftJoin('sale.cashRegisterSession', 'cashRegisterSession')
+      .select('cashRegisterSession.id', 'sessionId')
+      .addSelect('COALESCE(SUM(saleItem.subtotal), 0)', 'totalRevenue')
+      .addSelect(
+        'COALESCE(SUM(saleItem.unitCostSnapshot * COALESCE(saleItem.quantity, saleItem.weightInKg)), 0)',
+        'totalCost',
+      )
+      .where('cashRegisterSession.id IN (:...cashRegisterSessionIds)', {
+        cashRegisterSessionIds,
+      })
+      .groupBy('cashRegisterSession.id')
+      .getRawMany<{
+        sessionId: string;
+        totalRevenue: string;
+        totalCost: string;
+      }>();
+
+    rows.forEach((row) =>
+      summaries.set(row.sessionId, {
+        totalRevenue: Number(row.totalRevenue),
+        totalCost: Number(row.totalCost),
+      }),
+    );
+
+    return summaries;
+  }
+
   async findRevenueAndCostByProductAndDateRange(
     companyId: string,
     dateFrom: Date,
     dateTo: Date,
+    filters?: ReportProductFilters,
   ): Promise<ProductRevenueAndCost[]> {
-    const rows = await this.saleItemRepository
+    const query = this.saleItemRepository
       .createQueryBuilder('saleItem')
       .innerJoin('saleItem.sale', 'sale')
       .innerJoin('sale.company', 'company')
       .innerJoin('saleItem.product', 'product')
+      .leftJoin('product.category', 'category')
       .select('product.id', 'productId')
       .addSelect('product.name', 'productName')
       .addSelect(
@@ -130,7 +170,21 @@ export class SaleItemRepositoryImpl implements SaleItemRepository {
       .andWhere('sale.createdAt BETWEEN :dateFrom AND :dateTo', {
         dateFrom,
         dateTo,
-      })
+      });
+
+    if (filters?.productId) {
+      query.andWhere('product.id = :productId', { productId: filters.productId });
+    }
+    if (filters?.categoryId) {
+      query.andWhere('category.id = :categoryId', { categoryId: filters.categoryId });
+    }
+    if (filters?.typeProduct) {
+      query.andWhere('product.typeProduct = :typeProduct', {
+        typeProduct: filters.typeProduct,
+      });
+    }
+
+    const rows = await query
       .groupBy('product.id')
       .addGroupBy('product.name')
       .getRawMany<{

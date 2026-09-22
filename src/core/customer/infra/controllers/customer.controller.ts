@@ -11,6 +11,7 @@ import { UpdateCustomerUseCase } from '../../application/usecase/update-customer
 import { FindCustomerByIdUseCase } from '../../application/usecase/find-customer-by-id.usecase';
 import { FindAllCustomersUseCase } from '../../application/usecase/find-all-customers.usecase';
 import { InactivateCustomerUseCase } from '../../application/usecase/inactivate-customer.usecase';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Customer')
 @Controller('v1/customer')
@@ -43,7 +44,7 @@ export class CustomerController {
       search,
       pagination: {
         page: page ? Number(page) : undefined,
-        limit: limit ? Number(limit) : undefined,
+        limit: clampLimit(limit),
       },
     });
   }

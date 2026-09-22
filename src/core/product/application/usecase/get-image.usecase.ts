@@ -9,11 +9,14 @@ import { LoggedUserService } from '@/shared/application/logged-user/logged-user.
 
 type Input = {
   productId: string;
+  ifNoneMatch?: string | null;
 };
 
 type Output = {
-  buffer: Buffer;
+  buffer: Buffer | null;
   mimetype: string;
+  etag: string;
+  notModified: boolean;
 };
 
 export class GetProductImageUseCase implements UseCase<Input, Output> {
@@ -25,7 +28,7 @@ export class GetProductImageUseCase implements UseCase<Input, Output> {
     @Inject(PROVIDERS.LOGGED_USER_SERVICE) private readonly loggedUserService: LoggedUserService
   ) {}
 
-  async execute({ productId }: Input): Promise<Output> {
+  async execute({ productId, ifNoneMatch = null }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser()
     const product = await this.productRepository.findById(productId);
 
@@ -37,10 +40,20 @@ export class GetProductImageUseCase implements UseCase<Input, Output> {
       throw new NotFoundError('Produto não possui imagem');
     }
 
-    const buffer = await this.storageService.download(product.imagePath);
     const mimetype = this.getMimeType(product.imagePath);
 
-    return { buffer, mimetype };
+    // A chave da imagem é única por upload (timestamp + random), então ela
+    // identifica o conteúdo. O tenant já foi validado acima — só depois disso
+    // é seguro responder 304 sem baixar nada do Storage.
+    const etag = `"${product.imagePath}"`;
+
+    if (ifNoneMatch === etag) {
+      return { buffer: null, mimetype, etag, notModified: true };
+    }
+
+    const buffer = await this.storageService.download(product.imagePath);
+
+    return { buffer, mimetype, etag, notModified: false };
   }
 
   private getMimeType(filename: string): string {

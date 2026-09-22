@@ -45,6 +45,7 @@ import { UpdateDailyProductionItemPresenter } from '@/shared/infra/presenter/dai
 import { CancelDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/cancel-daily-production-item.presenter';
 import { DailyProductionItemRequirementsPresenter } from '@/shared/infra/presenter/daily-production/daily-production-item-requirements.presenter';
 import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Daily Production')
 @Controller('v1/daily-production')
@@ -97,7 +98,7 @@ export class DailyProductionController {
       status,
       productionDate: productionDate ? parseDateOnly(productionDate) : undefined,
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
     });
   }
 
@@ -176,7 +177,7 @@ export class DailyProductionController {
   }
 
   @Patch('items/:itemId/cancel')
-  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_UPDATE)
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_CANCEL)
   @ApiOperation({ summary: 'Cancela um item aguardando produção' })
   @ApiParam({ name: 'itemId', description: 'Id do item de produção' })
   @ApiOkResponse({ type: CancelDailyProductionItemPresenter })
@@ -202,7 +203,7 @@ export class DailyProductionController {
   }
 
   @Patch('items/:itemId/produce')
-  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_UPDATE)
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_COMPLETE)
   @ApiOperation({
     summary: 'Marca um item como produzido',
     description:

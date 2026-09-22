@@ -14,14 +14,13 @@ import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
+import { buildCashRegisterSessionDetail } from '../helpers/build-cash-register-session-detail';
 
 type Input = {
   id: string;
 };
 
 type Output = CashRegisterSessionDetailOutput;
-
-const round2 = (value: number) => Math.round(value * 100) / 100;
 
 const toDateOnly = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -122,52 +121,21 @@ export class FindCashRegisterSessionDetailUseCase
       ),
     );
 
-    const productionCost = round2(
-      productionItemsByProduction
-        .flat()
-        .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
-        .reduce((sum, item) => sum + item.plannedCost, 0),
-    );
+    const productionCostRaw = productionItemsByProduction
+      .flat()
+      .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
+      .reduce((sum, item) => sum + item.plannedCost, 0);
 
-    const totalExpenses = round2(
-      expenses.items.reduce((sum, expense) => sum + expense.value, 0),
-    );
-
-    // Lucro real = vendas (+ o que foi recuperado vendendo sobra ao custo,
-    // já que isso não é perda) − custo do que foi efetivamente produzido −
-    // valor perdido em descarte − despesas do dia.
-    const profit = round2(
-      salesSummary.totalRevenue +
-        totalRecoveredAtCost -
-        productionCost -
-        totalWaste -
-        totalExpenses,
-    );
-
-    return {
-      id: session.id,
-      status: session.status,
-      openingAmount: session.openingAmount,
-      openedAt: session.openedAt,
-      closedAt: session.closedAt,
-      totalCash: session.totalCash,
-      totalPix: session.totalPix,
-      totalCard: session.totalCard,
-      totalSales: round2(salesSummary.totalRevenue),
-      costOfSold: round2(salesSummary.totalCost),
-      productionCost,
-      expenses: expenses.items.map((expense) => ({
-        id: expense.id,
-        date: expense.date,
-        value: expense.value,
-        description: expense.description,
-      })),
-      totalExpenses,
-      totalWaste: round2(totalWaste),
-      totalRecoveredAtCost: round2(totalRecoveredAtCost),
-      totalSupplies: round2(totalSupplies),
-      totalWithdrawals: round2(totalWithdrawals),
-      profit,
-    };
+    return buildCashRegisterSessionDetail({
+      session,
+      totalRevenue: salesSummary.totalRevenue,
+      costOfSold: salesSummary.totalCost,
+      productionCostRaw,
+      expenses: expenses.items,
+      totalWaste,
+      totalRecoveredAtCost,
+      totalSupplies,
+      totalWithdrawals,
+    });
   }
 }

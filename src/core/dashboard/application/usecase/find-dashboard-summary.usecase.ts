@@ -8,8 +8,10 @@ import { DailyProductionRepository } from '@/core/daily-production/domain/reposi
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
-import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
+import { isPermissionGranted } from '@/shared/application/helpers/user-permission.helper';
 import { PermissionSale } from '@/core/auth/domain/permissions-definition/sale';
+import { PermissionDailyProduction } from '@/core/auth/domain/permissions-definition/daily-production';
+import { PermissionExpense } from '@/core/auth/domain/permissions-definition/expense';
 import { getBusinessTodayRange } from '@/shared/infra/utils/get-business-today-range';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 
@@ -38,11 +40,21 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
 
     const { startOfDay, endOfDay } = getBusinessTodayRange();
 
-    // Empresa sem PDV/Caixa no plano não tem dado de venda pra mostrar —
-    // omite em vez de 403 (Dashboard nunca deve exibir erro de permissão).
-    const canReadSales = isPermissionInPlan(
-      loggedUser.company.plan?.permissions,
+    // Dashboard nunca deve devolver 403 — cada seção é omitida (não zerada,
+    // pra não confundir "sem dado hoje" com "sem acesso") quando o usuário
+    // logado não tem a permissão da tela de origem daquele dado, considerando
+    // tanto o plano da empresa quanto a permissão individual dele.
+    const canReadSales = isPermissionGranted(
+      loggedUser,
       PermissionSale.SALE_READER,
+    );
+    const canReadProduction = isPermissionGranted(
+      loggedUser,
+      PermissionDailyProduction.DAILY_PRODUCTION_READER,
+    );
+    const canReadExpenses = isPermissionGranted(
+      loggedUser,
+      PermissionExpense.EXPENSE_READER,
     );
 
     const [
@@ -76,34 +88,43 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
             TypePaymentMethod.CARD,
           )
         : Promise.resolve(0),
-      this.dailyProductionRepository.findAllByCompanyId(companyId, {
-        productionDate: startOfDay,
-      }),
-      this.expenseRepository.findAllByCompanyAndDate(companyId, startOfDay),
+      canReadProduction
+        ? this.dailyProductionRepository.findAllByCompanyId(companyId, {
+            productionDate: startOfDay,
+          })
+        : Promise.resolve(null),
+      canReadExpenses
+        ? this.expenseRepository.findAllByCompanyAndDate(companyId, startOfDay)
+        : Promise.resolve(null),
     ]);
 
-    const productionItemsByProduction = await Promise.all(
-      dailyProductions.items.map((production) =>
-        this.dailyProductionItemRepository.findAllByDailyProductionId(
-          production.id,
+    let productionCostToday: number | undefined;
+
+    if (canReadProduction && dailyProductions) {
+      const productionItemsByProduction = await Promise.all(
+        dailyProductions.items.map((production) =>
+          this.dailyProductionItemRepository.findAllByDailyProductionId(
+            production.id,
+          ),
         ),
-      ),
-    );
+      );
 
-    const productionCostToday = round2(
-      productionItemsByProduction
-        .flat()
-        .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
-        .reduce((sum, item) => sum + item.plannedCost, 0),
-    );
+      productionCostToday = round2(
+        productionItemsByProduction
+          .flat()
+          .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
+          .reduce((sum, item) => sum + item.plannedCost, 0),
+      );
+    }
 
-    const expensesToday = round2(
-      expenses.reduce((sum, expense) => sum + expense.value, 0),
-    );
+    const expensesToday =
+      canReadExpenses && expenses
+        ? round2(expenses.reduce((sum, expense) => sum + expense.value, 0))
+        : undefined;
 
     return {
-      productionCostToday,
-      expensesToday,
+      ...(canReadProduction ? { productionCostToday } : {}),
+      ...(canReadExpenses ? { expensesToday } : {}),
       ...(canReadSales
         ? {
             salesRevenueCashToday: round2(salesRevenueCashToday),

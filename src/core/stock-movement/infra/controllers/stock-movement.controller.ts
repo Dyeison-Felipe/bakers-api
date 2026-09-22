@@ -72,7 +72,7 @@ export class StockMovementController {
   }
 
   @Get('waste')
-  @Permission(PermissionStockMovement.STOCK_MOVEMENT_READER)
+  @Permission(PermissionStockMovement.STOCK_MOVEMENT_WASTE_READER)
   @ApiOperation({
     summary: 'Lista os movimentos de desperdício por período',
     description:

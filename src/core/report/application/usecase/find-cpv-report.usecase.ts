@@ -7,11 +7,12 @@ import {
   CpvReportItem,
   CpvReportOutput,
 } from '@/shared/application/output/report/cpv-report.output';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 
 type Input = {
   dateFrom: Date;
   dateTo: Date;
-};
+} & ReportProductFilters;
 
 type Output = CpvReportOutput;
 
@@ -25,7 +26,13 @@ export class FindCpvReportUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ dateFrom, dateTo }: Input): Promise<Output> {
+  async execute({
+    dateFrom,
+    dateTo,
+    productId,
+    categoryId,
+    typeProduct,
+  }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
 
@@ -33,6 +40,7 @@ export class FindCpvReportUseCase implements UseCase<Input, Output> {
       companyId,
       dateFrom,
       dateTo,
+      { productId, categoryId, typeProduct },
     );
 
     const items: CpvReportItem[] = rows

@@ -1,6 +1,7 @@
 import { CreateUserUseCase } from '../usecase/create-user.usecase';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { makeCompany, makeLoggedUser, makePermission, makeRole, makeUser } from './fixtures';
 import type { UserRepository } from '../../domain/repositories/user.repository';
 import type { HashService } from '@/shared/application/hash/hash.service';
@@ -150,6 +151,24 @@ describe('CreateUserUseCase', () => {
 
     const savedUser = userRepository.save.mock.calls[0][0];
     expect(savedUser.emailVerified).toBe(true);
+  });
+
+  it('should reject a permission that requires another one absent from the same request', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+    ]);
+
+    await expect(sut.execute(baseInput)).rejects.toThrow(BadRequestError);
+    expect(userRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should accept a permission together with the one it requires', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+      makePermission({ id: 'p2', action: 'waste_reader', subject: 'stock_movement' }),
+    ]);
+
+    await expect(sut.execute(baseInput)).resolves.toBeDefined();
   });
 
   it('should create one UserPermissionEntity per requested permission', async () => {

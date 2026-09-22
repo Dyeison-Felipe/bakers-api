@@ -12,6 +12,7 @@ import { PlanPermission } from "@/core/plan-permission/domain/entity/plan-permis
 import { Permission } from "@/core/permission/domain/entity/permission.entity";
 import { Transactional } from "@/shared/infra/database/typeorm/decorators/transactional.decorator";
 import { BadRequestError } from "@/shared/application/errors/bad-request-error";
+import { validatePermissionDependencies } from "@/core/auth/domain/permissions-definition/permission-dependencies";
 import { StripeService } from "@/shared/application/stripe/stripe.service";
 
 // Limite do Stripe pra cobrança recorrente com interval:'day'.
@@ -65,6 +66,10 @@ export class UpdatePlanUseCase implements UseCase<Input, Output> {
         `Permissões não encontradas: ${notFoundIds.join(', ')}`,
       );
     }
+
+    validatePermissionDependencies(
+      permissions.map((p) => ({ action: p.action, resource: p.subject })),
+    );
 
     await this.syncStripePrice(plan, { name, price, duration });
 

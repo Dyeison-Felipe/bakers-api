@@ -10,11 +10,12 @@ import {
   WasteReportOutput,
   WasteReportProductPoint,
 } from '@/shared/application/output/report/waste-report.output';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 
 type Input = {
   dateFrom: Date;
   dateTo: Date;
-};
+} & ReportProductFilters;
 
 type Output = WasteReportOutput;
 
@@ -30,9 +31,10 @@ export class FindWasteReportUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ dateFrom, dateTo }: Input): Promise<Output> {
+  async execute({ dateFrom, dateTo, productId, categoryId, typeProduct }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
+    const filters = { productId, categoryId, typeProduct };
 
     const [wasteRows, recoveredRows] = await Promise.all([
       this.stockMovementRepository.findAllByCompanyAndDateAndReason(
@@ -40,12 +42,14 @@ export class FindWasteReportUseCase implements UseCase<Input, Output> {
         dateFrom,
         dateTo,
         [TypeStockMovementReason.WASTE],
+        filters,
       ),
       this.stockMovementRepository.findAllByCompanyAndDateAndReason(
         companyId,
         dateFrom,
         dateTo,
         [TypeStockMovementReason.LEFTOVER_SOLD_AT_COST],
+        filters,
       ),
     ]);
 

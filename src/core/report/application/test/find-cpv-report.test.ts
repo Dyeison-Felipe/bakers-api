@@ -48,7 +48,29 @@ describe('FindCpvReportUseCase', () => {
 
     expect(
       saleItemRepository.findRevenueAndCostByProductAndDateRange,
-    ).toHaveBeenCalledWith('company-1', dateFrom, dateTo);
+    ).toHaveBeenCalledWith('company-1', dateFrom, dateTo, {
+      productId: undefined,
+      categoryId: undefined,
+      typeProduct: undefined,
+    });
+  });
+
+  it('should forward the product/category/type filters to the repository', async () => {
+    await sut.execute({
+      dateFrom,
+      dateTo,
+      productId: 'product-1',
+      categoryId: 'category-1',
+      typeProduct: 'OWN_PRODUCTION' as never,
+    });
+
+    expect(
+      saleItemRepository.findRevenueAndCostByProductAndDateRange,
+    ).toHaveBeenCalledWith('company-1', dateFrom, dateTo, {
+      productId: 'product-1',
+      categoryId: 'category-1',
+      typeProduct: 'OWN_PRODUCTION',
+    });
   });
 
   it('should compute totals and gross profit from the per-product rows', async () => {

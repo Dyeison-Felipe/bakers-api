@@ -29,6 +29,7 @@ import { UpdateRecipeDto } from '../dtos/update-recipe.dto';
 import { RecipePresenter } from '@/shared/infra/presenter/recipe/recipe.presenter';
 import { RecipeDetailPresenter } from '@/shared/infra/presenter/recipe/recipe-detail.presenter';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Recipes')
 @Controller('v1/recipe')
@@ -98,7 +99,7 @@ export class RecipeController {
     return await this.findAllRecipesByCompanyUseCase.execute({
       name,
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
     });
   }
 }

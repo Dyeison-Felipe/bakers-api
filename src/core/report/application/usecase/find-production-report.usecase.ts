@@ -10,11 +10,12 @@ import {
   ProductionReportOutput,
 } from '@/shared/application/output/report/production-report.output';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
+import { ReportProductFilters } from '@/shared/application/types/report-product-filters';
 
 type Input = {
   dateFrom: Date;
   dateTo: Date;
-};
+} & ReportProductFilters;
 
 type Output = ProductionReportOutput;
 
@@ -32,7 +33,13 @@ export class FindProductionReportUseCase implements UseCase<Input, Output> {
     private readonly loggedUserService: LoggedUserService,
   ) {}
 
-  async execute({ dateFrom, dateTo }: Input): Promise<Output> {
+  async execute({
+    dateFrom,
+    dateTo,
+    productId,
+    categoryId,
+    typeProduct,
+  }: Input): Promise<Output> {
     const loggedUser = this.loggedUserService.getLoggedUser();
     const companyId = loggedUser.company.id;
 
@@ -52,8 +59,18 @@ export class FindProductionReportUseCase implements UseCase<Input, Output> {
       ),
     );
 
-    const items: ProductionReportItem[] = itemsByProduction.flat().map(
-      ({ item, production }) => ({
+    // Filtro por produto/categoria/tipo aplicado em memória: os itens já
+    // vêm carregados com `product`/`product.category` (findAllByDailyProductionId),
+    // e o volume por produção é pequeno — não compensa uma query por filtro.
+    const items: ProductionReportItem[] = itemsByProduction
+      .flat()
+      .filter(
+        ({ item }) =>
+          (!productId || item.product?.id === productId) &&
+          (!categoryId || item.product?.category?.id === categoryId) &&
+          (!typeProduct || item.product?.typeProduct === typeProduct),
+      )
+      .map(({ item, production }) => ({
         id: item.id,
         productionDate: production.productionDate,
         productId: item.product?.id ?? '',
@@ -62,8 +79,7 @@ export class FindProductionReportUseCase implements UseCase<Input, Output> {
         plannedWeight: item.plannedWeight,
         plannedCost: round2(item.plannedCost),
         status: item.status,
-      }),
-    );
+      }));
 
     const producedItems = items.filter(
       (item) => item.status === TypeDailyProductionItemStatus.PRODUCED,

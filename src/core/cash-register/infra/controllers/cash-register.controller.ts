@@ -27,6 +27,7 @@ import { FindAllCashRegisterSessionsUseCase } from '../../application/usecase/fi
 import { FindCashRegisterSessionDetailUseCase } from '../../application/usecase/find-cash-register-session-detail.usecase';
 import { CreateCashRegisterMovementUseCase } from '../../application/usecase/create-cash-register-movement.usecase';
 import { FindCashRegisterMovementsUseCase } from '../../application/usecase/find-cash-register-movements.usecase';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Cash Register')
 @Controller('v1/cash-register')
@@ -103,7 +104,7 @@ export class CashRegisterController {
 
     return await this.findAllCashRegisterSessionsUseCase.execute({
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
       dateFrom: dateFrom ? parseDateOnly(dateFrom) : undefined,
       dateTo: parsedDateTo,
     });

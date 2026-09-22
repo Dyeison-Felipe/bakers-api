@@ -6,12 +6,16 @@ import { TypeUnitOfMeasurement } from '@/shared/infra/enums/product';
 import type { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
-const makeLoggedUserService = (
-  permissions: { subject: string; action: string }[],
-) =>
+const makeLoggedUserService = (overrides: Record<string, unknown> = {}) =>
   ({
     getLoggedUser: jest.fn().mockReturnValue({
-      company: { id: 'company-1', plan: { permissions } },
+      company: {
+        id: 'company-1',
+        plan: { permissions: [{ subject: 'sale', action: 'reader' }] },
+      },
+      role: { name: 'Admin' },
+      userPermissions: [],
+      ...overrides,
     }),
     setLoggedUser: jest.fn(),
   }) as unknown as jest.Mocked<LoggedUserService>;
@@ -30,7 +34,7 @@ describe('FindTopSellingProductsUseCase', () => {
   it('should return an empty list without querying when the plan has no sale permission', async () => {
     const sut = new FindTopSellingProductsUseCase(
       saleItemRepository as unknown as SaleItemRepository,
-      makeLoggedUserService([]),
+      makeLoggedUserService({ company: { id: 'company-1', plan: { permissions: [] } } }),
     );
 
     await expect(sut.execute()).resolves.toEqual([]);
@@ -39,7 +43,19 @@ describe('FindTopSellingProductsUseCase', () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("should query today's top products for the logged company with the limit", async () => {
+  it('should return an empty list for a non-Admin user without sale.reader, even if the plan includes it', async () => {
+    const sut = new FindTopSellingProductsUseCase(
+      saleItemRepository as unknown as SaleItemRepository,
+      makeLoggedUserService({ role: { name: 'Funcionário' }, userPermissions: [] }),
+    );
+
+    await expect(sut.execute()).resolves.toEqual([]);
+    expect(
+      saleItemRepository.findTopSoldByCompanyAndDateRange,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("should query today's top products for an Admin of the logged company with the limit", async () => {
     const rows = [
       {
         productId: 'p1',
@@ -51,7 +67,7 @@ describe('FindTopSellingProductsUseCase', () => {
     saleItemRepository.findTopSoldByCompanyAndDateRange.mockResolvedValue(rows);
     const sut = new FindTopSellingProductsUseCase(
       saleItemRepository as unknown as SaleItemRepository,
-      makeLoggedUserService([{ subject: 'sale', action: 'reader' }]),
+      makeLoggedUserService(),
     );
 
     await expect(sut.execute()).resolves.toEqual(rows);
@@ -63,5 +79,19 @@ describe('FindTopSellingProductsUseCase', () => {
       expect.any(Date),
       TOP_SELLING_PRODUCTS_LIMIT,
     );
+  });
+
+  it('should query for a non-Admin user that individually has sale.reader', async () => {
+    const sut = new FindTopSellingProductsUseCase(
+      saleItemRepository as unknown as SaleItemRepository,
+      makeLoggedUserService({
+        role: { name: 'Funcionário' },
+        userPermissions: [{ permission: { action: 'reader', subject: 'sale' } }],
+      }),
+    );
+
+    await sut.execute();
+
+    expect(saleItemRepository.findTopSoldByCompanyAndDateRange).toHaveBeenCalled();
   });
 });

@@ -12,4 +12,11 @@ export interface CashRegisterMovementRepository
     cashRegisterSessionId: string,
     type: TypeCashRegisterMovement,
   ): Promise<number>;
+
+  /** Versão em lote de `sumAmountByCashRegisterSessionIdAndType`. Sessão sem
+   * movimentos do tipo não aparece no Map. */
+  sumAmountByCashRegisterSessionIdsAndType(
+    cashRegisterSessionIds: string[],
+    type: TypeCashRegisterMovement,
+  ): Promise<Map<string, number>>;
 }

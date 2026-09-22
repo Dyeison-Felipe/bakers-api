@@ -1,4 +1,5 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
+import { TypeProduct } from '@/shared/infra/enums/product';
 import { FastifyReply } from 'fastify';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
@@ -62,14 +63,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Relatório de desperdício por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   @ApiOkResponse({ type: WasteReportPresenter })
   async waste(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('typeProduct') typeProduct?: TypeProduct,
   ): Promise<WasteReportPresenter> {
-    return await this.findWasteReportUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    return await this.findWasteReportUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
   }
 
   @Get('waste/pdf')
@@ -77,14 +87,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Exporta o relatório de desperdício em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   async wastePdf(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId: string | undefined,
+    @Query('categoryId') categoryId: string | undefined,
+    @Query('typeProduct') typeProduct: TypeProduct | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const buffer = await this.generateWasteReportPdfUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    const buffer = await this.generateWasteReportPdfUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
 
     return reply
       .type('application/pdf')
@@ -132,14 +151,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Relatório de custo de produção por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   @ApiOkResponse({ type: ProductionReportPresenter })
   async production(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('typeProduct') typeProduct?: TypeProduct,
   ): Promise<ProductionReportPresenter> {
-    return await this.findProductionReportUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    return await this.findProductionReportUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
   }
 
   @Get('production/pdf')
@@ -147,14 +175,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Exporta o relatório de produção em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   async productionPdf(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId: string | undefined,
+    @Query('categoryId') categoryId: string | undefined,
+    @Query('typeProduct') typeProduct: TypeProduct | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const buffer = await this.generateProductionReportPdfUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    const buffer = await this.generateProductionReportPdfUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
 
     return reply
       .type('application/pdf')
@@ -202,14 +239,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Relatório de CPV (Custo dos Produtos Vendidos) por período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   @ApiOkResponse({ type: CpvReportPresenter })
   async cpv(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('typeProduct') typeProduct?: TypeProduct,
   ): Promise<CpvReportPresenter> {
-    return await this.findCpvReportUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    return await this.findCpvReportUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
   }
 
   @Get('cpv/pdf')
@@ -217,14 +263,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Exporta o relatório de CPV em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   async cpvPdf(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId: string | undefined,
+    @Query('categoryId') categoryId: string | undefined,
+    @Query('typeProduct') typeProduct: TypeProduct | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const buffer = await this.generateCpvReportPdfUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    const buffer = await this.generateCpvReportPdfUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
 
     return reply
       .type('application/pdf')
@@ -237,14 +292,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Relatório de Margem de Contribuição por produto no período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   @ApiOkResponse({ type: ContributionMarginReportPresenter })
   async contributionMargin(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('typeProduct') typeProduct?: TypeProduct,
   ): Promise<ContributionMarginReportPresenter> {
-    return await this.findContributionMarginReportUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    return await this.findContributionMarginReportUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
   }
 
   @Get('contribution-margin/pdf')
@@ -252,14 +316,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Exporta o relatório de Margem de Contribuição em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   async contributionMarginPdf(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId: string | undefined,
+    @Query('categoryId') categoryId: string | undefined,
+    @Query('typeProduct') typeProduct: TypeProduct | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const buffer = await this.generateContributionMarginReportPdfUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    const buffer = await this.generateContributionMarginReportPdfUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
 
     return reply
       .type('application/pdf')
@@ -272,14 +345,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Relatório de Curva ABC de produtos por receita no período' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   @ApiOkResponse({ type: AbcCurveReportPresenter })
   async abcCurve(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('typeProduct') typeProduct?: TypeProduct,
   ): Promise<AbcCurveReportPresenter> {
-    return await this.findAbcCurveReportUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    return await this.findAbcCurveReportUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
   }
 
   @Get('abc-curve/pdf')
@@ -287,14 +369,23 @@ export class ReportController {
   @ApiOperation({ summary: 'Exporta o relatório de Curva ABC em PDF' })
   @ApiQuery({ name: 'dateFrom', required: true })
   @ApiQuery({ name: 'dateTo', required: true })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'typeProduct', required: false, enum: TypeProduct })
   async abcCurvePdf(
     @Query('dateFrom') dateFrom: string,
     @Query('dateTo') dateTo: string,
+    @Query('productId') productId: string | undefined,
+    @Query('categoryId') categoryId: string | undefined,
+    @Query('typeProduct') typeProduct: TypeProduct | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const buffer = await this.generateAbcCurveReportPdfUseCase.execute(
-      parseReportDateRange(dateFrom, dateTo),
-    );
+    const buffer = await this.generateAbcCurveReportPdfUseCase.execute({
+      ...parseReportDateRange(dateFrom, dateTo),
+      productId,
+      categoryId,
+      typeProduct,
+    });
 
     return reply
       .type('application/pdf')

@@ -70,7 +70,54 @@ describe('GetProductImageUseCase', () => {
     expect(output).toEqual({
       buffer: Buffer.from('image-bytes'),
       mimetype: 'image/png',
+      etag: '"company/company-1/product/product-1.png"',
+      notModified: false,
     });
+  });
+
+  it('should return notModified without hitting the storage when ifNoneMatch matches the etag', async () => {
+    productRepository.findById.mockResolvedValue(
+      makeProduct({ imagePath: 'company/company-1/product/product-1.png' }),
+    );
+
+    const output = await sut.execute({
+      productId: 'product-1',
+      ifNoneMatch: '"company/company-1/product/product-1.png"',
+    });
+
+    expect(storageService.download).not.toHaveBeenCalled();
+    expect(output.notModified).toBe(true);
+    expect(output.buffer).toBeNull();
+  });
+
+  it('should download the image when ifNoneMatch does not match the current etag', async () => {
+    productRepository.findById.mockResolvedValue(
+      makeProduct({ imagePath: 'company/company-1/product/product-2.png' }),
+    );
+
+    const output = await sut.execute({
+      productId: 'product-1',
+      ifNoneMatch: '"company/company-1/product/product-1.png"',
+    });
+
+    expect(storageService.download).toHaveBeenCalledTimes(1);
+    expect(output.notModified).toBe(false);
+  });
+
+  it('should still reject another company even if ifNoneMatch matches', async () => {
+    productRepository.findById.mockResolvedValue(
+      makeProduct({
+        imagePath: 'company/company-2/product/product-1.png',
+        company: { id: 'company-2' },
+      }),
+    );
+
+    await expect(
+      sut.execute({
+        productId: 'product-1',
+        ifNoneMatch: '"company/company-2/product/product-1.png"',
+      }),
+    ).rejects.toThrow(NotFoundError);
   });
 
   it('should default to image/jpeg for an unknown extension', async () => {

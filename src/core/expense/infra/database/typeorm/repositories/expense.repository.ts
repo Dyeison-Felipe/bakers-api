@@ -5,6 +5,7 @@ import {
   FindAllExpensesFilters,
 } from '@/core/expense/domain/repositories/expense.repository';
 import { Expense } from '@/core/expense/domain/entities/expense.entity';
+import { ExpenseDayWindow } from '@/core/expense/domain/repositories/expense.repository';
 import {
   Pagination,
   PaginationInput,
@@ -110,6 +111,71 @@ export class ExpenseRepositoryImpl implements ExpenseRepository {
       .getMany();
 
     return schemas.map((schema) => ExpenseMapper.toEntity(schema));
+  }
+
+  async findAllByCompanyIdAndDayWindows(
+    companyId: string,
+    windows: ExpenseDayWindow[],
+  ): Promise<Map<string, Expense[]>> {
+    const byWindow = new Map<string, Expense[]>();
+
+    if (windows.length === 0) return byWindow;
+
+    // Mesmas datas (YYYY-MM-DD) e mesma comparação por coluna `date` do filtro
+    // individual de `findAllByCompanyId`.
+    const parameters: Record<string, unknown> = { companyId };
+    const rowsSql = windows.map((window, index) => {
+      parameters[`windowId${index}`] = window.id;
+      parameters[`windowFrom${index}`] = formatDateOnly(window.dateFrom);
+      parameters[`windowTo${index}`] = formatDateOnly(window.dateTo);
+
+      return `(CAST(:windowId${index} AS uuid), CAST(:windowFrom${index} AS date), CAST(:windowTo${index} AS date))`;
+    });
+
+    const pairs = await this.expenseRepository
+      .createQueryBuilder('expense')
+      .innerJoin('expense.company', 'company')
+      .innerJoin(
+        `(SELECT w.id, w.date_from, w.date_to FROM (VALUES ${rowsSql.join(', ')}) AS w(id, date_from, date_to))`,
+        'win',
+        'expense.date BETWEEN win.date_from AND win.date_to',
+      )
+      .select('win.id', 'windowId')
+      .addSelect('expense.id', 'expenseId')
+      .where('company.id = :companyId')
+      .setParameters(parameters)
+      // Despesas na mesma data: createdAt/id como desempate mantém a ordem
+      // estável entre chamadas (sem isso o Postgres pode alternar a ordem).
+      .orderBy('expense.date', 'DESC')
+      .addOrderBy('expense.createdAt', 'ASC')
+      .addOrderBy('expense.id', 'ASC')
+      .getRawMany<{ windowId: string; expenseId: string }>();
+
+    if (pairs.length === 0) return byWindow;
+
+    const expenseIds = [...new Set(pairs.map((pair) => pair.expenseId))];
+
+    const schemas = await this.expenseRepository
+      .createQueryBuilder('expense')
+      .leftJoinAndSelect('expense.company', 'company')
+      .where('expense.id IN (:...expenseIds)', { expenseIds })
+      .getMany();
+
+    const expensesById = new Map(
+      schemas.map((schema) => [schema.id, ExpenseMapper.toEntity(schema)]),
+    );
+
+    pairs.forEach(({ windowId, expenseId }) => {
+      const expense = expensesById.get(expenseId);
+
+      if (!expense) return;
+
+      const list = byWindow.get(windowId) ?? [];
+      list.push(expense);
+      byWindow.set(windowId, list);
+    });
+
+    return byWindow;
   }
 
   async update(entity: Expense): Promise<void> {

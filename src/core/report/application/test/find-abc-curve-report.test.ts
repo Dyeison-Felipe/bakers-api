@@ -43,6 +43,24 @@ describe('FindAbcCurveReportUseCase', () => {
     );
   });
 
+  it('should forward the product/category/type filters to the repository', async () => {
+    await sut.execute({
+      dateFrom,
+      dateTo,
+      productId: 'product-1',
+      categoryId: 'category-1',
+      typeProduct: 'OWN_PRODUCTION' as never,
+    });
+
+    expect(
+      saleItemRepository.findRevenueAndCostByProductAndDateRange,
+    ).toHaveBeenCalledWith('company-1', dateFrom, dateTo, {
+      productId: 'product-1',
+      categoryId: 'category-1',
+      typeProduct: 'OWN_PRODUCTION',
+    });
+  });
+
   it('should sort products by revenue descending and compute cumulative percent', async () => {
     saleItemRepository.findRevenueAndCostByProductAndDateRange.mockResolvedValue([
       makeRow({ productId: 'p-small', revenue: 20 }),

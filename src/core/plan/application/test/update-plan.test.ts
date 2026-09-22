@@ -1,5 +1,6 @@
 import { UpdatePlanUseCase } from '../usecase/update-plan.usecase';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { makePermission, makePlan } from './fixtures';
 import type { PlanRepository } from '../../domain/repositories/plan.repository';
 import type { PermissionRepository } from '@/core/permission/domain/repositories/permission.repository';
@@ -66,6 +67,28 @@ describe('UpdatePlanUseCase', () => {
     permissionRepository.findPermissionsById.mockResolvedValue([]);
 
     await expect(sut.execute(input)).rejects.toThrow(NotFoundError);
+  });
+
+  it('should reject a permission that requires another one absent from the same request', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+    ]);
+
+    await expect(
+      sut.execute({ ...input, permissionIds: ['p1'] }),
+    ).rejects.toThrow(BadRequestError);
+    expect(planPermissionRepository.deleteAllByPlanId).not.toHaveBeenCalled();
+  });
+
+  it('should accept a permission together with the one it requires', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+      makePermission({ id: 'p2', action: 'waste_reader', subject: 'stock_movement' }),
+    ]);
+
+    await expect(
+      sut.execute({ ...input, permissionIds: ['p1', 'p2'] }),
+    ).resolves.toBeDefined();
   });
 
   it('should replace all plan permissions (delete then re-save)', async () => {

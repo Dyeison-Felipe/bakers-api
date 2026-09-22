@@ -1,6 +1,7 @@
 import { CreatePlanUseCase } from '../usecase/create-plan.usecase';
 import { ConflictError } from '@/shared/application/errors/conflict-error';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { makePermission, makePlan } from './fixtures';
 import type { PlanRepository } from '../../domain/repositories/plan.repository';
 import type { PermissionRepository } from '@/core/permission/domain/repositories/permission.repository';
@@ -58,6 +59,28 @@ describe('CreatePlanUseCase', () => {
     permissionRepository.findPermissionsById.mockResolvedValue([]);
 
     await expect(sut.execute(input)).rejects.toThrow(NotFoundError);
+  });
+
+  it('should reject a permission that requires another one absent from the same request', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+    ]);
+
+    await expect(
+      sut.execute({ ...input, permissionIds: ['p1'] }),
+    ).rejects.toThrow(BadRequestError);
+    expect(planRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should accept a permission together with the one it requires', async () => {
+    permissionRepository.findPermissionsById.mockResolvedValue([
+      makePermission({ id: 'p1', action: 'waste_reader', subject: 'report' }),
+      makePermission({ id: 'p2', action: 'waste_reader', subject: 'stock_movement' }),
+    ]);
+
+    await expect(
+      sut.execute({ ...input, permissionIds: ['p1', 'p2'] }),
+    ).resolves.toBeDefined();
   });
 
   it('should create the plan and persist its permissions', async () => {

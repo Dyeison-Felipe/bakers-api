@@ -21,6 +21,7 @@ import { CreateExpenseUseCase } from '../../application/usecases/create-expense.
 import { UpdateExpenseUseCase } from '../../application/usecases/update-expense.usecase';
 import { DeleteExpenseUseCase } from '../../application/usecases/delete-expense.usecase';
 import { FindAllExpensesByCompanyUseCase } from '../../application/usecases/find-all-expenses-by-company.usecase';
+import { clampLimit } from '@/shared/infra/utils/clamp-limit';
 
 @ApiTags('Expense')
 @Controller('v1/expense')
@@ -88,7 +89,7 @@ export class ExpenseController {
       dateFrom: dateFrom ? parseDateOnly(dateFrom) : undefined,
       dateTo: dateTo ? parseDateOnly(dateTo) : undefined,
       page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+      limit: clampLimit(limit),
     });
   }
 }

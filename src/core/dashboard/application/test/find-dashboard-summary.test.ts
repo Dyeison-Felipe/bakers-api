@@ -11,6 +11,23 @@ const makePagination = <T>(items: T[]) => ({
   meta: { totalItems: items.length, itemCount: items.length, itemsPerPage: 10, totalPages: 1, currentPage: 1 },
 });
 
+const FULL_PLAN_PERMISSIONS = [
+  { subject: 'sale', action: 'reader' },
+  { subject: 'daily_production', action: 'reader' },
+  { subject: 'expense', action: 'reader' },
+];
+
+// role Admin bypassa a checagem individual (mesma regra do PermissionGuard) —
+// usado como usuário "com tudo liberado" na maioria dos testes; os testes de
+// omissão usam um usuário não-Admin com `userPermissions` deliberadamente
+// incompletos.
+const makeLoggedUser = (overrides: Record<string, unknown> = {}) => ({
+  company: { id: 'company-1', plan: { permissions: FULL_PLAN_PERMISSIONS } },
+  role: { name: 'Admin' },
+  userPermissions: [],
+  ...overrides,
+});
+
 describe('FindDashboardSummaryUseCase', () => {
   let saleRepository: jest.Mocked<
     Pick<SaleRepository, 'sumTotalByCompanyAndDateRangeAndPaymentMethod'>
@@ -35,12 +52,7 @@ describe('FindDashboardSummaryUseCase', () => {
     };
     expenseRepository = { findAllByCompanyAndDate: jest.fn().mockResolvedValue([]) };
     loggedUserService = {
-      getLoggedUser: jest.fn().mockReturnValue({
-        company: {
-          id: 'company-1',
-          plan: { permissions: [{ subject: 'sale', action: 'reader' }] },
-        },
-      }),
+      getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
       setLoggedUser: jest.fn(),
     } as unknown as jest.Mocked<LoggedUserService>;
 
@@ -128,19 +140,77 @@ describe('FindDashboardSummaryUseCase', () => {
     );
   });
 
-  it('should omit sales revenue fields when the company plan does not include PDV/Caixa', async () => {
-    loggedUserService.getLoggedUser.mockReturnValue({
-      company: { id: 'company-1', plan: { permissions: [] } },
-    } as never);
+  it('should omit every field when the company plan includes nothing', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({ company: { id: 'company-1', plan: { permissions: [] } } }) as never,
+    );
 
     const output = await sut.execute();
 
-    expect(output).toEqual({
-      productionCostToday: 0,
-      expensesToday: 0,
-    });
+    expect(output).toEqual({});
     expect(
       saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod,
     ).not.toHaveBeenCalled();
+    expect(dailyProductionRepository.findAllByCompanyId).not.toHaveBeenCalled();
+    expect(expenseRepository.findAllByCompanyAndDate).not.toHaveBeenCalled();
+  });
+
+  it('should omit sales fields for a non-Admin user without sale.reader, even if the plan includes it', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({
+        role: { name: 'Funcionário' },
+        userPermissions: [
+          { permission: { action: 'reader', subject: 'daily_production' } },
+          { permission: { action: 'reader', subject: 'expense' } },
+        ],
+      }) as never,
+    );
+
+    const output = await sut.execute();
+
+    expect(output.salesRevenueCashToday).toBeUndefined();
+    expect(output.salesRevenuePixToday).toBeUndefined();
+    expect(output.salesRevenueCardToday).toBeUndefined();
+    expect(output.productionCostToday).toBe(0);
+    expect(output.expensesToday).toBe(0);
+    expect(
+      saleRepository.sumTotalByCompanyAndDateRangeAndPaymentMethod,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('should omit productionCostToday for a non-Admin user without daily_production.reader', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({
+        role: { name: 'Funcionário' },
+        userPermissions: [
+          { permission: { action: 'reader', subject: 'sale' } },
+          { permission: { action: 'reader', subject: 'expense' } },
+        ],
+      }) as never,
+    );
+
+    const output = await sut.execute();
+
+    expect(output.productionCostToday).toBeUndefined();
+    expect(dailyProductionRepository.findAllByCompanyId).not.toHaveBeenCalled();
+    expect(output.expensesToday).toBe(0);
+  });
+
+  it('should omit expensesToday for a non-Admin user without expense.reader', async () => {
+    loggedUserService.getLoggedUser.mockReturnValue(
+      makeLoggedUser({
+        role: { name: 'Funcionário' },
+        userPermissions: [
+          { permission: { action: 'reader', subject: 'sale' } },
+          { permission: { action: 'reader', subject: 'daily_production' } },
+        ],
+      }) as never,
+    );
+
+    const output = await sut.execute();
+
+    expect(output.expensesToday).toBeUndefined();
+    expect(expenseRepository.findAllByCompanyAndDate).not.toHaveBeenCalled();
+    expect(output.productionCostToday).toBe(0);
   });
 });
