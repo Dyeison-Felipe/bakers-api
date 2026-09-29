@@ -1,0 +1,56 @@
+# Banco de produção, rodando no próprio servidor (substitui o Supabase como
+# banco — o Storage de imagens continua no Supabase).
+#
+# Nenhuma credencial fica neste arquivo: usuário e senha vêm de arquivos que
+# só existem no servidor (fora do repositório), montados como Docker secrets.
+# O Postgres lê direto desses arquivos (POSTGRES_*_FILE), então a senha não
+# aparece nem em `docker inspect` do container do banco.
+#
+# A API alcança o banco pela rede `bakers-net` (DB_HOST=bakers_db,
+# DB_PORT=5432). De fora, só por túnel SSH: a porta 5433 existe apenas no
+# 127.0.0.1 do servidor.
+#
+# Subir:   docker compose -f docker-compose.prod.yaml up -d
+name: bakers_bill_prod
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: bakers_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER_FILE: /run/secrets/db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: ${DB_NAME:-bakers_bill}
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
+    secrets:
+      - db_user
+      - db_password
+    # Só para acesso administrativo (DBeaver via túnel SSH): a porta fica
+    # presa ao 127.0.0.1 do servidor, nunca aberta para a internet.
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - bakers_db_data:/var/lib/postgresql/data
+    networks:
+      - bakers-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$(cat /run/secrets/db_user)\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+secrets:
+  db_user:
+    file: ${BAKERS_SECRETS_DIR:-/opt/bakers/secrets}/db_user
+  db_password:
+    file: ${BAKERS_SECRETS_DIR:-/opt/bakers/secrets}/db_password
+
+volumes:
+  bakers_db_data:
+
+networks:
+  # Rede já existente no servidor, criada para a API e o gateway.
+  bakers-net:
+    external: true
