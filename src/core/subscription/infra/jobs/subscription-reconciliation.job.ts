@@ -45,6 +45,7 @@ export class SubscriptionReconciliationJob {
             approved: true,
             paymentStatus: subscription.status,
             amount: companySubscription.plan.price,
+            periodEnd: subscription.currentPeriodEnd,
           });
         } else if (
           subscription.status === 'canceled' ||

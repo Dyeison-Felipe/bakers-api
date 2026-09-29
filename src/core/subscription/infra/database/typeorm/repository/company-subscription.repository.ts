@@ -67,6 +67,18 @@ export class CompanySubscriptionRepositoryImpl
     return CompanySubscriptionMapper.toEntity(schema);
   }
 
+  async findLatestByCompanyId(
+    companyId: string,
+  ): Promise<CompanySubscription | null> {
+    const schema = await this.repository.findOne({
+      where: { company: { id: companyId } },
+      relations: this.getRelations(),
+      order: { createdAt: 'DESC' },
+    });
+    if (!schema) return null;
+    return CompanySubscriptionMapper.toEntity(schema);
+  }
+
   async findAllPendingOlderThan(date: Date): Promise<CompanySubscription[]> {
     const schemas = await this.repository.find({
       where: { status: 'pending', createdAt: LessThan(date) },

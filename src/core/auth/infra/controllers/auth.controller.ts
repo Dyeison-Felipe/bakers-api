@@ -23,7 +23,11 @@ import {
 } from '@nestjs/swagger';
 import { LoginUseCase } from '../../application/usecase/login.usecase';
 import { LoginPresenter } from '@/shared/infra/presenter/login/login.presenter';
-import { Public } from '@/shared/infra/decorators/permission.decorator';
+import {
+  AllowExpiredPlan,
+  AllowSuperAdmin,
+  Public,
+} from '@/shared/infra/decorators/permission.decorator';
 import { ForgotPasswordUseCase } from '../../application/usecase/forgot-password.usecase';
 import { ForgotPasswordDto } from '../dtos/forgot-password.dto';
 import { VerifyCodeDto } from '../dtos/verify-code.dto';
@@ -35,6 +39,8 @@ import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import { LogoutUseCase } from '../../application/usecase/logout.usecase';
 import { VerifyEmailUseCase } from '../../application/usecase/verify-email.usecase';
 import { VerifyEmailDto } from '../dtos/verify-email.dto';
+import { FindSessionUseCase } from '../../application/usecase/find-session.usecase';
+import { SessionOutput } from '@/shared/application/output/auth/login.output';
 
 @ApiTags('Auth')
 @Controller('/v1/auth')
@@ -46,7 +52,21 @@ export class AuthController {
     private readonly updatePasswordUseCase: UpdatePasswordUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
+    private readonly findSessionUseCase: FindSessionUseCase,
   ) {}
+
+  @Get('/session')
+  @AllowExpiredPlan()
+  @AllowSuperAdmin()
+  @ApiOperation({
+    summary: 'Sessão atual',
+    description:
+      'Devolve os mesmos dados do login (usuário, empresa, plano e permissões) para a sessão atual, sem gerar um novo token.',
+  })
+  @ApiResponse({ status: 200, description: 'Dados da sessão' })
+  async session(): Promise<SessionOutput> {
+    return await this.findSessionUseCase.execute();
+  }
 
   @Post('/login')
   @Public()

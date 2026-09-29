@@ -69,7 +69,17 @@ export class StripeWebhookController {
           ? (invoice.last_finalization_error?.message ?? null)
           : null,
       amount: invoice.amount_paid ? invoice.amount_paid / 100 : invoice.amount_due / 100,
+      periodEnd: this.extractPeriodEnd(invoice),
     });
+  }
+
+  // Período que a fatura cobra: numa fatura de assinatura, o `period` da
+  // linha é o período de serviço pago (o `period_end` da própria fatura
+  // aponta pro período anterior nas renovações, então não serve).
+  private extractPeriodEnd(invoice: Stripe.Invoice): Date | null {
+    const periodEnd = invoice.lines?.data[0]?.period?.end;
+
+    return periodEnd ? new Date(periodEnd * 1000) : null;
   }
 
   private extractSubscriptionId(invoice: Stripe.Invoice): string | null {

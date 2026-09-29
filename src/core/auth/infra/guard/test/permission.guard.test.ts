@@ -6,6 +6,7 @@ import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error
 import { SessionInvalidatedError } from '@/shared/application/errors/session-invalidated-error';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import {
+  ALLOW_EXPIRED_PLAN_KEY,
   ALLOW_SUPER_ADMIN_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
@@ -74,6 +75,7 @@ describe('PermissionGuard', () => {
       [IS_PUBLIC_KEY]: false,
       [SUPER_ADMIN_ONLY_KEY]: false,
       [ALLOW_SUPER_ADMIN_KEY]: false,
+      [ALLOW_EXPIRED_PLAN_KEY]: false,
       [PERMISSIONS_KEY]: undefined,
     };
     reflector = {
@@ -210,6 +212,38 @@ describe('PermissionGuard', () => {
     );
 
     await expect(sut.canActivate(makeContext())).rejects.toThrow(PlanExpiredError);
+  });
+
+  it('allows an expired company on an @AllowExpiredPlan() route', async () => {
+    reflectorAnswers[ALLOW_EXPIRED_PLAN_KEY] = true;
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({
+        role: { name: 'Admin' },
+        company: {
+          active: false,
+          planExpiresAt: new Date(Date.now() - 1000),
+          plan: { permissions: [] },
+        },
+      }),
+    );
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
+  });
+
+  it('still checks the plan permissions on an @AllowExpiredPlan() route', async () => {
+    reflectorAnswers[ALLOW_EXPIRED_PLAN_KEY] = true;
+    reflectorAnswers[PERMISSIONS_KEY] = [{ action: 'update', resource: 'company' }];
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({
+        company: {
+          active: false,
+          planExpiresAt: new Date(Date.now() - 1000),
+          plan: { permissions: [] },
+        },
+      }),
+    );
+
+    await expect(sut.canActivate(makeContext())).rejects.toThrow(ForbiddenError);
   });
 
   it('does not block a Super Admin even if their company plan looks expired', async () => {

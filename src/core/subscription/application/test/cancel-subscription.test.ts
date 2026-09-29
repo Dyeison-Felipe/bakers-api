@@ -2,13 +2,17 @@ import { CancelSubscriptionUseCase } from '../usecase/cancel-subscription.usecas
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { makeCompanySubscription, makeCompany } from './fixtures';
 import type { CompanySubscriptionRepository } from '../../domain/repositories/company-subscription.repository';
+import type { CompanyRepository } from '@/core/company/domain/repositories/company.repository';
 import type { StripeService } from '@/shared/application/stripe/stripe.service';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 describe('CancelSubscriptionUseCase', () => {
+  const periodEnd = new Date('2026-10-28T12:00:00.000Z');
+
   let companySubscriptionRepository: jest.Mocked<
     Pick<CompanySubscriptionRepository, 'findActiveByCompanyId' | 'update'>
   >;
+  let companyRepository: jest.Mocked<Pick<CompanyRepository, 'update'>>;
   let stripeService: jest.Mocked<Pick<StripeService, 'cancelSubscriptionAtPeriodEnd'>>;
   let loggedUserService: jest.Mocked<LoggedUserService>;
   let sut: CancelSubscriptionUseCase;
@@ -20,16 +24,26 @@ describe('CancelSubscriptionUseCase', () => {
         .mockResolvedValue(makeCompanySubscription({ status: 'active' })),
       update: jest.fn().mockImplementation((s) => Promise.resolve(s)),
     };
+    companyRepository = {
+      update: jest.fn().mockImplementation((c) => Promise.resolve(c)),
+    };
     stripeService = {
-      cancelSubscriptionAtPeriodEnd: jest.fn().mockResolvedValue(undefined),
+      cancelSubscriptionAtPeriodEnd: jest.fn().mockResolvedValue({
+        status: 'active',
+        currentPeriodEnd: periodEnd,
+        cancelAtPeriodEnd: true,
+      }),
     };
     loggedUserService = {
-      getLoggedUser: jest.fn().mockReturnValue({ company: makeCompany({ id: 'company-1' }) }),
+      getLoggedUser: jest
+        .fn()
+        .mockReturnValue({ id: 'user-1', company: makeCompany({ id: 'company-1' }) }),
       setLoggedUser: jest.fn(),
     };
 
     sut = new CancelSubscriptionUseCase(
       companySubscriptionRepository as unknown as CompanySubscriptionRepository,
+      companyRepository as unknown as CompanyRepository,
       stripeService as unknown as StripeService,
       loggedUserService,
     );
@@ -53,10 +67,9 @@ describe('CancelSubscriptionUseCase', () => {
     expect(companySubscriptionRepository.update).toHaveBeenCalledWith(subscription);
   });
 
-  it('should never touch company.active/planExpiresAt directly', async () => {
+  it('should keep the company active until exactly the end of the paid period (no renewal grace)', async () => {
     const company = makeCompany({ active: true });
     const setActiveSpy = jest.spyOn(company, 'setActive');
-    const renewPlanSpy = jest.spyOn(company, 'renewPlan');
     companySubscriptionRepository.findActiveByCompanyId.mockResolvedValue(
       makeCompanySubscription({ status: 'active', company }),
     );
@@ -64,6 +77,26 @@ describe('CancelSubscriptionUseCase', () => {
     await sut.execute();
 
     expect(setActiveSpy).not.toHaveBeenCalled();
-    expect(renewPlanSpy).not.toHaveBeenCalled();
+    expect(company.active).toBe(true);
+    expect(company.planExpiresAt).toEqual(periodEnd);
+    expect(companyRepository.update).toHaveBeenCalledWith(company);
+  });
+
+  it('should leave the plan window untouched when Stripe does not return the period', async () => {
+    const company = makeCompany({ active: true });
+    const originalExpiresAt = company.planExpiresAt;
+    companySubscriptionRepository.findActiveByCompanyId.mockResolvedValue(
+      makeCompanySubscription({ status: 'active', company }),
+    );
+    stripeService.cancelSubscriptionAtPeriodEnd.mockResolvedValue({
+      status: 'active',
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: true,
+    });
+
+    await sut.execute();
+
+    expect(company.planExpiresAt).toBe(originalExpiresAt);
+    expect(companyRepository.update).not.toHaveBeenCalled();
   });
 });

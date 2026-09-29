@@ -77,6 +77,23 @@ export class Company extends BaseEntity<CompanyProps> {
     });
   }
 
+  // Folga depois do fim do período pago de uma assinatura recorrente: o
+  // Stripe só cobra a renovação ~1h depois do fim do período (e pode tentar
+  // de novo se o cartão recusar). Sem ela, a empresa ficaria bloqueada nesse
+  // intervalo até o webhook 'invoice.paid' chegar.
+  static readonly SUBSCRIPTION_RENEWAL_GRACE_DAYS = 2;
+
+  // Até quando a empresa pode usar o sistema com uma assinatura que ainda vai
+  // renovar sozinha: fim do período pago + a folga da renovação.
+  static subscriptionAccessUntil(periodEnd: Date): Date {
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+
+    return new Date(
+      periodEnd.getTime() +
+        Company.SUBSCRIPTION_RENEWAL_GRACE_DAYS * oneDayInMs,
+    );
+  }
+
   private static calculatePlanExpiresAt(startedAt: Date, plan: Plan): Date {
     const oneDayInMs = 24 * 60 * 60 * 1000;
 
@@ -105,6 +122,26 @@ export class Company extends BaseEntity<CompanyProps> {
     this.planStartedAt = now;
     this.planExpiresAt = Company.calculatePlanExpiresAt(now, plan);
     this.active = true;
+    this.updatedBy = updatedBy;
+    this.updateTimestamp();
+  }
+
+  // Cobrança de uma assinatura recorrente aprovada: a janela do plano segue o
+  // período que o Stripe acabou de cobrar (não "agora + duração"), então fica
+  // sempre alinhada com a próxima renovação.
+  renewSubscriptionPeriod(plan: Plan, periodEnd: Date, updatedBy: string): void {
+    this.plan = plan;
+    this.planStartedAt = new Date();
+    this.planExpiresAt = Company.subscriptionAccessUntil(periodEnd);
+    this.active = true;
+    this.updatedBy = updatedBy;
+    this.updateTimestamp();
+  }
+
+  // Ajusta só o fim do acesso — ex.: cancelamento (acaba no fim do período
+  // pago, sem a folga de renovação) ou reativação (volta a ter a folga).
+  setPlanExpiresAt(planExpiresAt: Date, updatedBy: string): void {
+    this.planExpiresAt = planExpiresAt;
     this.updatedBy = updatedBy;
     this.updateTimestamp();
   }

@@ -36,6 +36,14 @@ export class CompanySubscriptionSchema extends BaseSchema {
   })
   status: string;
 
+  @Column({
+    name: 'origin',
+    type: 'enum',
+    enum: ['signup', 'renewal'],
+    default: 'signup',
+  })
+  origin: string;
+
   @Column({ name: 'payer_email', type: 'varchar', nullable: false })
   payerEmail: string;
 

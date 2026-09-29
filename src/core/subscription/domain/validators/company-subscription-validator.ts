@@ -20,6 +20,9 @@ export class CompanySubscriptionRules {
   @IsIn(['pending', 'active', 'cancelled', 'rejected'])
   status: string;
 
+  @IsIn(['signup', 'renewal'])
+  origin: string;
+
   @IsEmail()
   @IsNotEmpty()
   payerEmail: string;

@@ -17,6 +17,9 @@ type Input = {
   paymentStatus: string;
   paymentStatusDetail?: string | null;
   amount: number;
+  // Fim do período que essa cobrança pagou (vem da fatura/assinatura do
+  // Stripe). Sem ele, cai no cálculo antigo "agora + duração do plano".
+  periodEnd?: Date | null;
 };
 
 type Output = void;
@@ -67,7 +70,11 @@ export class ConfirmSubscriptionPaymentUseCase
     await this.logPayment(companySubscription.id, input, isInitialCharge);
 
     if (input.approved) {
-      await this.handleApproved(companySubscription, isInitialCharge);
+      await this.handleApproved(
+        companySubscription,
+        isInitialCharge,
+        input.periodEnd ?? null,
+      );
       return;
     }
 
@@ -107,24 +114,36 @@ export class ConfirmSubscriptionPaymentUseCase
   private async handleApproved(
     companySubscription: CompanySubscription,
     isInitialCharge: boolean,
+    periodEnd: Date | null,
   ): Promise<void> {
     const company = companySubscription.company;
     const plan = companySubscription.plan;
 
-    company.renewPlan(plan, company.updatedBy);
+    // Com o fim do período em mãos, a janela do plano fica alinhada com a
+    // próxima cobrança do Stripe (mais a folga da renovação) — e reprocessar
+    // a mesma fatura (webhook + reconciliação) não estende o prazo de novo.
+    if (periodEnd) {
+      company.renewSubscriptionPeriod(plan, periodEnd, company.updatedBy);
+    } else {
+      company.renewPlan(plan, company.updatedBy);
+    }
     await this.companyRepository.update(company);
 
     if (isInitialCharge) {
       companySubscription.activate();
       await this.companySubscriptionRepository.update(companySubscription);
 
-      const admin = await this.userRepository.findByEmail(
-        companySubscription.payerEmail,
-      );
+      // Só no cadastro o e-mail do admin ainda não foi verificado (o login
+      // fica travado até a 1ª cobrança ser aprovada).
+      if (companySubscription.origin === 'signup') {
+        const admin = await this.userRepository.findByEmail(
+          companySubscription.payerEmail,
+        );
 
-      if (admin) {
-        admin.verifyEmail();
-        await this.userRepository.update(admin);
+        if (admin) {
+          admin.verifyEmail();
+          await this.userRepository.update(admin);
+        }
       }
 
       await this.mailService
@@ -151,6 +170,11 @@ export class ConfirmSubscriptionPaymentUseCase
   ): Promise<void> {
     companySubscription.reject();
     await this.companySubscriptionRepository.update(companySubscription);
+
+    // Assinatura feita de dentro do sistema: a empresa já existia e segue
+    // como estava (plano gratuito ou vencido) — o usuário vê a recusa na tela
+    // e pode tentar de novo com outro cartão.
+    if (companySubscription.origin === 'renewal') return;
 
     const company = companySubscription.company;
     const admin = await this.userRepository.findByEmail(

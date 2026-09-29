@@ -47,6 +47,17 @@ export const makeCompany = (overrides: Record<string, unknown> = {}): Company =>
       this.active = true;
       this.updatedBy = updatedBy;
     },
+    renewSubscriptionPeriod(plan: Plan, periodEnd: Date, updatedBy: string) {
+      this.plan = plan;
+      this.planStartedAt = new Date();
+      this.planExpiresAt = Company.subscriptionAccessUntil(periodEnd);
+      this.active = true;
+      this.updatedBy = updatedBy;
+    },
+    setPlanExpiresAt(planExpiresAt: Date, updatedBy: string) {
+      this.planExpiresAt = planExpiresAt;
+      this.updatedBy = updatedBy;
+    },
     setActive(active: boolean, updatedBy: string) {
       this.active = active;
       this.updatedBy = updatedBy;
@@ -83,6 +94,7 @@ export const makeCompanySubscription = (
     stripeSubscriptionId: 'sub_123',
     stripeCustomerId: 'cus_123',
     status: 'pending' as CompanySubscription['status'],
+    origin: 'signup' as CompanySubscription['origin'],
     payerEmail: 'admin@padaria.com',
     cardLastFourDigits: '4242',
     cardBrand: 'visa',
@@ -95,6 +107,9 @@ export const makeCompanySubscription = (
     },
     cancel() {
       this.status = 'cancelled';
+    },
+    resume() {
+      this.status = 'active';
     },
     ...overrides,
   };

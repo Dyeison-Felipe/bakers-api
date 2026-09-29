@@ -16,4 +16,5 @@ export class CompanyLoginPresenter {
   readonly fantasyName: string;
   readonly socialReazon: string;
   readonly plan: CompanyLoginPlanPresenter;
+  readonly planExpired: boolean;
 }

@@ -142,6 +142,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
     // (ConfirmSubscriptionPaymentUseCase) — não confiamos no retorno
     // síncrono desta chamada pra ativar a empresa.
     let stripeSubscriptionId: string | null = null;
+    let stripeInvoiceId: string | null = null;
     let stripeCustomerId: string | null = null;
     let cardLastFourDigits: string | null = null;
     let cardBrand: string | null = null;
@@ -170,6 +171,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       });
 
       stripeSubscriptionId = subscription.subscriptionId;
+      stripeInvoiceId = subscription.latestInvoiceId;
     }
 
     const company = Company.create({
@@ -216,6 +218,15 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       });
 
       await this.companySubscriptionRepository.save(companySubscription);
+
+      // Só cobra depois de a assinatura existir aqui — o resultado chega pelo
+      // webhook (ConfirmSubscriptionPaymentUseCase).
+      if (stripeInvoiceId) {
+        await this.stripeService.confirmInvoicePayment(
+          stripeInvoiceId,
+          input.stripePaymentMethodId as string,
+        );
+      }
     }
 
     return this.output(savedCompany, requiresPayment);

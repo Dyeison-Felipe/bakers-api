@@ -32,7 +32,11 @@ describe('CreateCompanyUseCase', () => {
   let stripeService: jest.Mocked<
     Pick<
       StripeService,
-      'createCustomer' | 'attachPaymentMethod' | 'retrievePaymentMethodCardDetails' | 'createSubscription'
+      | 'createCustomer'
+      | 'attachPaymentMethod'
+      | 'retrievePaymentMethodCardDetails'
+      | 'createSubscription'
+      | 'confirmInvoicePayment'
     >
   >;
   let companySubscriptionRepository: jest.Mocked<Pick<CompanySubscriptionRepository, 'save'>>;
@@ -105,7 +109,10 @@ describe('CreateCompanyUseCase', () => {
       retrievePaymentMethodCardDetails: jest
         .fn()
         .mockResolvedValue({ brand: 'visa', last4: '4242' }),
-      createSubscription: jest.fn().mockResolvedValue({ subscriptionId: 'sub_123' }),
+      createSubscription: jest
+        .fn()
+        .mockResolvedValue({ subscriptionId: 'sub_123', latestInvoiceId: 'in_123' }),
+      confirmInvoicePayment: jest.fn().mockResolvedValue(undefined),
     };
     companySubscriptionRepository = {
       save: jest.fn().mockImplementation((s) => Promise.resolve(s)),
@@ -278,6 +285,24 @@ describe('CreateCompanyUseCase', () => {
       expect(saved.payerEmail).toBe('admin@padaria.com');
       expect(saved.cardLastFourDigits).toBe('4242');
       expect(saved.cardBrand).toBe('visa');
+      expect(saved.origin).toBe('signup');
+    });
+
+    it('should only charge the first invoice after the subscription is saved', async () => {
+      const calls: string[] = [];
+      companySubscriptionRepository.save.mockImplementation((s) => {
+        calls.push('save');
+        return Promise.resolve(s);
+      });
+      stripeService.confirmInvoicePayment.mockImplementation(() => {
+        calls.push('confirm');
+        return Promise.resolve();
+      });
+
+      await sut.execute(paidInput);
+
+      expect(stripeService.confirmInvoicePayment).toHaveBeenCalledWith('in_123', 'pm_123');
+      expect(calls).toEqual(['save', 'confirm']);
     });
 
     it('should not create anything when Stripe rejects the request', async () => {

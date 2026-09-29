@@ -33,7 +33,6 @@ import { StripeService } from '@/shared/application/stripe/stripe.service';
 import { CompanySubscriptionRepository } from '@/core/subscription/domain/repositories/company-subscription.repository';
 import { SubscriptionPersistenceModule } from '@/core/subscription/infra/subscription-persistence.module';
 import { CreateSetupIntentUseCase } from '../application/usecase/create-setup-intent.usecase';
-import { CancelSubscriptionUseCase } from '@/core/subscription/application/usecase/cancel-subscription.usecase';
 
 @Module({
   imports: [
@@ -108,25 +107,6 @@ import { CancelSubscriptionUseCase } from '@/core/subscription/application/useca
         return new CreateSetupIntentUseCase(planRepository, stripeService);
       },
       inject: [PROVIDERS.PLAN_REPOSITORY, PROVIDERS.STRIPE_SERVICE],
-    },
-    {
-      provide: CancelSubscriptionUseCase,
-      useFactory: (
-        companySubscriptionRepository: CompanySubscriptionRepository,
-        stripeService: StripeService,
-        loggedUserService: LoggedUserService,
-      ) => {
-        return new CancelSubscriptionUseCase(
-          companySubscriptionRepository,
-          stripeService,
-          loggedUserService,
-        );
-      },
-      inject: [
-        PROVIDERS.COMPANY_SUBSCRIPTION_REPOSITORY,
-        PROVIDERS.STRIPE_SERVICE,
-        PROVIDERS.LOGGED_USER_SERVICE,
-      ],
     },
     {
       provide: FindCompanyUseCase,

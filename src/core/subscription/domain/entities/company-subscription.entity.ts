@@ -11,12 +11,18 @@ export type CompanySubscriptionStatus =
   | 'cancelled'
   | 'rejected';
 
+// De onde a assinatura veio: o cadastro da empresa ou uma nova assinatura
+// feita de dentro do sistema (plano vencido ou troca do plano gratuito por
+// um pago). Muda o que acontece se a 1ª cobrança for recusada.
+export type CompanySubscriptionOrigin = 'signup' | 'renewal';
+
 export type CompanySubscriptionProps = {
   company: Company;
   plan: Plan;
   stripeSubscriptionId: string;
   stripeCustomerId: string;
   status: CompanySubscriptionStatus;
+  origin: CompanySubscriptionOrigin;
   payerEmail: string;
   cardLastFourDigits?: string | null;
   cardBrand?: string | null;
@@ -27,6 +33,7 @@ type CreateCompanySubscriptionProps = {
   plan: Plan;
   stripeSubscriptionId: string;
   stripeCustomerId: string;
+  origin?: CompanySubscriptionOrigin;
   payerEmail: string;
   cardLastFourDigits?: string | null;
   cardBrand?: string | null;
@@ -44,6 +51,7 @@ export class CompanySubscription extends BaseEntity<CompanySubscriptionProps> {
       stripeSubscriptionId: props.stripeSubscriptionId,
       stripeCustomerId: props.stripeCustomerId,
       status: 'pending',
+      origin: props.origin ?? 'signup',
       payerEmail: props.payerEmail,
       cardLastFourDigits: props.cardLastFourDigits ?? null,
       cardBrand: props.cardBrand ?? null,
@@ -67,6 +75,13 @@ export class CompanySubscription extends BaseEntity<CompanySubscriptionProps> {
   // só impede a próxima renovação de ser tentada.
   cancel(): void {
     this.status = 'cancelled';
+    this.updateTimestamp();
+  }
+
+  // Desfaz o cancelamento enquanto o período pago ainda não acabou — a
+  // cobrança recorrente volta a acontecer normalmente.
+  resume(): void {
+    this.status = 'active';
     this.updateTimestamp();
   }
 

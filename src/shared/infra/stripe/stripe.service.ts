@@ -10,7 +10,7 @@ import {
   CreateSubscriptionInput,
   CreateSubscriptionOutput,
   StripeService,
-  StripeSubscriptionStatus,
+  SubscriptionSnapshot,
 } from '@/shared/application/stripe/stripe.service';
 
 @Injectable()
@@ -82,24 +82,20 @@ export class StripeServiceImpl implements StripeService {
     });
 
     // 'default_incomplete' só cria a fatura e o PaymentIntent associado —
-    // NÃO tenta cobrar sozinho. Confirmamos aqui mesmo, de forma síncrona
-    // (o usuário está na tela nesse instante, dentro do próprio POST de
-    // cadastro). Se for recusada, não relançamos o erro: o Stripe já
-    // registra a tentativa e
-    // dispara 'invoice.payment_failed' pro webhook, que é quem decide (por
-    // design) se a assinatura é aprovada ou rejeitada — nunca o retorno
-    // síncrono desta chamada.
+    // NÃO tenta cobrar sozinho. Quem chama confirma em seguida
+    // (confirmInvoicePayment), depois de persistir a assinatura.
     const invoice = subscription.latest_invoice as Stripe.Invoice | string | null;
-    const invoiceId = typeof invoice === 'string' ? invoice : invoice?.id;
+    const invoiceId = typeof invoice === 'string' ? invoice : (invoice?.id ?? null);
 
-    if (invoiceId) {
-      await this.confirmInvoicePayment(invoiceId, input.paymentMethodId);
-    }
-
-    return { subscriptionId: subscription.id };
+    return { subscriptionId: subscription.id, latestInvoiceId: invoiceId };
   }
 
-  private async confirmInvoicePayment(
+  // Confirma a 1ª cobrança de forma síncrona (o usuário está na tela nesse
+  // instante). Se for recusada, não relançamos o erro: o Stripe já registra a
+  // tentativa e dispara 'invoice.payment_failed' pro webhook, que é quem
+  // decide (por design) se a assinatura é aprovada ou rejeitada — nunca o
+  // retorno síncrono desta chamada.
+  async confirmInvoicePayment(
     invoiceId: string,
     paymentMethodId: string,
   ): Promise<void> {
@@ -142,18 +138,40 @@ export class StripeServiceImpl implements StripeService {
     }
   }
 
-  async getSubscription(
-    subscriptionId: string,
-  ): Promise<{ status: StripeSubscriptionStatus }> {
+  async getSubscription(subscriptionId: string): Promise<SubscriptionSnapshot> {
     const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
 
-    return { status: subscription.status };
+    return this.toSnapshot(subscription);
   }
 
-  async cancelSubscriptionAtPeriodEnd(subscriptionId: string): Promise<void> {
-    await this.stripe.subscriptions.update(subscriptionId, {
+  async cancelSubscriptionAtPeriodEnd(
+    subscriptionId: string,
+  ): Promise<SubscriptionSnapshot> {
+    const subscription = await this.stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
     });
+
+    return this.toSnapshot(subscription);
+  }
+
+  async resumeSubscription(subscriptionId: string): Promise<SubscriptionSnapshot> {
+    const subscription = await this.stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: false,
+    });
+
+    return this.toSnapshot(subscription);
+  }
+
+  // Na API atual do Stripe o período fica em cada item da assinatura (não
+  // mais na assinatura em si); os planos daqui têm sempre um único item.
+  private toSnapshot(subscription: Stripe.Subscription): SubscriptionSnapshot {
+    const periodEnd = subscription.items.data[0]?.current_period_end;
+
+    return {
+      status: subscription.status,
+      currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    };
   }
 
   constructWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {

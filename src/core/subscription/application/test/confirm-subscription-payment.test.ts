@@ -105,6 +105,43 @@ describe('ConfirmSubscriptionPaymentUseCase', () => {
       expect(companySubscriptionRepository.update).toHaveBeenCalledWith(subscription);
     });
 
+    it('should align the plan window with the paid period plus the renewal grace', async () => {
+      const company = makeCompany({ active: false });
+      const subscription = makeCompanySubscription({ status: 'pending', company });
+      companySubscriptionRepository.findByStripeSubscriptionId.mockResolvedValue(subscription);
+      const periodEnd = new Date('2026-10-28T12:00:00.000Z');
+
+      await sut.execute({ ...baseInput, periodEnd });
+
+      expect(company.planExpiresAt).toEqual(new Date('2026-10-30T12:00:00.000Z'));
+      expect(company.active).toBe(true);
+    });
+
+    it('should not extend the window again when the same period is processed twice', async () => {
+      const company = makeCompany({ active: true });
+      const subscription = makeCompanySubscription({ status: 'active', company });
+      companySubscriptionRepository.findByStripeSubscriptionId.mockResolvedValue(subscription);
+      const periodEnd = new Date('2026-10-28T12:00:00.000Z');
+
+      await sut.execute({ ...baseInput, periodEnd });
+      await sut.execute({ ...baseInput, periodEnd });
+
+      expect(company.planExpiresAt).toEqual(new Date('2026-10-30T12:00:00.000Z'));
+    });
+
+    it('should not touch the admin email verification on a subscription made from inside the system', async () => {
+      const subscription = makeCompanySubscription({ status: 'pending', origin: 'renewal' });
+      companySubscriptionRepository.findByStripeSubscriptionId.mockResolvedValue(subscription);
+
+      await sut.execute(baseInput);
+
+      expect(subscription.status).toBe('active');
+      expect(userRepository.findByEmail).not.toHaveBeenCalled();
+      expect(mailService.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ template: 'subscription-confirmed' }),
+      );
+    });
+
     it('should verify the admin user email and send the confirmation mail', async () => {
       const user = makeUser({ emailVerified: false });
       userRepository.findByEmail.mockResolvedValue(user);
@@ -146,6 +183,18 @@ describe('ConfirmSubscriptionPaymentUseCase', () => {
       expect(subscription.status).toBe('rejected');
       expect(companyRepository.delete).toHaveBeenCalledWith('company-1');
       expect(userRepository.delete).toHaveBeenCalledWith('user-1');
+    });
+
+    it('should keep the company when the first charge of a subscription made from inside the system is rejected', async () => {
+      const subscription = makeCompanySubscription({ status: 'pending', origin: 'renewal' });
+      companySubscriptionRepository.findByStripeSubscriptionId.mockResolvedValue(subscription);
+
+      await sut.execute({ ...baseInput, approved: false });
+
+      expect(subscription.status).toBe('rejected');
+      expect(companySubscriptionRepository.update).toHaveBeenCalledWith(subscription);
+      expect(companyRepository.delete).not.toHaveBeenCalled();
+      expect(userRepository.delete).not.toHaveBeenCalled();
     });
 
     it('should do nothing extra on a renewal rejection (Stripe retries on its own)', async () => {

@@ -9,6 +9,8 @@ export const SUPER_ADMIN_ONLY_KEY = 'SUPER_ADMIN_ONLY';
 
 export const ALLOW_SUPER_ADMIN_KEY = 'ALLOW_SUPER_ADMIN';
 
+export const ALLOW_EXPIRED_PLAN_KEY = 'ALLOW_EXPIRED_PLAN';
+
 export const Permission = (...permissions: PermissionRef[]) =>
   SetMetadata(PERMISSIONS_KEY, permissions);
 
@@ -26,3 +28,8 @@ export const SuperAdminOnly = () => SetMetadata(SUPER_ADMIN_ONLY_KEY, true);
 // sentido tanto pro fluxo normal (Admin/usuário) quanto pro Super Admin, como
 // catálogos/listas de referência que não são sensíveis por empresa.
 export const AllowSuperAdmin = () => SetMetadata(ALLOW_SUPER_ADMIN_KEY, true);
+
+// Libera a rota mesmo com o plano da empresa vencido — só para o que o Admin
+// precisa pra assinar um plano de novo (ver a situação da assinatura, pagar,
+// recarregar a sessão). Permissões continuam valendo normalmente.
+export const AllowExpiredPlan = () => SetMetadata(ALLOW_EXPIRED_PLAN_KEY, true);

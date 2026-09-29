@@ -20,6 +20,7 @@ import { SessionInvalidatedError } from '@/shared/application/errors/session-inv
 import { CaslAbilityService } from '../service/casl-ability.service';
 import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission.helper';
 import {
+  ALLOW_EXPIRED_PLAN_KEY,
   ALLOW_SUPER_ADMIN_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
@@ -112,9 +113,17 @@ export class PermissionGuard implements CanActivate {
       // 3.6. Bloqueia empresas com o plano vencido (ou já desativadas pelo job
       // de expiração) — cobre tanto a checagem "em tempo real" (a data já
       // passou mas o cron diário ainda não rodou) quanto o estado já persistido.
+      // Exceção: rotas de renovação (@AllowExpiredPlan()), que o Admin usa
+      // justamente pra sair desse estado.
+      const allowsExpiredPlan = this.reflector.getAllAndOverride<boolean>(
+        ALLOW_EXPIRED_PLAN_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
       if (
-        !user.company.active ||
-        user.company.planExpiresAt.getTime() < Date.now()
+        !allowsExpiredPlan &&
+        (!user.company.active ||
+          user.company.planExpiresAt.getTime() < Date.now())
       ) {
         throw new PlanExpiredError();
       }

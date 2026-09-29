@@ -15,6 +15,7 @@ describe('CompanySubscriptionValidator unit tests', () => {
         'stripeSubscriptionId',
         'stripeCustomerId',
         'status',
+        'origin',
         'payerEmail',
       ].sort(),
     );
@@ -28,6 +29,7 @@ describe('CompanySubscriptionValidator unit tests', () => {
       stripeSubscriptionId: 'sub_123',
       stripeCustomerId: 'cus_123',
       status: 'active',
+      origin: 'signup',
       payerEmail: 'financeiro@padariasabor.com',
     };
 

@@ -7,5 +7,7 @@ export interface CompanySubscriptionRepository
     stripeSubscriptionId: string,
   ): Promise<CompanySubscription | null>;
   findActiveByCompanyId(companyId: string): Promise<CompanySubscription | null>;
+  // A assinatura mais recente da empresa, em qualquer status.
+  findLatestByCompanyId(companyId: string): Promise<CompanySubscription | null>;
   findAllPendingOlderThan(date: Date): Promise<CompanySubscription[]>;
 }

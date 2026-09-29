@@ -14,10 +14,14 @@ import { LoginOutput } from '@/shared/application/output/auth/login.output';
 import { SessionNotifierService } from '@/shared/application/session/session-notifier.service';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { Inject } from '@nestjs/common';
+import { toSessionOutput } from '../helpers/session-output.helper';
 
 type Input = LoginInput;
 
 type Output = LoginOutput;
+
+const PLAN_EXPIRED_EMPLOYEE_MESSAGE =
+  'O plano da sua empresa expirou. Peça ao administrador da empresa para assinar um novo plano.';
 
 export class LoginUseCase implements UseCase<Input, Output> {
   constructor(
@@ -45,22 +49,8 @@ export class LoginUseCase implements UseCase<Input, Output> {
       throw new UnauthorizedError(`Usuário ou senha invalido`);
     }
 
-    if (!user.emailVerified) {
-      throw new UnauthorizedError(
-        `Verifique seu e-mail antes de fazer login`,
-      );
-    }
-
-    // Super Admin não está vinculado a um plano de verdade — nunca bloquear
-    // por expiração.
-    if (
-      user.role !== 'Super Admin' &&
-      (!user.company.active ||
-        user.company.planExpiresAt.getTime() < Date.now())
-    ) {
-      throw new PlanExpiredError();
-    }
-
+    // Senha antes de qualquer outra regra: sem ela, as mensagens abaixo
+    // (e-mail não verificado, plano vencido) revelariam que a conta existe.
     const comparePassword = this.hashService.compareHash(
       password,
       user.password,
@@ -68,6 +58,21 @@ export class LoginUseCase implements UseCase<Input, Output> {
 
     if (!comparePassword) {
       throw new UnauthorizedError(`Usuário ou senha invalido`);
+    }
+
+    if (!user.emailVerified) {
+      throw new UnauthorizedError(
+        `Verifique seu e-mail antes de fazer login`,
+      );
+    }
+
+    const session = toSessionOutput(user);
+
+    // Plano vencido: só o Admin entra — e o guard só o deixa usar as rotas de
+    // assinar um plano (@AllowExpiredPlan()) até pagar. Os demais usuários
+    // continuam barrados aqui.
+    if (session.company.planExpired && user.role !== 'Admin') {
+      throw new PlanExpiredError(PLAN_EXPIRED_EMPLOYEE_MESSAGE);
     }
 
     // Uma conta só pode estar logada em um navegador por vez. Se já existe
@@ -107,38 +112,6 @@ export class LoginUseCase implements UseCase<Input, Output> {
       this.sessionNotifierService.invalidateOtherSessions(user.id, sessionId);
     }
 
-    const output: Output = {
-      user: {
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        permissions: (user?.permissions ?? []).map((permission) => ({
-          action: permission.action,
-          subject: permission.subject,
-        })),
-      },
-      company: {
-        id: user.company.id,
-        cnpj: user.company.cnpj,
-        stateRegistration: user.company.stateRegistration,
-        fantasyName: user.company.fantasyName,
-        socialReazon: user.company.socialReazon,
-        plan: {
-          id: user.company.plan?.id ?? '',
-          name: user.company.plan?.name ?? '',
-          permissions: (user.company.plan?.permissions ?? []).map(
-            (permission) => ({
-              action: permission.action,
-              subject: permission.subject,
-            }),
-          ),
-        },
-      },
-      token: token,
-    };
-
-    return output;
+    return { ...session, token };
   }
 }

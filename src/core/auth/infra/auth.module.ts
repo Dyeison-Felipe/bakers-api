@@ -21,6 +21,8 @@ import { LogoutUseCase } from '../application/usecase/logout.usecase';
 import { VerifyEmailUseCase } from '../application/usecase/verify-email.usecase';
 import { SessionGateway } from './gateway/session.gateway';
 import { SessionNotifierService } from '@/shared/application/session/session-notifier.service';
+import { FindSessionUseCase } from '../application/usecase/find-session.usecase';
+import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 
 @Global()
 @Module({
@@ -146,6 +148,16 @@ import { SessionNotifierService } from '@/shared/application/session/session-not
         PROVIDERS.JWT_SERVICE,
         PROVIDERS.ENV_CONFIG_SERVICE,
       ],
+    },
+    {
+      provide: FindSessionUseCase,
+      useFactory: (
+        userQuery: UserQuery,
+        loggedUserService: LoggedUserService,
+      ) => {
+        return new FindSessionUseCase(userQuery, loggedUserService);
+      },
+      inject: [PROVIDERS.USER_QUERY, PROVIDERS.LOGGED_USER_SERVICE],
     },
   ],
   exports: [PROVIDERS.CASL_ABILITY_SERVICE],

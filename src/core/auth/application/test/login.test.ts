@@ -1,6 +1,7 @@
 import { LoginUseCase } from '../usecase/login.usecase';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { SessionConflictError } from '@/shared/application/errors/session-conflict-error';
+import { PlanExpiredError } from '@/shared/application/errors/plan-expired-error';
 import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import { makeEnvConfig } from './fixtures';
 import type { UserQuery, UserByLogin } from '@/core/user/application/queries/user.query';
@@ -109,6 +110,62 @@ describe('LoginUseCase', () => {
     await expect(
       sut.execute({ email: 'x@x.com', password: 'wrong', setCookie }),
     ).rejects.toThrow(UnauthorizedError);
+  });
+
+  it('should not reveal the account state before checking the password', async () => {
+    userQuery.findUserByEmail.mockResolvedValue(
+      makeUserByLogin({ emailVerified: false }),
+    );
+    hashService.compareHash.mockReturnValue(false);
+
+    await expect(
+      sut.execute({ email: 'x@x.com', password: 'wrong', setCookie }),
+    ).rejects.toThrow('Usuário ou senha invalido');
+  });
+
+  describe('when the company plan has expired', () => {
+    const expiredCompany = {
+      id: 'company-1',
+      cnpj: '12345678000190',
+      stateRegistration: '123456',
+      fantasyName: 'Padaria X',
+      socialReazon: 'Padaria X LTDA',
+      active: false,
+      planExpiresAt: new Date(Date.now() - 1000),
+      plan: { id: 'plan-1', name: 'Básico', price: 0, duration: 30, permissions: [] },
+    };
+
+    it('should block employees with PlanExpiredError', async () => {
+      userQuery.findUserByEmail.mockResolvedValue(
+        makeUserByLogin({ company: expiredCompany }),
+      );
+
+      await expect(
+        sut.execute({ email: 'x@x.com', password: '123', setCookie }),
+      ).rejects.toThrow(PlanExpiredError);
+      expect(setCookie).not.toHaveBeenCalled();
+    });
+
+    it('should let the Admin in flagged as planExpired, so they can subscribe again', async () => {
+      userQuery.findUserByEmail.mockResolvedValue(
+        makeUserByLogin({ role: 'Admin', company: expiredCompany }),
+      );
+
+      const output = await sut.execute({ email: 'x@x.com', password: '123', setCookie });
+
+      expect(output.company.planExpired).toBe(true);
+      expect(setCookie).toHaveBeenCalled();
+    });
+
+    it('should never flag a Super Admin as expired', async () => {
+      userQuery.findUserByEmail.mockResolvedValue(
+        makeUserByLogin({ role: 'Super Admin', company: expiredCompany }),
+      );
+
+      const output = await sut.execute({ email: 'x@x.com', password: '123', setCookie });
+
+      expect(output.company.planExpired).toBe(false);
+    });
   });
 
   it('should set the auth cookie with the generated token on success', async () => {
