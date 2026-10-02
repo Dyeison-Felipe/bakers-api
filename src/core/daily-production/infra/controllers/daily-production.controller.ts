@@ -27,6 +27,7 @@ import { AddDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-
 import { AddDailyProductionItemsPresenter } from '@/shared/infra/presenter/daily-production/add-daily-production-items.presenter';
 import { RemoveDailyProductionItemPresenter } from '@/shared/infra/presenter/daily-production/remove-daily-production-item.presenter';
 import { MarkItemAsProducedPresenter } from '@/shared/infra/presenter/daily-production/mark-item-as-produced.presenter';
+import { MarkAllItemsAsProducedPresenter } from '@/shared/infra/presenter/daily-production/mark-all-items-as-produced.presenter';
 import { CreateDailyProductionDto } from '../dtos/create-daily-production.dto';
 import { AddDailyProductionItemDto } from '../dtos/add-daily-production-item.dto';
 import { AddDailyProductionItemsDto } from '../dtos/add-daily-production-items.dto';
@@ -36,6 +37,7 @@ import { AddDailyProductionItemUseCase } from '../../application/usecase/add-dai
 import { AddDailyProductionItemsUseCase } from '../../application/usecase/add-daily-production-items.usecase';
 import { RemoveDailyProductionItemUseCase } from '../../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../../application/usecase/mark-item-as-produced.usecase';
+import { MarkAllDailyProductionItemsAsProducedUseCase } from '../../application/usecase/mark-all-items-as-produced.usecase';
 import { UpdateDailyProductionItemUseCase } from '../../application/usecase/update-daily-production-item.usecase';
 import { CancelDailyProductionItemUseCase } from '../../application/usecase/cancel-daily-production-item.usecase';
 import { FindDailyProductionItemRequirementsUseCase } from '../../application/usecase/find-daily-production-item-requirements.usecase';
@@ -56,6 +58,7 @@ export class DailyProductionController {
     private readonly addDailyProductionItemsUseCase: AddDailyProductionItemsUseCase,
     private readonly removeDailyProductionItemUseCase: RemoveDailyProductionItemUseCase,
     private readonly markDailyProductionItemAsProducedUseCase: MarkDailyProductionItemAsProducedUseCase,
+    private readonly markAllDailyProductionItemsAsProducedUseCase: MarkAllDailyProductionItemsAsProducedUseCase,
     private readonly findDailyProductionByIdUseCase: FindDailyProductionByIdUseCase,
     private readonly findAllDailyProductionsUseCase: FindAllDailyProductionsUseCase,
     private readonly updateDailyProductionItemUseCase: UpdateDailyProductionItemUseCase,
@@ -144,6 +147,23 @@ export class DailyProductionController {
     return await this.addDailyProductionItemsUseCase.execute({
       dailyProductionId: id,
       items: dto.items,
+    });
+  }
+
+  @Patch(':id/produce-all')
+  @Permission(PermissionDailyProduction.DAILY_PRODUCTION_COMPLETE)
+  @ApiOperation({
+    summary: 'Marca todos os itens aguardando produção como produzidos',
+    description:
+      'Conclui de uma vez todos os itens PLANNED da produção diária, dando entrada no estoque de cada produto (e baixa nos insumos da receita) com a quantidade/peso planejado. Itens já produzidos ou cancelados não são alterados.',
+  })
+  @ApiParam({ name: 'id', description: 'Id da produção diária' })
+  @ApiOkResponse({ type: MarkAllItemsAsProducedPresenter })
+  async produceAllItems(
+    @Param('id') id: string,
+  ): Promise<MarkAllItemsAsProducedPresenter> {
+    return await this.markAllDailyProductionItemsAsProducedUseCase.execute({
+      dailyProductionId: id,
     });
   }
 

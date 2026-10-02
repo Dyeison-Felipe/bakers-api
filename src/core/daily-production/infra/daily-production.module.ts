@@ -17,6 +17,7 @@ import { AddDailyProductionItemUseCase } from '../application/usecase/add-daily-
 import { AddDailyProductionItemsUseCase } from '../application/usecase/add-daily-production-items.usecase';
 import { RemoveDailyProductionItemUseCase } from '../application/usecase/remove-daily-production-item.usecase';
 import { MarkDailyProductionItemAsProducedUseCase } from '../application/usecase/mark-item-as-produced.usecase';
+import { MarkAllDailyProductionItemsAsProducedUseCase } from '../application/usecase/mark-all-items-as-produced.usecase';
 import { UpdateDailyProductionItemUseCase } from '../application/usecase/update-daily-production-item.usecase';
 import { CancelDailyProductionItemUseCase } from '../application/usecase/cancel-daily-production-item.usecase';
 import { FindDailyProductionItemRequirementsUseCase } from '../application/usecase/find-daily-production-item-requirements.usecase';
@@ -132,6 +133,27 @@ import { FindAllDailyProductionsUseCase } from '../application/usecase/find-all-
         PROVIDERS.RECIPE_ITEM_REPOSITORY,
         PROVIDERS.LOGGED_USER_SERVICE,
         AdjustProductStockUseCase,
+      ],
+    },
+    {
+      provide: MarkAllDailyProductionItemsAsProducedUseCase,
+      useFactory: (
+        dailyProductionRepository: DailyProductionRepository,
+        dailyProductionItemRepository: DailyProductionItemRepository,
+        loggedUserService: LoggedUserService,
+        markDailyProductionItemAsProducedUseCase: MarkDailyProductionItemAsProducedUseCase,
+      ) =>
+        new MarkAllDailyProductionItemsAsProducedUseCase(
+          dailyProductionRepository,
+          dailyProductionItemRepository,
+          loggedUserService,
+          markDailyProductionItemAsProducedUseCase,
+        ),
+      inject: [
+        PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
+        PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
+        PROVIDERS.LOGGED_USER_SERVICE,
+        MarkDailyProductionItemAsProducedUseCase,
       ],
     },
     {
