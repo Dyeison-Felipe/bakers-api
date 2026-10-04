@@ -1,0 +1,393 @@
+{
+    "root_group": {
+        "checks": {},
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+                "setup": {
+                    "path": "::setup",
+                    "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                    "groups": {},
+                    "checks": {
+                            "setup: login ok": {
+                                "name": "setup: login ok",
+                                "path": "::setup::setup: login ok",
+                                "id": "bd8d02e1bc7f1ba1b4da4059c2dbe3be",
+                                "passes": 1,
+                                "fails": 0
+                            },
+                            "setup: categoria criado": {
+                                "name": "setup: categoria criado",
+                                "path": "::setup::setup: categoria criado",
+                                "id": "40b09de629c03d6d2505cacc59f60cbe",
+                                "passes": 1,
+                                "fails": 0
+                            },
+                            "setup: matéria-prima Farinha de trigo criado": {
+                                "id": "33208695890c08ff76ba8b0be17ecf65",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: matéria-prima Farinha de trigo criado",
+                                "path": "::setup::setup: matéria-prima Farinha de trigo criado"
+                            },
+                            "setup: matéria-prima Açúcar refinado criado": {
+                                "id": "1d9c59c814302f3c6f1043d74f568d34",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: matéria-prima Açúcar refinado criado",
+                                "path": "::setup::setup: matéria-prima Açúcar refinado criado"
+                            },
+                            "setup: matéria-prima Fermento biológico criado": {
+                                "fails": 0,
+                                "name": "setup: matéria-prima Fermento biológico criado",
+                                "path": "::setup::setup: matéria-prima Fermento biológico criado",
+                                "id": "3976933618c2774ae74de5ebe69f48a6",
+                                "passes": 1
+                            },
+                            "setup: matéria-prima Manteiga criado": {
+                                "name": "setup: matéria-prima Manteiga criado",
+                                "path": "::setup::setup: matéria-prima Manteiga criado",
+                                "id": "1581175cad853d78ac20550cde5171d5",
+                                "passes": 1,
+                                "fails": 0
+                            },
+                            "setup: matéria-prima Ovo criado": {
+                                "id": "807c61dcd428758acbb9a674e4109d1d",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: matéria-prima Ovo criado",
+                                "path": "::setup::setup: matéria-prima Ovo criado"
+                            },
+                            "setup: matéria-prima Leite integral criado": {
+                                "id": "fb5deb583ff8227eba370a1ad4568cc2",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: matéria-prima Leite integral criado",
+                                "path": "::setup::setup: matéria-prima Leite integral criado"
+                            },
+                            "setup: receita massa pão francês criado": {
+                                "name": "setup: receita massa pão francês criado",
+                                "path": "::setup::setup: receita massa pão francês criado",
+                                "id": "a76de1accc50affe0e0173004b962479",
+                                "passes": 1,
+                                "fails": 0
+                            },
+                            "setup: receita massa pão doce criado": {
+                                "name": "setup: receita massa pão doce criado",
+                                "path": "::setup::setup: receita massa pão doce criado",
+                                "id": "2b2048a2c65aaaf20b4fd834a3f48c61",
+                                "passes": 1,
+                                "fails": 0
+                            },
+                            "setup: receita massa bolo criado": {
+                                "path": "::setup::setup: receita massa bolo criado",
+                                "id": "e2ec48ef743dcb94678c10221cfcd695",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: receita massa bolo criado"
+                            },
+                            "setup: produto pão francês (kg) criado": {
+                                "path": "::setup::setup: produto pão francês (kg) criado",
+                                "id": "41089345c3c2c69a399fff1f8caaa0e3",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: produto pão francês (kg) criado"
+                            },
+                            "setup: produto pão doce (un) criado": {
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: produto pão doce (un) criado",
+                                "path": "::setup::setup: produto pão doce (un) criado",
+                                "id": "f73542351f20ea57fc5804353b15d2a3"
+                            },
+                            "setup: produto bolo (un) criado": {
+                                "id": "a7cb3a6161d617273fa339fb925670c5",
+                                "passes": 1,
+                                "fails": 0,
+                                "name": "setup: produto bolo (un) criado",
+                                "path": "::setup::setup: produto bolo (un) criado"
+                            },
+                            "setup: produto revenda refrigerante criado": {
+                                "name": "setup: produto revenda refrigerante criado",
+                                "path": "::setup::setup: produto revenda refrigerante criado",
+                                "id": "048615e6dad0de61dad6eca967d28a6a",
+                                "passes": 1,
+                                "fails": 0
+                            }
+                        },
+                    "name": "setup"
+                },
+                "1. producao diaria": {
+                    "name": "1. producao diaria",
+                    "path": "::1. producao diaria",
+                    "id": "8f1c7e4c4ae0911dc182ba747cb22282",
+                    "groups": {},
+                    "checks": {
+                            "producao: criada": {
+                                "fails": 0,
+                                "name": "producao: criada",
+                                "path": "::1. producao diaria::producao: criada",
+                                "id": "25d0a698b57a00f5bde4b60f7a240255",
+                                "passes": 194
+                            },
+                            "producao: confirmada (produce-all)": {
+                                "name": "producao: confirmada (produce-all)",
+                                "path": "::1. producao diaria::producao: confirmada (produce-all)",
+                                "id": "9333dbb09da5b8fac2d3548b340109c5",
+                                "passes": 194,
+                                "fails": 0
+                            }
+                        }
+                },
+                "2. vendas (pdv)": {
+                    "name": "2. vendas (pdv)",
+                    "path": "::2. vendas (pdv)",
+                    "id": "396ca7a282128b4f565d9d7970e11630",
+                    "groups": {},
+                    "checks": {
+                            "venda: finalizada": {
+                                "fails": 0,
+                                "name": "venda: finalizada",
+                                "path": "::2. vendas (pdv)::venda: finalizada",
+                                "id": "922a6c10612f0324bd567908bceba8c6",
+                                "passes": 577
+                            }
+                        }
+                },
+                "3. desperdicio": {
+                    "name": "3. desperdicio",
+                    "path": "::3. desperdicio",
+                    "id": "541265b2b7d065c3e4d03a266bafea7e",
+                    "groups": {},
+                    "checks": {
+                            "desperdicio: registrado": {
+                                "name": "desperdicio: registrado",
+                                "path": "::3. desperdicio::desperdicio: registrado",
+                                "id": "24fe58c67a4fe8684073eb96477c4052",
+                                "passes": 194,
+                                "fails": 0
+                            }
+                        }
+                },
+                "4. despesa": {
+                    "checks": {
+                        "despesa: lançada": {
+                            "name": "despesa: lançada",
+                            "path": "::4. despesa::despesa: lançada",
+                            "id": "73591b9ddb980f77f472da61e58c52a9",
+                            "passes": 194,
+                            "fails": 0
+                        }
+                    },
+                    "name": "4. despesa",
+                    "path": "::4. despesa",
+                    "id": "752a97d7c3326433599cda8bc0b0a95e",
+                    "groups": {}
+                },
+                "5. consultas e relatorios": {
+                    "path": "::5. consultas e relatorios",
+                    "id": "246357537e7ad8758e5e47c40ce3bd53",
+                    "groups": {},
+                    "checks": {
+                            "consulta: GET /v1/dashboard/summary 200": {
+                                "id": "4614ecf3587be5d281b1d31fa4fe4b48",
+                                "passes": 194,
+                                "fails": 0,
+                                "name": "consulta: GET /v1/dashboard/summary 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/dashboard/summary 200"
+                            },
+                            "consulta: GET /v1/product 200": {
+                                "name": "consulta: GET /v1/product 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/product 200",
+                                "id": "9030554fdb6d1ef1fd0483151acea05b",
+                                "passes": 194,
+                                "fails": 0
+                            },
+                            "consulta: GET /v1/sale 200": {
+                                "name": "consulta: GET /v1/sale 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/sale 200",
+                                "id": "cdb12ea03f24d12224de9e2039228939",
+                                "passes": 194,
+                                "fails": 0
+                            },
+                            "consulta: GET /v1/report/waste 200": {
+                                "name": "consulta: GET /v1/report/waste 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/report/waste 200",
+                                "id": "3cbd56c59b4a7bdd44093bfae713ab2f",
+                                "passes": 194,
+                                "fails": 0
+                            },
+                            "consulta: GET /v1/report/production 200": {
+                                "name": "consulta: GET /v1/report/production 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/report/production 200",
+                                "id": "d80bf8fa64d0d86616ea8f2607e28fd9",
+                                "passes": 194,
+                                "fails": 0
+                            },
+                            "consulta: GET /v1/report/cash-register 200": {
+                                "fails": 0,
+                                "name": "consulta: GET /v1/report/cash-register 200",
+                                "path": "::5. consultas e relatorios::consulta: GET /v1/report/cash-register 200",
+                                "id": "105db121873d086d957544650d9abc69",
+                                "passes": 194
+                            }
+                        },
+                    "name": "5. consultas e relatorios"
+                },
+                "teardown": {
+                    "name": "teardown",
+                    "path": "::teardown",
+                    "id": "a8a9942382e8ffe2e56ef29e664b8229",
+                    "groups": {},
+                    "checks": {
+                            "teardown: caixa fechado": {
+                                "name": "teardown: caixa fechado",
+                                "path": "::teardown::teardown: caixa fechado",
+                                "id": "f0b834c416ecc08f086f51234beaf178",
+                                "passes": 1,
+                                "fails": 0
+                            }
+                        }
+                }
+            }
+    },
+    "metrics": {
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 1062.656809589581,
+            "min": 26.5854,
+            "med": 338.92584999999997,
+            "max": 38493.804,
+            "p(90)": 2220.9124,
+            "p(95)": 3200.3760749999988
+        },
+        "http_req_sending": {
+            "med": 0,
+            "max": 1.5059,
+            "p(90)": 0.4238100000000001,
+            "p(95)": 0.51718,
+            "avg": 0.13373318863456987,
+            "min": 0
+        },
+        "vus": {
+            "max": 20,
+            "value": 1,
+            "min": 0
+        },
+        "data_sent": {
+            "count": 530264,
+            "rate": 1504.6052594551902
+        },
+        "group_duration": {
+            "avg": 3262.1722130927847,
+            "min": 27.8562,
+            "med": 1543.1635999999999,
+            "max": 40643.7367,
+            "p(90)": 8311.688400000001,
+            "p(95)": 11421.211964999991
+        },
+        "checks": {
+            "passes": 2533,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.95": false
+            },
+            "value": 1
+        },
+        "http_req_duration": {
+            "med": 338.92584999999997,
+            "max": 38493.804,
+            "p(90)": 2220.9124,
+            "p(95)": 3200.3760749999988,
+            "avg": 1062.656809589581,
+            "min": 26.5854,
+            "thresholds": {
+                "p(95)<2000": true
+            }
+        },
+        "iteration_duration": {
+            "avg": 20312.598123711337,
+            "min": 7159.5657,
+            "med": 18270.26165,
+            "max": 64820.6482,
+            "p(90)": 36607.08649,
+            "p(95)": 39859.665115
+        },
+        "http_req_waiting": {
+            "med": 336.64075,
+            "max": 38493.804,
+            "p(90)": 2219.91793,
+            "p(95)": 3199.4476899999986,
+            "avg": 1061.807705051301,
+            "min": 25.6341
+        },
+        "iterations": {
+            "rate": 0.5504681070830886,
+            "count": 194
+        },
+        "http_req_blocked": {
+            "avg": 0.37267853196527223,
+            "min": 0,
+            "med": 0,
+            "max": 152.5586,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_connecting": {
+            "avg": 0.10534546172059982,
+            "min": 0,
+            "med": 0,
+            "max": 12.9727,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "data_received": {
+            "count": 31578829,
+            "rate": 89603.80527593064
+        },
+        "http_reqs": {
+            "count": 2534,
+            "rate": 7.190134965714158
+        },
+        "http_req_receiving": {
+            "avg": 0.7153713496448302,
+            "min": 0,
+            "med": 0,
+            "max": 57.8772,
+            "p(90)": 1.8466800000000003,
+            "p(95)": 4.536234999999995
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 2534,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0.22988831886345695,
+            "min": 0,
+            "med": 0,
+            "max": 76.1337,
+            "p(90)": 0,
+            "p(95)": 0
+        }
+    },
+    "setup_data": {
+        "authCookie": "authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzN2Y0NjNkNy05MjUzLTQ4NTQtODVlYS1hNGFiMTBlODIzNDIiLCJ1c2VybmFtZSI6IlRlc3RlIGNhcmdhIiwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS5jb20iLCJzZXNzaW9uSWQiOiIwMTRlMTc4OC0yY2NmLTQxNWUtOWI1NC1hNTM2YTgzMDgzMzUiLCJpYXQiOjE3OTA5NzkwNTIsImV4cCI6MTc5MTA2NTQ1Mn0.XwRLFbdmpQDD9ZSfZz7pVb632zzhj2OEu3XtcfXTCrg",
+        "cashRegisterId": "a0cd52a6-9158-4134-8d55-720ff146b1b2",
+        "products": {
+            "bolo": "d19b7082-efb9-4df7-a4f7-7fbe07837b3f",
+            "paoDoce": "2acc3e18-f475-4cc6-8a49-90fd3e823060",
+            "paoFrances": "2e937731-7189-4bc6-b18a-085d58f1a752",
+            "refrigerante": "f8a3110f-a1a6-4db7-bea1-8c050ccb2814"
+        },
+        "run": "202610022210"
+    }
+}

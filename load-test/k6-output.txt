@@ -1,0 +1,73 @@
+﻿
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.95' rate=100.00%
+
+    http_req_duration
+    ✗ 'p(95)<2000' p(95)=3.2s
+
+    http_req_failed
+    ✓ 'rate<0.05' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 2533    7.187298/s
+    checks_succeeded...: 100.00% 2533 out of 2533
+    checks_failed......: 0.00%   0 out of 2533
+
+    ✓ setup: login ok
+    ✓ setup: categoria criado
+    ✓ setup: matéria-prima Farinha de trigo criado
+    ✓ setup: matéria-prima Açúcar refinado criado
+    ✓ setup: matéria-prima Fermento biológico criado
+    ✓ setup: matéria-prima Manteiga criado
+    ✓ setup: matéria-prima Ovo criado
+    ✓ setup: matéria-prima Leite integral criado
+    ✓ setup: receita massa pão francês criado
+    ✓ setup: receita massa pão doce criado
+    ✓ setup: receita massa bolo criado
+    ✓ setup: produto pão francês (kg) criado
+    ✓ setup: produto pão doce (un) criado
+    ✓ setup: produto bolo (un) criado
+    ✓ setup: produto revenda refrigerante criado
+    ✓ producao: criada
+    ✓ producao: confirmada (produce-all)
+    ✓ venda: finalizada
+    ✓ desperdicio: registrado
+    ✓ despesa: lançada
+    ✓ consulta: GET /v1/dashboard/summary 200
+    ✓ consulta: GET /v1/product 200
+    ✓ consulta: GET /v1/sale 200
+    ✓ consulta: GET /v1/report/waste 200
+    ✓ consulta: GET /v1/report/production 200
+    ✓ consulta: GET /v1/report/cash-register 200
+    ✓ teardown: caixa fechado
+
+    HTTP
+    http_req_duration..............: avg=1.06s  min=26.58ms med=338.92ms max=38.49s p(90)=2.22s p(95)=3.2s  
+      { expected_response:true }...: avg=1.06s  min=26.58ms med=338.92ms max=38.49s p(90)=2.22s p(95)=3.2s  
+    http_req_failed................: 0.00%  0 out of 2534
+    http_reqs......................: 2534   7.190135/s
+
+    EXECUTION
+    iteration_duration.............: avg=20.31s min=7.15s   med=18.27s   max=1m4s   p(90)=36.6s p(95)=39.85s
+    iterations.....................: 194    0.550468/s
+    vus............................: 1      min=0         max=20
+    vus_max........................: 20     min=20        max=20
+
+    NETWORK
+    data_received..................: 32 MB  90 kB/s
+    data_sent......................: 530 kB 1.5 kB/s
+
+
+
+k6 : time="2026-10-02T19:16:44-03:00" level=error msg="thresholds on metrics 'http_req_duration' have been crossed"
+No linha:1 caractere:441
++ ... port.html'; k6 run --no-color -q --summary-export summary.json -e BAS ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (time="2026-10-0...e been crossed":String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
