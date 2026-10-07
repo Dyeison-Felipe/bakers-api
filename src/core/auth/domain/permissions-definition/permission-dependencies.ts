@@ -11,9 +11,10 @@ export type PermissionRef = { action: string; resource: string };
 const key = (ref: PermissionRef): string => `${ref.resource}.${ref.action}`;
 
 /**
- * Permissões que exigem outra(s) já concedida(s) no mesmo conjunto. Hoje
- * cobre só os relatórios (cada um depende da tela de origem dos dados que
- * mostra) — ex.: sem `stock_movement.waste_reader` (tela de Desperdício),
+ * Permissões que exigem outra(s) já concedida(s) no mesmo conjunto. Cobre
+ * os relatórios (cada um depende da tela de origem dos dados que mostra) e
+ * ações que vivem dentro de uma tela (ex.: movimentar estoque exige ver o
+ * Estoque) — ex.: sem `stock_movement.waste_reader` (tela de Desperdício),
  * não é possível conceder `report.waste_reader`, senão o usuário veria dados
  * de uma tela que não pode acessar.
  *
@@ -22,6 +23,10 @@ const key = (ref: PermissionRef): string => `${ref.resource}.${ref.action}`;
  * `validatePermissionDependencies`.
  */
 export const PERMISSION_DEPENDENCIES: Record<string, PermissionRef[]> = {
+  // Movimentar estoque é uma ação dentro da tela de Estoque.
+  [key(PermissionStockMovement.STOCK_MOVEMENT_ADJUST)]: [
+    PermissionStockMovement.STOCK_MOVEMENT_READER,
+  ],
   [key(PermissionReport.REPORT_WASTE_READER)]: [
     PermissionStockMovement.STOCK_MOVEMENT_WASTE_READER,
   ],

@@ -42,6 +42,7 @@ describe('validatePermissionDependencies', () => {
     [PermissionReport.REPORT_CPV_READER, PermissionSale.SALE_READER],
     [PermissionReport.REPORT_CONTRIBUTION_MARGIN_READER, PermissionSale.SALE_READER],
     [PermissionReport.REPORT_ABC_CURVE_READER, PermissionSale.SALE_READER],
+    [PermissionStockMovement.STOCK_MOVEMENT_ADJUST, PermissionStockMovement.STOCK_MOVEMENT_READER],
   ])('%o requires %o', (dependent, required) => {
     expect(() => validatePermissionDependencies([dependent])).toThrow();
     expect(() =>
@@ -50,8 +51,9 @@ describe('validatePermissionDependencies', () => {
   });
 
   it('should report every missing dependency, not just the first one', () => {
-    // reforça a garantia de que o mapa cobre exatamente as 6 dependências de
-    // relatório combinadas (nenhuma sobrando, nenhuma faltando)
+    // reforça a garantia de que o mapa cobre exatamente as dependências
+    // combinadas (relatórios + movimentar estoque; nenhuma sobrando, nenhuma
+    // faltando)
     expect(Object.keys(PERMISSION_DEPENDENCIES).sort()).toEqual(
       [
         'report.waste_reader',
@@ -61,6 +63,7 @@ describe('validatePermissionDependencies', () => {
         'report.cpv_reader',
         'report.contribution_margin_reader',
         'report.abc_curve_reader',
+        'stock_movement.adjust',
       ].sort(),
     );
   });

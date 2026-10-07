@@ -110,17 +110,42 @@ describe('MarkAllDailyProductionItemsAsProducedUseCase', () => {
     expect(output.itemIds).toEqual(['planned-1', 'planned-2']);
   });
 
-  it('should propagate the error when producing one of the items fails', async () => {
+  it('should keep producing the remaining items when one of them fails and report the failure', async () => {
     dailyProductionItemRepository.findAllByDailyProductionId.mockResolvedValue([
       makeItem({ id: 'planned-1' }),
       makeItem({ id: 'planned-2' }),
+      makeItem({ id: 'planned-3' }),
     ]);
     markDailyProductionItemAsProducedUseCase.execute
       .mockResolvedValueOnce({ id: 'planned-1' })
-      .mockRejectedValueOnce(new BadRequestError('Estoque insuficiente'));
+      .mockRejectedValueOnce(new BadRequestError('Estoque insuficiente'))
+      .mockResolvedValueOnce({ id: 'planned-3' });
 
-    await expect(
-      sut.execute({ dailyProductionId: 'daily-production-1' }),
-    ).rejects.toThrow(BadRequestError);
+    const output = await sut.execute({ dailyProductionId: 'daily-production-1' });
+
+    expect(markDailyProductionItemAsProducedUseCase.execute).toHaveBeenCalledTimes(3);
+    expect(output.itemIds).toEqual(['planned-1', 'planned-3']);
+    expect(output.failures).toEqual([
+      {
+        itemId: 'planned-2',
+        productName: expect.any(String),
+        reason: 'Estoque insuficiente',
+      },
+    ]);
+  });
+
+  it('should report a generic reason for unexpected (non-domain) errors', async () => {
+    dailyProductionItemRepository.findAllByDailyProductionId.mockResolvedValue([
+      makeItem({ id: 'planned-1' }),
+    ]);
+    markDailyProductionItemAsProducedUseCase.execute.mockRejectedValueOnce(
+      new Error('connection reset'),
+    );
+
+    const output = await sut.execute({ dailyProductionId: 'daily-production-1' });
+
+    expect(output.itemIds).toEqual([]);
+    expect(output.failures).toHaveLength(1);
+    expect(output.failures[0].reason).not.toContain('connection reset');
   });
 });

@@ -8,6 +8,11 @@ export const PermissionStockMovement = {
     action: 'write_off',
     resource: 'stock_movement',
   },
+  // Botão "Movimentar estoque" da tela de Estoque (entrada/baixa manual).
+  STOCK_MOVEMENT_ADJUST: {
+    action: 'adjust',
+    resource: 'stock_movement',
+  },
   // Separado de READER de propósito: tela de Desperdício é uma feature
   // própria (registrar/consultar perdas), independente de ver o Estoque
   // como um todo.

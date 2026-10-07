@@ -5,10 +5,13 @@ import { PermissionStockMovement } from '@/core/auth/domain/permissions-definiti
 import { RegisterWasteMovementPresenter } from '@/shared/infra/presenter/stock-movement/register-waste-movement.presenter';
 import { FindWasteMovementsPresenter } from '@/shared/infra/presenter/stock-movement/find-waste-movements.presenter';
 import { FindStockMovementsPresenter } from '@/shared/infra/presenter/stock-movement/find-stock-movements.presenter';
+import { RegisterManualStockMovementPresenter } from '@/shared/infra/presenter/stock-movement/register-manual-stock-movement.presenter';
 import { RegisterWasteMovementDto } from '../dtos/register-waste-movement.dto';
+import { RegisterManualStockMovementDto } from '../dtos/register-manual-stock-movement.dto';
 import { AdjustProductStockUseCase } from '../../application/usecase/adjust-product-stock.usecase';
 import { FindWasteMovementsUseCase } from '../../application/usecase/find-waste-movements.usecase';
 import { FindStockMovementsUseCase } from '../../application/usecase/find-stock-movements.usecase';
+import { RegisterManualStockMovementUseCase } from '../../application/usecase/register-manual-stock-movement.usecase';
 import {
   TypeStockMovement,
   TypeStockMovementReason,
@@ -22,6 +25,7 @@ export class StockMovementController {
     private readonly adjustProductStockUseCase: AdjustProductStockUseCase,
     private readonly findWasteMovementsUseCase: FindWasteMovementsUseCase,
     private readonly findStockMovementsUseCase: FindStockMovementsUseCase,
+    private readonly registerManualStockMovementUseCase: RegisterManualStockMovementUseCase,
   ) {}
 
   @Get()
@@ -48,6 +52,25 @@ export class StockMovementController {
       dateFrom: from,
       dateTo: to,
       reason,
+    });
+  }
+
+  @Post('manual')
+  @Permission(PermissionStockMovement.STOCK_MOVEMENT_ADJUST)
+  @ApiOperation({
+    summary: 'Registra uma entrada ou baixa manual de estoque',
+    description:
+      'Inclui ou dá baixa na quantidade informada no estoque do produto (botão "Movimentar estoque" da tela de Estoque). Só aceita produtos com controle de estoque ativado; baixa maior que o saldo atual é recusada.',
+  })
+  @ApiOkResponse({ type: RegisterManualStockMovementPresenter })
+  async registerManual(
+    @Body() dto: RegisterManualStockMovementDto,
+  ): Promise<RegisterManualStockMovementPresenter> {
+    return await this.registerManualStockMovementUseCase.execute({
+      productId: dto.productId,
+      type: dto.type,
+      quantity: dto.quantity,
+      reasonDescription: dto.reasonDescription,
     });
   }
 
