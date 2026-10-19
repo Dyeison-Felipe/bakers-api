@@ -19,8 +19,8 @@ export class FindProductPresenter {
   @ApiProperty({ description: 'Código de barras' })
   readonly barCode: string | null;
 
-  @ApiProperty({ description: 'NCM do produto' })
-  readonly ncm: string;
+  @ApiProperty({ description: 'NCM do produto', nullable: true })
+  readonly ncm: string | null;
 
   @ApiProperty({ description: 'Preço de custo' })
   readonly costPrice: number;

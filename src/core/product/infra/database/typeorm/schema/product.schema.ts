@@ -21,8 +21,8 @@ export class ProductSchema extends BaseSchema {
   @Column({ name: 'scale_reference', nullable: true, type: 'varchar' })
   scaleReference: string | null;
 
-  @Column({ name: 'ncm', nullable: false, type: 'varchar' })
-  ncm: string;
+  @Column({ name: 'ncm', nullable: true, type: 'varchar' })
+  ncm: string | null;
 
   @Column({
     name: 'cost_price',

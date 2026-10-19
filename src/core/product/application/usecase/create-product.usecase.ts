@@ -54,7 +54,7 @@ type Input = {
   name: string;
   scaleReference?: string;
   barCode?: string;
-  ncm: string;
+  ncm?: string | null;
   costPrice: number;
   unitCostPrice: number;
   pricePerKilogram?: number;
@@ -235,7 +235,7 @@ export class CreateProductUseCase implements UseCase<Input, Output> {
       pricePerKilogram: pricePerKilogram ?? input.pricePerKilogram ?? null,
       description: input.description ?? null,
       expirationDateInDays: input.expirationDateInDays ?? null,
-      ncm: input.ncm,
+      ncm: input.ncm || null,
       typeProduct: input.typeProduct,
       profitPrice: requiresPricing ? (profitPrice ?? 1) : null,
       salePrice: requiresPricing ? salePrice : null,

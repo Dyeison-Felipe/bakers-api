@@ -8,7 +8,7 @@ export type FindAllProductOutput = {
   pricePerKilogram: number | null;
   scaleReference: string | null;
   barCode: string | null;
-  ncm: string;
+  ncm: string | null;
   costPrice: number;
   salePrice: number | null;
   profitPrice: number | null;

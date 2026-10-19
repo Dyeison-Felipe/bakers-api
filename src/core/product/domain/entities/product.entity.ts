@@ -15,7 +15,7 @@ export type ProductProps = {
   name: string;
   scaleReference: string | null;
   barCode: string | null;
-  ncm: string;
+  ncm: string | null;
   costPrice: number;
   unitCostPrice: number;
   pricePerKilogram: number | null;
@@ -46,7 +46,7 @@ type CreateProductProps = {
   name: string;
   scaleReference: string | null;
   barCode: string | null;
-  ncm: string;
+  ncm: string | null;
   costPrice: number;
   unitCostPrice: number;
   pricePerKilogram: number | null;
@@ -76,7 +76,7 @@ type UpdateProductProps = {
   name: string;
   scaleReference: string | null;
   barCode: string | null;
-  ncm: string;
+  ncm: string | null;
   costPrice: number;
   unitCostPrice: number;
   pricePerKilogram: number | null;

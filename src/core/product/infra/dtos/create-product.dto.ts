@@ -67,15 +67,18 @@ export class CreateProductDto {
   })
   barCode?: string;
 
-  @ApiProperty({
-    description: 'Código NCM do produto',
+  @ApiPropertyOptional({
+    description: 'Código NCM do produto (6 ou 8 dígitos)',
     example: '19059090',
-    maxLength: 8,
+    pattern: '^(\\d{6}|\\d{8})$',
+    nullable: true,
   })
+  @IsOptional()
   @IsString()
-  @MaxLength(8)
-  @IsNotEmpty()
-  ncm: string;
+  @Matches(/^(\d{6}|\d{8})$/, {
+    message: 'NCM deve ter 6 ou 8 dígitos numéricos',
+  })
+  ncm?: string | null;
 
   @ApiProperty({
     description: 'Preço de custo do produto',

@@ -45,10 +45,12 @@ export class ProductRules {
   @IsOptional()
   barCode: string | null;
 
+  @IsOptional()
   @IsString()
-  @MaxLength(8)
-  @IsNotEmpty()
-  ncm: string;
+  @Matches(/^(\d{6}|\d{8})$/, {
+    message: 'NCM deve ter 6 ou 8 dígitos numéricos',
+  })
+  ncm: string | null;
 
   @IsNumber()
   @Min(0)

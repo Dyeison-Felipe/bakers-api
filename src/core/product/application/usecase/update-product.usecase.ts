@@ -48,7 +48,7 @@ type Input = {
   name: string;
   scaleReference?: string;
   barCode?: string;
-  ncm: string;
+  ncm?: string | null;
   costPrice: number;
   unitCostPrice: number;
   pricePerKilogram: number | null;
@@ -222,7 +222,7 @@ export class UpdateProductUseCase implements UseCase<Input, Output> {
       name: input.name,
       scaleReference: input.scaleReference ?? null,
       barCode: input.barCode ?? product.barCode,
-      ncm: input.ncm,
+      ncm: input.ncm || null,
       costPrice,
       salePrice: requiresPricing ? salePrice : null,
       profitPrice: requiresPricing ? (profitPrice ?? 1) : null,
