@@ -22,6 +22,7 @@ import { isPermissionInPlan } from '@/shared/application/helpers/plan-permission
 import {
   ALLOW_EXPIRED_PLAN_KEY,
   ALLOW_SUPER_ADMIN_KEY,
+  AVAILABLE_IN_ALL_PLANS_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
   SUPER_ADMIN_ONLY_KEY,
@@ -137,11 +138,17 @@ export class PermissionGuard implements CanActivate {
       if (!policies || policies.length === 0) return true;
 
       //5. Verifica se a permissão está inclusa no plano da empresa
+      // (exceto rotas @AvailableInAllPlans(), ex.: recontratar o plano)
+      const availableInAllPlans = this.reflector.getAllAndOverride<boolean>(
+        AVAILABLE_IN_ALL_PLANS_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
       const planPermissions = user.company.plan?.permissions ?? [];
 
-      const allInPlan = policies.every((policy) =>
-        isPermissionInPlan(planPermissions, policy),
-      );
+      const allInPlan =
+        availableInAllPlans ||
+        policies.every((policy) => isPermissionInPlan(planPermissions, policy));
 
       if (!allInPlan) {
         throw new ForbiddenError(

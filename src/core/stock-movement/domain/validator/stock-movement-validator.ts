@@ -10,9 +10,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
+import { QUANTITY_MAX, UNIT_COST_MAX } from '@/shared/domain/constants/field-limits';
 import { StockMovementProps } from '../entities/stock-movement.entity';
 
 export class StockMovementRules {
@@ -24,6 +26,7 @@ export class StockMovementRules {
 
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   quantity: number;
 
   @IsEnum(TypeStockMovementReason)
@@ -37,6 +40,7 @@ export class StockMovementRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(UNIT_COST_MAX)
   unitCostSnapshot: number | null;
 
   @IsString()

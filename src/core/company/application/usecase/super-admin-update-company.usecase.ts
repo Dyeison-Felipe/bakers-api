@@ -17,7 +17,7 @@ type Input = {
   cnpj: string;
   email: string;
   phoneNumber: string;
-  stateRegistration: string;
+  stateRegistration?: string | null;
   active: boolean;
   planId?: string;
 };
@@ -60,7 +60,7 @@ export class SuperAdminUpdateCompanyUseCase implements UseCase<Input, Output> {
       cnpj: input.cnpj,
       email: input.email,
       phoneNumber: input.phoneNumber,
-      stateRegistration: input.stateRegistration,
+      stateRegistration: input.stateRegistration ?? null,
       plan: company.plan!,
       address: company.address ?? undefined,
       updatedBy,

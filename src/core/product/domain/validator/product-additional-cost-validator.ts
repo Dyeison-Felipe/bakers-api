@@ -3,8 +3,10 @@ import {
   IsInstance,
   IsNumber,
   IsOptional,
+  Max,
   Min,
 } from 'class-validator';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { Product } from '../entities/product.entity';
 import { AdditionalCost } from '@/core/additional-cost/domain/entities/additional-cost.entity';
@@ -22,6 +24,7 @@ export class ProductAdditionalCostRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   value: number;
 
   constructor(data: ProductAdditionalCostProps) {

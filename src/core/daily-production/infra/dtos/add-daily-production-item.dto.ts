@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 
 export class AddDailyProductionItemDto {
   @ApiProperty({ description: 'Id do produto (produção própria)' })
@@ -13,6 +14,7 @@ export class AddDailyProductionItemDto {
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   readonly plannedQuantity?: number;
 
   @ApiProperty({
@@ -23,5 +25,6 @@ export class AddDailyProductionItemDto {
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   readonly recipeMultiplier?: number;
 }

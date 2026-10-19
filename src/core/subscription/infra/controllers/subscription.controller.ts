@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/commo
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AllowExpiredPlan,
+  AvailableInAllPlans,
   Permission,
 } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionCompany } from '@/core/auth/domain/permissions-definition/company';
@@ -12,7 +13,10 @@ import { CancelSubscriptionUseCase } from '../../application/usecase/cancel-subs
 import { ResumeSubscriptionUseCase } from '../../application/usecase/resume-subscription.usecase';
 import { SubscribePlanDto } from '../dtos/subscribe-plan.dto';
 
+// Gerenciar a própria assinatura (ver, recontratar, cancelar, reativar) vale
+// para qualquer plano — continua exigindo Admin ou a permissão individual.
 @ApiTags('Subscription')
+@AvailableInAllPlans()
 @Controller('v1/subscription')
 export class SubscriptionController {
   constructor(

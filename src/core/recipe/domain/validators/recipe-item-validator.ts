@@ -2,8 +2,10 @@ import {
   IsInstance,
   IsNumber,
   IsOptional,
+  Max,
   Min,
 } from 'class-validator';
+import { QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { Product } from '@/core/product/domain/entities/product.entity';
 import { Recipe } from '../entities/recipe.entity';
@@ -21,6 +23,7 @@ export class RecipeItemRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   quantity: number | null;
 
   constructor(data: RecipeItemProps) {

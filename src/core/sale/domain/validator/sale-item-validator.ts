@@ -8,8 +8,10 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
+import { MONEY_MAX, QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 import { SaleItemProps } from '../entities/sale-item.entity';
 import { Sale } from '../entities/sale.entity';
 
@@ -32,23 +34,28 @@ export class SaleItemRules {
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   quantity: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   weightInKg: number | null;
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   unitPriceSnapshot: number;
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   unitCostSnapshot: number;
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   subtotal: number;
 
   @IsString()

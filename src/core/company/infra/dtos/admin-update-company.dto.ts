@@ -5,9 +5,14 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsCnpj } from '@/shared/domain/validators/decorators/is-document.decorator';
+import { IsEmailDomain } from '@/shared/infra/validators/is-email-domain.decorator';
+import { emptyStringToNull } from '@/shared/infra/utils/empty-string-to-null';
 
 export class AdminUpdateCompanyDto {
   @ApiProperty({ description: 'Nome fantasia da empresa', maxLength: 255 })
@@ -22,28 +27,34 @@ export class AdminUpdateCompanyDto {
   @MaxLength(255)
   socialReazon: string;
 
-  @ApiProperty({ description: 'CNPJ da empresa', maxLength: 14 })
+  @ApiProperty({ description: 'CNPJ da empresa (somente números)', maxLength: 14 })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(14)
+  @IsCnpj()
   cnpj: string;
 
-  @ApiProperty({ description: 'Inscrição estadual', maxLength: 14 })
+  @ApiProperty({
+    description: 'Inscrição estadual (opcional — empresas isentas não têm)',
+    maxLength: 14,
+    required: false,
+  })
+  @Transform(emptyStringToNull)
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(14)
-  stateRegistration: string;
+  stateRegistration?: string | null;
 
   @ApiProperty({ description: 'Email principal da empresa' })
   @IsEmail()
   @IsNotEmpty()
   @MaxLength(255)
+  @IsEmailDomain()
   email: string;
 
-  @ApiProperty({ description: 'Telefone da empresa' })
+  @ApiProperty({ description: 'Telefone da empresa (DDD + número, somente dígitos)' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(11)
+  @Matches(/^\d{10,11}$/, { message: 'Telefone deve ter DDD + número (10 ou 11 dígitos)' })
   phoneNumber: string;
 
   @ApiProperty({ description: 'Se a empresa está ativa' })

@@ -11,6 +11,8 @@ import { ValidationPipe } from '@nestjs/common';
 import fastifyCookie from '@fastify/cookie';
 import { EntityValidationErrorFilter } from './shared/infra/exeption-filters/validation-error.filter';
 import fastifyMultipart from '@fastify/multipart';
+import { EntityValidationError } from './shared/application/errors/validation-error';
+import { flattenValidationErrors } from './shared/domain/validators/validation-messages';
 
 export async function globalConfig(
   app: NestFastifyApplication,
@@ -64,6 +66,10 @@ export async function globalConfig(
     new ValidationPipe({
       whitelist: true,
       transform: true,
+      // Mesmo formato/idioma dos erros de domínio (422 + { errors: {campo: []} })
+      // em vez do 400 padrão do Nest com mensagens em inglês.
+      exceptionFactory: (errors) =>
+        new EntityValidationError(flattenValidationErrors(errors)),
     }),
     new GlobalStringLengthPipe(),
   );

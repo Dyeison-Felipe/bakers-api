@@ -8,8 +8,10 @@ import {
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -21,6 +23,12 @@ import {
 } from '@/shared/infra/enums/product';
 import { MulterFileDto } from '@/shared/infra/dto/multer-file';
 import { Type } from 'class-transformer';
+import {
+  MONEY_MAX,
+  PERCENT_MAX,
+  QUANTITY_MAX,
+  UNIT_COST_MAX,
+} from '@/shared/domain/constants/field-limits';
 import { AdditionalCostInputDto } from './additional-cost.dto';
 import { RecipeLinkInputDto } from './recipe-link.dto';
 
@@ -39,12 +47,12 @@ export class CreateProductDto {
   @ApiPropertyOptional({
     description: 'Referência de balança do produto',
     example: 'PF001',
-    maxLength: 255,
+    maxLength: 20,
     required: false,
   })
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(20)
   scaleReference?: string;
 
   @ApiPropertyOptional({
@@ -76,6 +84,7 @@ export class CreateProductDto {
   })
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   costPrice: number;
 
   @ApiPropertyOptional({
@@ -86,6 +95,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   salePrice?: number;
 
   @ApiPropertyOptional({
@@ -96,6 +106,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(PERCENT_MAX)
   profitPrice?: number;
 
   @ApiProperty({
@@ -121,9 +132,10 @@ export class CreateProductDto {
     example: '1',
     maxLength: 10,
   })
-  @IsOptional()
+  @ValidateIf((o) => o.expirationDateInDays != null && o.expirationDateInDays !== '')
   @IsString()
   @MaxLength(10)
+  @Matches(/^\d+$/, { message: 'Validade (dias) deve conter apenas números' })
   expirationDateInDays?: string;
 
   @ApiProperty({
@@ -148,6 +160,7 @@ export class CreateProductDto {
   })
   @IsNumber()
   @Min(0)
+  @Max(UNIT_COST_MAX)
   unitCostPrice: number;
 
   @ApiProperty({
@@ -157,6 +170,7 @@ export class CreateProductDto {
   })
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   @IsOptional()
   pricePerKilogram?: number;
 
@@ -168,6 +182,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   currentStock?: number;
 
   @ApiPropertyOptional({
@@ -178,6 +193,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   stockMin?: number;
 
   @ApiProperty({
@@ -214,6 +230,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   quantity?: number;
 
   @ApiPropertyOptional({
@@ -224,6 +241,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   weight?: number;
 
   @ApiPropertyOptional({
@@ -234,6 +252,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   volume?: number;
 
   @ApiProperty({

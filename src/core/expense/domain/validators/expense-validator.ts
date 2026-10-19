@@ -7,9 +7,11 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 import { ExpenseProps } from '../entities/expense.entity';
 
 export class ExpenseRules {
@@ -22,6 +24,7 @@ export class ExpenseRules {
 
   @IsNumber()
   @Min(0.01)
+  @Max(MONEY_MAX)
   value: number;
 
   @IsString()

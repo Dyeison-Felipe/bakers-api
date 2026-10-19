@@ -38,7 +38,7 @@ type UserInput = {
 
 type Input = {
   cnpj: string;
-  stateRegistration: string;
+  stateRegistration?: string | null;
   fantasyName: string;
   socialReazon: string;
   phoneNumber: string;
@@ -180,7 +180,7 @@ export class CreateCompanyUseCase implements UseCase<Input, Output> {
       cnpj: input.cnpj,
       email: input.email,
       phoneNumber: input.phoneNumber,
-      stateRegistration: input.stateRegistration,
+      stateRegistration: input.stateRegistration ?? null,
       address: savedAddress,
       plan,
       // Plano pago: nasce bloqueada até o webhook do Stripe confirmar a 1ª

@@ -6,11 +6,13 @@ import {
   IsNumber,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 
 export class RecipeItemInputDto {
   @ApiProperty({ description: 'Id do produto matéria-prima' })
@@ -22,6 +24,7 @@ export class RecipeItemInputDto {
   })
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   quantity: number;
 }
 

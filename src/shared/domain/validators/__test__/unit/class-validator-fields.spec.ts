@@ -20,7 +20,7 @@ describe('ClassValidatorFields unit test', () => {
     spyValidateSync.mockReturnValue([
       {
         property: 'field',
-        constraints: { isRequired: 'test error' },
+        constraints: { isNotEmpty: 'field should not be empty' },
       },
     ]);
     const sut = new StubClassValidatorFields();
@@ -28,7 +28,8 @@ describe('ClassValidatorFields unit test', () => {
     expect(sut.validate(null)).toBeFalsy();
     expect(spyValidateSync).toHaveBeenCalled();
     expect(sut.validatedData).toMatchObject({});
-    expect(sut.errors).toStrictEqual({ field: ['test error'] });
+    // sem metadata para o alvo, a constraint é traduzida pelo nome do campo
+    expect(sut.errors).toStrictEqual({ field: ['field é obrigatório'] });
   });
 
   it('Should validate without errors', () => {

@@ -9,6 +9,8 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsEmailDomain } from '@/shared/infra/validators/is-email-domain.decorator';
+
 
 export class CreateUserDto {
   @ApiProperty({
@@ -17,6 +19,8 @@ export class CreateUserDto {
     maxLength: 255,
   })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   username: string;
 
   @ApiProperty({
@@ -26,6 +30,7 @@ export class CreateUserDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   name: string;
 
   @IsUUID()
@@ -37,12 +42,14 @@ export class CreateUserDto {
     maxLength: 255,
   })
   @IsString()
-  @MaxLength(255)
+  @MaxLength(100)
   @MinLength(8)
   password: string;
 
   @IsEmail()
   @IsNotEmpty()
+  @MaxLength(255)
+  @IsEmailDomain()
   email: string;
 
   @ApiProperty({

@@ -7,10 +7,12 @@ import {
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { MONEY_MAX, PERCENT_MAX, QUANTITY_MAX, UNIT_COST_MAX } from '@/shared/domain/constants/field-limits';
 import { Type } from 'class-transformer';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { CompanyRules } from '@/core/company/domain/validators/company-validator';
@@ -51,27 +53,32 @@ export class ProductRules {
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
+  @Max(MONEY_MAX)
   costPrice: number;
 
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
   @IsOptional()
+  @Max(UNIT_COST_MAX)
   unitCostPrice: number | null;
 
   @IsNumber()
   @Min(0)
   @IsOptional()
+  @Max(MONEY_MAX)
   pricePerKilogram: number | null;
 
   @IsNumber()
   @Min(0)
   @IsOptional()
+  @Max(MONEY_MAX)
   salePrice: number | null;
 
   @IsNumber()
   @Min(0)
   @IsOptional()
+  @Max(PERCENT_MAX)
   profitPrice: number | null;
 
   @IsEnum(TypeUnitOfMeasurement)
@@ -98,11 +105,13 @@ export class ProductRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  stockAtual: number | null;
+  @Max(QUANTITY_MAX)
+  currentStock: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   stockMin: number | null;
 
   @IsBoolean()
@@ -121,11 +130,13 @@ export class ProductRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   quantity: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   weight: number | null;
 
   @IsOptional()
@@ -136,6 +147,7 @@ export class ProductRules {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(QUANTITY_MAX)
   volume: number | null;
 
   @IsString()

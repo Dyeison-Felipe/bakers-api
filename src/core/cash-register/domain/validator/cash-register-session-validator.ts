@@ -9,8 +9,10 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 import { CashRegisterSessionProps } from '../entities/cash-register-session.entity';
 
 export class CashRegisterSessionRules {
@@ -23,6 +25,7 @@ export class CashRegisterSessionRules {
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   openingAmount: number;
 
   @IsDate()
@@ -42,14 +45,17 @@ export class CashRegisterSessionRules {
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   totalCash: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   totalPix: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   totalCard: number | null;
 
   @IsString()

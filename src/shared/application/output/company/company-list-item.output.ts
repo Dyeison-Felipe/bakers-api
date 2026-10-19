@@ -5,7 +5,7 @@ export type CompanyListItemOutput = {
   cnpj: string;
   email: string;
   phoneNumber: string;
-  stateRegistration: string;
+  stateRegistration: string | null;
   active: boolean;
   planStartedAt: Date;
   planExpiresAt: Date;

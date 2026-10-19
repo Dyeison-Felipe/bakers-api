@@ -11,8 +11,10 @@ import {
   IsString,
   IsUUID,
   Length,
+  Max,
   Min,
 } from 'class-validator';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 import { SaleProps } from '../entities/sale.entity';
 
 export class SaleRules {
@@ -32,14 +34,17 @@ export class SaleRules {
 
   @IsNumber()
   @Min(0.01)
+  @Max(MONEY_MAX)
   totalAmount: number;
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   amountReceived: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   changeAmount: number | null;
 
   @IsOptional()

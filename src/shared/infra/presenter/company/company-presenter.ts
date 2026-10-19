@@ -23,7 +23,7 @@ export class CompanyPresenter {
   readonly phoneNumber: string;
 
   @ApiProperty({ description: 'Imagem da logo da empresa', type: String })
-  readonly stateRegistration: string;
+  readonly stateRegistration: string | null;
 
   @ApiProperty({ description: 'Status da empresa', type: String })
   readonly active: boolean;

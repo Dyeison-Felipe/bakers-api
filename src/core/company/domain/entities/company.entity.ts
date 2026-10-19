@@ -14,7 +14,7 @@ export type CompanyProps = {
   phoneNumber: string;
   logotipo?: string;
   active: boolean;
-  stateRegistration: string;
+  stateRegistration: string | null;
   address?: Address | null;
   plan?: Plan | null;
   planStartedAt: Date;
@@ -30,7 +30,7 @@ type CreateCompanyProps = {
   cnpj: string;
   email: string;
   phoneNumber: string;
-  stateRegistration: string;
+  stateRegistration: string | null;
   address: Address;
   plan: Plan;
   // false quando o cadastro depende de confirmação de pagamento (assinatura
@@ -47,7 +47,7 @@ type UpdateCompanyProps = {
   email: string;
   plan: Plan;
   phoneNumber: string;
-  stateRegistration: string;
+  stateRegistration: string | null;
   address?: Address;
   updatedBy: string;
 };

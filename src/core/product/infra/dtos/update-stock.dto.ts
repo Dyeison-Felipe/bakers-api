@@ -7,7 +7,9 @@ import {
   IsPositive,
   IsString,
   IsUUID,
+  Max,
 } from 'class-validator';
+import { QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 
 export class UpdateStockDto {
   @ApiProperty({ description: 'ID do produto' })
@@ -24,5 +26,6 @@ export class UpdateStockDto {
   @ApiProperty({ description: 'Quantidade a ser incrementada ou decrementada' })
   @IsNumber()
   @IsPositive()
+  @Max(QUANTITY_MAX)
   value: number;
 }

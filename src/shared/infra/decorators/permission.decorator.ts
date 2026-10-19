@@ -11,6 +11,8 @@ export const ALLOW_SUPER_ADMIN_KEY = 'ALLOW_SUPER_ADMIN';
 
 export const ALLOW_EXPIRED_PLAN_KEY = 'ALLOW_EXPIRED_PLAN';
 
+export const AVAILABLE_IN_ALL_PLANS_KEY = 'AVAILABLE_IN_ALL_PLANS';
+
 export const Permission = (...permissions: PermissionRef[]) =>
   SetMetadata(PERMISSIONS_KEY, permissions);
 
@@ -33,3 +35,11 @@ export const AllowSuperAdmin = () => SetMetadata(ALLOW_SUPER_ADMIN_KEY, true);
 // precisa pra assinar um plano de novo (ver a situação da assinatura, pagar,
 // recarregar a sessão). Permissões continuam valendo normalmente.
 export const AllowExpiredPlan = () => SetMetadata(ALLOW_EXPIRED_PLAN_KEY, true);
+
+// Pula só a checagem "a permissão está inclusa no plano da empresa" — para
+// ações que toda empresa precisa ter independente do plano contratado, como
+// gerenciar/recontratar a própria assinatura (senão uma empresa num plano sem
+// `company.update` nunca conseguiria trocar de plano). O usuário continua
+// precisando ser Admin ou ter a permissão individual exigida por @Permission().
+export const AvailableInAllPlans = () =>
+  SetMetadata(AVAILABLE_IN_ALL_PLANS_KEY, true);

@@ -6,9 +6,11 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  Min,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
+import { MONEY_MAX, PLAN_DURATION_MAX_DAYS, PLAN_USER_LIMIT_MAX } from '@/shared/domain/constants/field-limits';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-field';
 import { PlanProps } from '../entities/plan.entity';
 
@@ -29,6 +31,8 @@ export class PlanRules {
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
+  @Max(MONEY_MAX)
   price: number;
 
   @IsBoolean()
@@ -38,12 +42,14 @@ export class PlanRules {
   @IsInt()
   @Min(1)
   @IsNotEmpty()
+  @Max(PLAN_DURATION_MAX_DAYS)
   duration: number;
 
   // null = plano sem limite de usuários (ilimitado)
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(PLAN_USER_LIMIT_MAX)
   userLimit: number | null;
 
   // null = plano gratuito, sem Product/Price correspondente no Stripe

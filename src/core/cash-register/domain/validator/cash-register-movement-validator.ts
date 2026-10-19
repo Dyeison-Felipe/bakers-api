@@ -2,13 +2,15 @@ import { ClassValidatorFields } from '@/shared/domain/validators/class-validator
 import {
   IsEnum,
   IsInstance,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  IsNotEmpty,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 import {
   TypeCashRegisterMovement,
   TypeCashRegisterMovementReason,
@@ -34,13 +36,16 @@ export class CashRegisterMovementRules {
 
   @IsNumber()
   @Min(0.01)
+  @Max(MONEY_MAX)
   amount: number;
 
   @IsNumber()
+  @Max(MONEY_MAX)
   balanceBefore: number;
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   balanceAfter: number;
 
   @IsString()

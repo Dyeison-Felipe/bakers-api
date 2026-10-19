@@ -10,8 +10,10 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
+import { MONEY_MAX, QUANTITY_MAX, UNIT_COST_MAX } from '@/shared/domain/constants/field-limits';
 import { DailyProductionItemProps } from '../entities/daily-production-item.entity';
 import { DailyProduction } from '../entities/daily-production.entity';
 
@@ -30,28 +32,34 @@ export class DailyProductionItemRules {
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   plannedQuantity: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   recipeMultiplier: number | null;
 
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   plannedWeight: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(UNIT_COST_MAX)
   unitCostPriceSnapshot: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(MONEY_MAX)
   pricePerKilogramSnapshot: number | null;
 
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   plannedCost: number;
 
   @IsEnum(TypeDailyProductionItemStatus)
@@ -59,10 +67,12 @@ export class DailyProductionItemRules {
 
   @IsOptional()
   @IsNumber()
+  @Max(QUANTITY_MAX)
   actualQuantity: number | null;
 
   @IsOptional()
   @IsNumber()
+  @Max(QUANTITY_MAX)
   actualWeight: number | null;
 
   @IsOptional()

@@ -42,10 +42,11 @@ export class CompanyRules {
   @IsNotEmpty()
   phoneNumber: string;
 
+  // Opcional: empresas isentas não têm inscrição estadual
+  @IsOptional()
   @IsString()
   @MaxLength(14)
-  @IsNotEmpty()
-  stateRegistration: string;
+  stateRegistration: string | null;
 
   @IsBoolean()
   @IsNotEmpty()

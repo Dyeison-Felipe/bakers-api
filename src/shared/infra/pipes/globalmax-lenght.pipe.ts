@@ -1,8 +1,6 @@
-import {
-  Injectable,
-  PipeTransform,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, PipeTransform } from '@nestjs/common';
+import { EntityValidationError } from '@/shared/application/errors/validation-error';
+import { fieldLabel } from '@/shared/domain/validators/validation-messages';
 
 @Injectable()
 export class GlobalStringLengthPipe implements PipeTransform {
@@ -12,6 +10,8 @@ export class GlobalStringLengthPipe implements PipeTransform {
     'token',
     'accessToken',
     'refreshToken',
+    // limite próprio de 500 validado no DTO de movimentação de estoque
+    'reasonDescription',
   ]);
 
   transform(value: any) {
@@ -21,9 +21,11 @@ export class GlobalStringLengthPipe implements PipeTransform {
       if (this.EXEMPT_FIELDS.has(key)) continue;
 
       if (typeof val === 'string' && val.length > this.DEFAULT_MAX) {
-        throw new BadRequestException(
-          `Campo "${key}" excede tamanho máximo de ${this.DEFAULT_MAX}`
-        );
+        throw new EntityValidationError({
+          [key]: [
+            `${fieldLabel(key)} deve ter no máximo ${this.DEFAULT_MAX} caracteres`,
+          ],
+        });
       }
     }
 

@@ -36,6 +36,7 @@ import { DashboardModule } from './core/dashboard/infra/dashboard.module';
 import { RecipeModule } from './core/recipe/infra/recipe.module';
 import { ReportModule } from './core/report/infra/report.module';
 import { CustomerModule } from './core/customer/infra/customer.module';
+import { ValidationModule } from './core/validation/infra/validation.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { CustomerModule } from './core/customer/infra/customer.module';
     RecipeModule,
     ReportModule,
     CustomerModule,
+    ValidationModule,
     StorageModule,
     StripeModule,
     ScheduleModule.forRoot(),

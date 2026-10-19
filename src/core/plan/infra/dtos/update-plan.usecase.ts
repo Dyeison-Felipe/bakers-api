@@ -1,4 +1,10 @@
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from "class-validator";
+import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from "class-validator";
+import {
+  MONEY_MAX,
+  PLAN_DURATION_MAX_DAYS,
+  PLAN_USER_LIMIT_MAX,
+} from '@/shared/domain/constants/field-limits';
+
 
 export class UpdatePlanDto {
 
@@ -8,18 +14,23 @@ export class UpdatePlanDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   name: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   description: string;
 
   @IsArray()
   @IsString({ each: true })
+  @MaxLength(255, { each: true })
   features: string[];
 
   @IsNumber()
   @IsNotEmpty()
+  @Min(0)
+  @Max(MONEY_MAX)
   price: number;
 
   @IsBoolean()
@@ -28,6 +39,7 @@ export class UpdatePlanDto {
 
   @IsInt()
   @Min(1)
+  @Max(PLAN_DURATION_MAX_DAYS)
   @IsNotEmpty()
   duration: number;
 
@@ -35,6 +47,7 @@ export class UpdatePlanDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(PLAN_USER_LIMIT_MAX)
   userLimit: number | null;
 
   @IsArray()

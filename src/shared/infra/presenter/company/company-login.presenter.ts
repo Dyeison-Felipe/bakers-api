@@ -12,7 +12,7 @@ export class CompanyLoginPlanPresenter {
 export class CompanyLoginPresenter {
   readonly id: string;
   readonly cnpj: string;
-  readonly stateRegistration: string;
+  readonly stateRegistration: string | null;
   readonly fantasyName: string;
   readonly socialReazon: string;
   readonly plan: CompanyLoginPlanPresenter;

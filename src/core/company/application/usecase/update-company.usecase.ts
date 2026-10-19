@@ -17,7 +17,7 @@ type Input = {
   fantasyName: string;
   socialReazon: string;
   cnpj: string;
-  stateRegistration: string;
+  stateRegistration?: string | null;
   email: string;
   phoneNumber: string;
   address: CreateAddressInput;
@@ -84,7 +84,7 @@ export class UpdateCompanyUseCase implements UseCase<Input, Output> {
       cnpj: input.cnpj,
       email: input.email,
       phoneNumber: input.phoneNumber,
-      stateRegistration: input.stateRegistration,
+      stateRegistration: input.stateRegistration ?? null,
       plan: company.plan!,
       address: company.address ?? undefined,
       updatedBy: loggedUser?.id ?? ID_USER_DEFAULT,

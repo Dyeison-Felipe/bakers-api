@@ -1,6 +1,7 @@
 
 import { FieldsError, ValidatorFieldsInterface } from '@/shared/application/validators/validator-field.interface';
 import { validateSync } from 'class-validator';
+import { flattenValidationErrors } from './validation-messages';
 
 export abstract class ClassValidatorFields<
   PropsValidated,
@@ -12,12 +13,8 @@ export abstract class ClassValidatorFields<
     const errors = validateSync(data);
 
     if (errors.length) {
-      this.errors = {};
-
-      for (const error of errors) {
-        const field = error.property
-        this.errors[field] = Object.values(error.constraints ?? {});
-      }
+      // Mensagens já traduzidas para pt-BR (ver validation-messages.ts)
+      this.errors = flattenValidationErrors(errors);
     } else {
       this.validatedData = data;
     }

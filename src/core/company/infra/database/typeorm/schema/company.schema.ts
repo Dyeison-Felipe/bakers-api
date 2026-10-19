@@ -81,9 +81,9 @@ export class CompanySchema extends BaseSchema {
     name: 'state_registration',
     type: 'varchar',
     length: 14,
-    nullable: false,
+    nullable: true,
   })
-  stateRegistration: string;
+  stateRegistration: string | null;
 
   @Column({ name: 'created_by', type: 'uuid', nullable: false })
   createdBy: string;

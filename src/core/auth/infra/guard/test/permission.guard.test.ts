@@ -8,6 +8,7 @@ import { AuthConstants } from '@/shared/application/constants/auth-constants';
 import {
   ALLOW_EXPIRED_PLAN_KEY,
   ALLOW_SUPER_ADMIN_KEY,
+  AVAILABLE_IN_ALL_PLANS_KEY,
   IS_PUBLIC_KEY,
   PERMISSIONS_KEY,
   SUPER_ADMIN_ONLY_KEY,
@@ -76,6 +77,7 @@ describe('PermissionGuard', () => {
       [SUPER_ADMIN_ONLY_KEY]: false,
       [ALLOW_SUPER_ADMIN_KEY]: false,
       [ALLOW_EXPIRED_PLAN_KEY]: false,
+      [AVAILABLE_IN_ALL_PLANS_KEY]: false,
       [PERMISSIONS_KEY]: undefined,
     };
     reflector = {
@@ -271,6 +273,28 @@ describe('PermissionGuard', () => {
     userRepository.findByIdWithPermissions.mockResolvedValue(
       makeUser({ company: { active: true, planExpiresAt: new Date(Date.now() + 1000), plan: { permissions: [] } } }),
     );
+
+    await expect(sut.canActivate(makeContext())).rejects.toThrow(ForbiddenError);
+  });
+
+  it('allows an Admin on an @AvailableInAllPlans() route even if the plan lacks the permission (e.g. renewing an expired plan)', async () => {
+    reflectorAnswers[AVAILABLE_IN_ALL_PLANS_KEY] = true;
+    reflectorAnswers[ALLOW_EXPIRED_PLAN_KEY] = true;
+    reflectorAnswers[PERMISSIONS_KEY] = [{ action: 'update', resource: 'company' }];
+    userRepository.findByIdWithPermissions.mockResolvedValue(
+      makeUser({
+        role: { name: 'Admin' },
+        company: { active: false, planExpiresAt: new Date(Date.now() - 1000), plan: { permissions: [] } },
+      }),
+    );
+
+    await expect(sut.canActivate(makeContext())).resolves.toBe(true);
+  });
+
+  it('still requires the individual permission for a regular user on an @AvailableInAllPlans() route', async () => {
+    reflectorAnswers[AVAILABLE_IN_ALL_PLANS_KEY] = true;
+    reflectorAnswers[PERMISSIONS_KEY] = [{ action: 'update', resource: 'company' }];
+    caslAbilityService.createForUser.mockReturnValue({ can: jest.fn().mockReturnValue(false) } as never);
 
     await expect(sut.canActivate(makeContext())).rejects.toThrow(ForbiddenError);
   });

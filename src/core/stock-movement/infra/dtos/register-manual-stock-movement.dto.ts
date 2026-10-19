@@ -7,8 +7,10 @@ import {
   IsString,
   IsUUID,
   MaxLength,
+  Max,
   Min,
 } from 'class-validator';
+import { QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
 import { TypeStockMovement } from '@/shared/infra/enums/stock-movement';
 
 export class RegisterManualStockMovementDto {
@@ -27,6 +29,7 @@ export class RegisterManualStockMovementDto {
   @ApiProperty({ description: 'Quantidade/peso movimentado' })
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   readonly quantity: number;
 
   @ApiProperty({ description: 'Observação livre (ex.: "compra", "inventário")', required: false })

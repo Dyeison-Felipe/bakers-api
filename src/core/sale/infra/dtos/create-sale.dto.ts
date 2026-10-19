@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsEnum,
@@ -7,11 +7,14 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Length,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
+import { MONEY_MAX, QUANTITY_MAX } from '@/shared/domain/constants/field-limits';
+import { IsCpf } from '@/shared/domain/validators/decorators/is-document.decorator';
+import { emptyStringToNull } from '@/shared/infra/utils/empty-string-to-null';
 
 export class SaleItemDto {
   @ApiProperty({ description: 'Id do produto vendido' })
@@ -24,12 +27,14 @@ export class SaleItemDto {
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   quantity?: number;
 
   @ApiPropertyOptional({ description: 'Peso vendido em kg (produtos por peso)' })
   @IsOptional()
   @IsNumber()
   @Min(0.001)
+  @Max(QUANTITY_MAX)
   weightInKg?: number;
 
   @ApiPropertyOptional({
@@ -39,6 +44,7 @@ export class SaleItemDto {
   @IsOptional()
   @IsNumber()
   @Min(0.01)
+  @Max(MONEY_MAX)
   unitPrice?: number;
 }
 
@@ -59,12 +65,14 @@ export class CreateSaleDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @Max(MONEY_MAX)
   amountReceived?: number;
 
   @ApiPropertyOptional({ description: 'CPF do cliente, apenas dígitos (opcional)' })
+  @Transform(emptyStringToNull)
   @IsOptional()
   @IsString()
-  @Length(11, 11)
+  @IsCpf()
   customerCpf?: string;
 
   @ApiPropertyOptional({

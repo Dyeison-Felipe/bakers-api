@@ -8,7 +8,7 @@ type PlanPermissionOutput = {
 type CompanyLoginOutput = {
   id: string;
   cnpj: string;
-  stateRegistration: string;
+  stateRegistration: string | null;
   fantasyName: string;
   socialReazon: string;
   plan: {

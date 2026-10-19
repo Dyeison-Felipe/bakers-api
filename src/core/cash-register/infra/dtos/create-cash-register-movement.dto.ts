@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -11,6 +12,7 @@ import {
   TypeCashRegisterMovement,
   TypeCashRegisterMovementReason,
 } from '@/shared/infra/enums/cash-register';
+import { MONEY_MAX } from '@/shared/domain/constants/field-limits';
 
 export class CreateCashRegisterMovementDto {
   @ApiProperty({
@@ -38,5 +40,6 @@ export class CreateCashRegisterMovementDto {
   @ApiProperty({ description: 'Valor movimentado' })
   @IsNumber()
   @Min(0.01)
+  @Max(MONEY_MAX)
   amount: number;
 }
