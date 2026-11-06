@@ -103,6 +103,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
       provide: FindCashRegisterSessionDetailUseCase,
       useFactory: (
         cashRegisterSessionRepository: CashRegisterSessionRepository,
+        saleRepository: SaleRepository,
         saleItemRepository: SaleItemRepository,
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
@@ -113,6 +114,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
       ) =>
         new FindCashRegisterSessionDetailUseCase(
           cashRegisterSessionRepository,
+          saleRepository,
           saleItemRepository,
           dailyProductionRepository,
           dailyProductionItemRepository,
@@ -123,6 +125,7 @@ import { FindCashRegisterMovementsUseCase } from '../application/usecase/find-ca
         ),
       inject: [
         PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY,
+        PROVIDERS.SALE_REPOSITORY,
         PROVIDERS.SALE_ITEM_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,

@@ -25,6 +25,7 @@ import { FindDashboardSummaryUseCase } from '../application/usecase/find-dashboa
       provide: FindDashboardSummaryUseCase,
       useFactory: (
         saleRepository: SaleRepository,
+        saleItemRepository: SaleItemRepository,
         dailyProductionRepository: DailyProductionRepository,
         dailyProductionItemRepository: DailyProductionItemRepository,
         expenseRepository: ExpenseRepository,
@@ -32,6 +33,7 @@ import { FindDashboardSummaryUseCase } from '../application/usecase/find-dashboa
       ) =>
         new FindDashboardSummaryUseCase(
           saleRepository,
+          saleItemRepository,
           dailyProductionRepository,
           dailyProductionItemRepository,
           expenseRepository,
@@ -39,6 +41,7 @@ import { FindDashboardSummaryUseCase } from '../application/usecase/find-dashboa
         ),
       inject: [
         PROVIDERS.SALE_REPOSITORY,
+        PROVIDERS.SALE_ITEM_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_REPOSITORY,
         PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY,
         PROVIDERS.EXPENSE_REPOSITORY,

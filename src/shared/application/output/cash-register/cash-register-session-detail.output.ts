@@ -1,4 +1,5 @@
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
+import { CashRegisterMovementOutput } from './cash-register-movement.output';
 
 export type CashRegisterSessionDetailExpenseOutput = {
   id: string;
@@ -26,4 +27,18 @@ export type CashRegisterSessionDetailOutput = {
   totalSupplies: number;
   totalWithdrawals: number;
   profit: number;
+};
+
+/**
+ * Saída do detalhe individual do caixa (Histórico de Caixa). Estende o
+ * detalhe base (compartilhado com o relatório por período) com o valor
+ * vendido em cada forma de pagamento — calculado direto das vendas, então
+ * funciona também com o caixa ainda aberto e não mistura sangria/incremento —
+ * e a lista de cada sangria/incremento da sessão.
+ */
+export type FindCashRegisterSessionDetailOutput = CashRegisterSessionDetailOutput & {
+  salesCash: number;
+  salesPix: number;
+  salesCard: number;
+  movements: CashRegisterMovementOutput[];
 };

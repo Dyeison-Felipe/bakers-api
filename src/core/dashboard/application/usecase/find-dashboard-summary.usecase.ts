@@ -4,6 +4,7 @@ import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { DashboardSummaryOutput } from '@/shared/application/output/dashboard/dashboard-summary.output';
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
+import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
@@ -24,6 +25,8 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
   constructor(
     @Inject(PROVIDERS.SALE_REPOSITORY)
     private readonly saleRepository: SaleRepository,
+    @Inject(PROVIDERS.SALE_ITEM_REPOSITORY)
+    private readonly saleItemRepository: SaleItemRepository,
     @Inject(PROVIDERS.DAILY_PRODUCTION_REPOSITORY)
     private readonly dailyProductionRepository: DailyProductionRepository,
     @Inject(PROVIDERS.DAILY_PRODUCTION_ITEM_REPOSITORY)
@@ -61,6 +64,7 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
       salesRevenueCashToday,
       salesRevenuePixToday,
       salesRevenueCardToday,
+      salesCostSummary,
       dailyProductions,
       expenses,
     ] = await Promise.all([
@@ -88,6 +92,15 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
             TypePaymentMethod.CARD,
           )
         : Promise.resolve(0),
+      // Preço de custo (snapshot no momento da venda) somado de cada item
+      // vendido hoje — base do lucro estimado (venda − custo de cada item).
+      canReadSales
+        ? this.saleItemRepository.sumRevenueAndCostByCompanyAndDateRange(
+            companyId,
+            startOfDay,
+            endOfDay,
+          )
+        : Promise.resolve(null),
       canReadProduction
         ? this.dailyProductionRepository.findAllByCompanyId(companyId, {
             productionDate: startOfDay,
@@ -130,6 +143,7 @@ export class FindDashboardSummaryUseCase implements UseCase<Input, Output> {
             salesRevenueCashToday: round2(salesRevenueCashToday),
             salesRevenuePixToday: round2(salesRevenuePixToday),
             salesRevenueCardToday: round2(salesRevenueCardToday),
+            costOfSoldToday: round2(salesCostSummary?.totalCost ?? 0),
           }
         : {}),
     };

@@ -1,6 +1,7 @@
 import { FindDashboardSummaryUseCase } from '../usecase/find-dashboard-summary.usecase';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import type { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
+import type { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import type { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import type { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
 import type { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
@@ -32,6 +33,9 @@ describe('FindDashboardSummaryUseCase', () => {
   let saleRepository: jest.Mocked<
     Pick<SaleRepository, 'sumTotalByCompanyAndDateRangeAndPaymentMethod'>
   >;
+  let saleItemRepository: jest.Mocked<
+    Pick<SaleItemRepository, 'sumRevenueAndCostByCompanyAndDateRange'>
+  >;
   let dailyProductionRepository: jest.Mocked<Pick<DailyProductionRepository, 'findAllByCompanyId'>>;
   let dailyProductionItemRepository: jest.Mocked<
     Pick<DailyProductionItemRepository, 'findAllByDailyProductionId'>
@@ -43,6 +47,11 @@ describe('FindDashboardSummaryUseCase', () => {
   beforeEach(() => {
     saleRepository = {
       sumTotalByCompanyAndDateRangeAndPaymentMethod: jest.fn().mockResolvedValue(0),
+    };
+    saleItemRepository = {
+      sumRevenueAndCostByCompanyAndDateRange: jest
+        .fn()
+        .mockResolvedValue({ totalRevenue: 0, totalCost: 0 }),
     };
     dailyProductionRepository = {
       findAllByCompanyId: jest.fn().mockResolvedValue(makePagination([])),
@@ -58,6 +67,7 @@ describe('FindDashboardSummaryUseCase', () => {
 
     sut = new FindDashboardSummaryUseCase(
       saleRepository as unknown as SaleRepository,
+      saleItemRepository as unknown as SaleItemRepository,
       dailyProductionRepository as unknown as DailyProductionRepository,
       dailyProductionItemRepository as unknown as DailyProductionItemRepository,
       expenseRepository as unknown as ExpenseRepository,
@@ -73,6 +83,7 @@ describe('FindDashboardSummaryUseCase', () => {
       salesRevenueCashToday: 0,
       salesRevenuePixToday: 0,
       salesRevenueCardToday: 0,
+      costOfSoldToday: 0,
       expensesToday: 0,
     });
   });
@@ -212,5 +223,16 @@ describe('FindDashboardSummaryUseCase', () => {
     expect(output.expensesToday).toBeUndefined();
     expect(expenseRepository.findAllByCompanyAndDate).not.toHaveBeenCalled();
     expect(output.productionCostToday).toBe(0);
+  });
+
+  it('should return the cost price of the items sold today (costOfSoldToday)', async () => {
+    saleItemRepository.sumRevenueAndCostByCompanyAndDateRange.mockResolvedValue({
+      totalRevenue: 8,
+      totalCost: 3,
+    });
+
+    const output = await sut.execute();
+
+    expect(output.costOfSoldToday).toBe(3);
   });
 });

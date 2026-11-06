@@ -4,6 +4,7 @@ import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { makeLoggedUser, makePagination, makeSession } from './fixtures';
 import type { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import type { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
+import type { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import type { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import type { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import type { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
@@ -14,6 +15,9 @@ import type { LoggedUserService } from '@/shared/application/logged-user/logged-
 describe('FindCashRegisterSessionDetailUseCase', () => {
   let cashRegisterSessionRepository: jest.Mocked<
     Pick<CashRegisterSessionRepository, 'findByIdAndCompanyId'>
+  >;
+  let saleRepository: jest.Mocked<
+    Pick<SaleRepository, 'sumTotalByCashRegisterSessionAndPaymentMethod'>
   >;
   let saleItemRepository: jest.Mocked<
     Pick<SaleItemRepository, 'sumRevenueAndCostByCashRegisterSessionId'>
@@ -31,13 +35,19 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     Pick<StockMovementRepository, 'sumUnitCostByCompanyAndDateAndReason'>
   >;
   let cashRegisterMovementRepository: jest.Mocked<
-    Pick<CashRegisterMovementRepository, 'sumAmountByCashRegisterSessionIdAndType'>
+    Pick<
+      CashRegisterMovementRepository,
+      'sumAmountByCashRegisterSessionIdAndType' | 'findAllByCashRegisterSessionId'
+    >
   >;
   let loggedUserService: jest.Mocked<LoggedUserService>;
   let sut: FindCashRegisterSessionDetailUseCase;
 
   beforeEach(() => {
     cashRegisterSessionRepository = { findByIdAndCompanyId: jest.fn() };
+    saleRepository = {
+      sumTotalByCashRegisterSessionAndPaymentMethod: jest.fn().mockResolvedValue(0),
+    };
     saleItemRepository = {
       sumRevenueAndCostByCashRegisterSessionId: jest
         .fn()
@@ -57,6 +67,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     };
     cashRegisterMovementRepository = {
       sumAmountByCashRegisterSessionIdAndType: jest.fn().mockResolvedValue(0),
+      findAllByCashRegisterSessionId: jest.fn().mockResolvedValue([]),
     };
     loggedUserService = {
       getLoggedUser: jest.fn().mockReturnValue(makeLoggedUser()),
@@ -65,6 +76,7 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
 
     sut = new FindCashRegisterSessionDetailUseCase(
       cashRegisterSessionRepository as unknown as CashRegisterSessionRepository,
+      saleRepository as unknown as SaleRepository,
       saleItemRepository as unknown as SaleItemRepository,
       dailyProductionRepository as unknown as DailyProductionRepository,
       dailyProductionItemRepository as unknown as DailyProductionItemRepository,
@@ -253,5 +265,49 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
       totalPix: 50,
       totalCard: 30,
     });
+  });
+
+  it('should return sales per payment method from the sales (also for an open session) and list every movement', async () => {
+    const session = makeSession(); // aberto: totalCash/Pix/Card ainda null
+    cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
+    saleRepository.sumTotalByCashRegisterSessionAndPaymentMethod.mockImplementation(
+      (_sessionId, paymentMethod) =>
+        Promise.resolve(
+          ({ CASH: 120.5, PIX: 80, CARD: 45.25 } as Record<string, number>)[
+            paymentMethod
+          ],
+        ),
+    );
+    const createdAt = new Date('2026-11-06T10:00:00Z');
+    cashRegisterMovementRepository.findAllByCashRegisterSessionId.mockResolvedValue([
+      {
+        id: 'm1',
+        type: 'WITHDRAWAL',
+        reason: 'BANK_DEPOSIT',
+        description: null,
+        amount: 50,
+        balanceBefore: 200,
+        balanceAfter: 150,
+        auditable: { createdAt },
+      } as never,
+    ]);
+
+    const output = await sut.execute({ id: session.id });
+
+    expect(output.salesCash).toBe(120.5);
+    expect(output.salesPix).toBe(80);
+    expect(output.salesCard).toBe(45.25);
+    expect(output.movements).toEqual([
+      {
+        id: 'm1',
+        type: 'WITHDRAWAL',
+        reason: 'BANK_DEPOSIT',
+        description: null,
+        amount: 50,
+        balanceBefore: 200,
+        balanceAfter: 150,
+        createdAt,
+      },
+    ]);
   });
 });

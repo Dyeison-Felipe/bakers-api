@@ -3,7 +3,8 @@ import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
-import { CashRegisterSessionDetailOutput } from '@/shared/application/output/cash-register/cash-register-session-detail.output';
+import { FindCashRegisterSessionDetailOutput } from '@/shared/application/output/cash-register/cash-register-session-detail.output';
+import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { SaleItemRepository } from '@/core/sale/domain/repositories/sale-item.repository';
 import { DailyProductionRepository } from '@/core/daily-production/domain/repositories/daily-production.repository';
 import { DailyProductionItemRepository } from '@/core/daily-production/domain/repositories/daily-production-item.repository';
@@ -11,16 +12,21 @@ import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.re
 import { StockMovementRepository } from '@/core/stock-movement/domain/repositories/stock-movement.repository';
 import { TypeStockMovementReason } from '@/shared/infra/enums/stock-movement';
 import { TypeCashRegisterMovement } from '@/shared/infra/enums/cash-register';
+import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import { TypeDailyProductionItemStatus } from '@/shared/infra/enums/daily-production';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
-import { buildCashRegisterSessionDetail } from '../helpers/build-cash-register-session-detail';
+import {
+  buildCashRegisterSessionDetail,
+  round2,
+} from '../helpers/build-cash-register-session-detail';
+import { toCashRegisterMovementOutput } from '../helpers/to-cash-register-movement-output';
 
 type Input = {
   id: string;
 };
 
-type Output = CashRegisterSessionDetailOutput;
+type Output = FindCashRegisterSessionDetailOutput;
 
 const toDateOnly = (date: Date): Date =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -31,6 +37,8 @@ export class FindCashRegisterSessionDetailUseCase
   constructor(
     @Inject(PROVIDERS.CASH_REGISTER_SESSION_REPOSITORY)
     private readonly cashRegisterSessionRepository: CashRegisterSessionRepository,
+    @Inject(PROVIDERS.SALE_REPOSITORY)
+    private readonly saleRepository: SaleRepository,
     @Inject(PROVIDERS.SALE_ITEM_REPOSITORY)
     private readonly saleItemRepository: SaleItemRepository,
     @Inject(PROVIDERS.DAILY_PRODUCTION_REPOSITORY)
@@ -77,6 +85,10 @@ export class FindCashRegisterSessionDetailUseCase
       totalRecoveredAtCost,
       totalSupplies,
       totalWithdrawals,
+      salesCash,
+      salesPix,
+      salesCard,
+      movements,
     ] = await Promise.all([
       this.saleItemRepository.sumRevenueAndCostByCashRegisterSessionId(
         session.id,
@@ -111,6 +123,21 @@ export class FindCashRegisterSessionDetailUseCase
         session.id,
         TypeCashRegisterMovement.WITHDRAWAL,
       ),
+      this.saleRepository.sumTotalByCashRegisterSessionAndPaymentMethod(
+        session.id,
+        TypePaymentMethod.CASH,
+      ),
+      this.saleRepository.sumTotalByCashRegisterSessionAndPaymentMethod(
+        session.id,
+        TypePaymentMethod.PIX,
+      ),
+      this.saleRepository.sumTotalByCashRegisterSessionAndPaymentMethod(
+        session.id,
+        TypePaymentMethod.CARD,
+      ),
+      this.cashRegisterMovementRepository.findAllByCashRegisterSessionId(
+        session.id,
+      ),
     ]);
 
     const productionItemsByProduction = await Promise.all(
@@ -126,7 +153,7 @@ export class FindCashRegisterSessionDetailUseCase
       .filter((item) => item.status === TypeDailyProductionItemStatus.PRODUCED)
       .reduce((sum, item) => sum + item.plannedCost, 0);
 
-    return buildCashRegisterSessionDetail({
+    const detail = buildCashRegisterSessionDetail({
       session,
       totalRevenue: salesSummary.totalRevenue,
       costOfSold: salesSummary.totalCost,
@@ -137,5 +164,13 @@ export class FindCashRegisterSessionDetailUseCase
       totalSupplies,
       totalWithdrawals,
     });
+
+    return {
+      ...detail,
+      salesCash: round2(salesCash),
+      salesPix: round2(salesPix),
+      salesCard: round2(salesCard),
+      movements: movements.map(toCashRegisterMovementOutput),
+    };
   }
 }

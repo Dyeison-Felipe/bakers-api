@@ -28,6 +28,12 @@ export class DashboardSummaryPresenter {
 
   @ApiPropertyOptional({
     description:
+      'Soma do preço de custo dos itens vendidos no dia — ausente se o usuário não tem acesso a PDV/Caixa',
+  })
+  readonly costOfSoldToday?: number;
+
+  @ApiPropertyOptional({
+    description:
       'Total de despesas lançadas no dia — ausente se o usuário não tem acesso a Despesas',
   })
   readonly expensesToday?: number;
@@ -37,6 +43,7 @@ export class DashboardSummaryPresenter {
     this.salesRevenueCashToday = props.salesRevenueCashToday;
     this.salesRevenuePixToday = props.salesRevenuePixToday;
     this.salesRevenueCardToday = props.salesRevenueCardToday;
+    this.costOfSoldToday = props.costOfSoldToday;
     this.expensesToday = props.expensesToday;
   }
 }

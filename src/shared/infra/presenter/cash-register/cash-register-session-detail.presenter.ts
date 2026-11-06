@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TypeCashRegisterSessionStatus } from '@/shared/infra/enums/cash-register';
+import { CashRegisterMovementPresenter } from './cash-register-movement.presenter';
 
 export class CashRegisterSessionDetailExpensePresenter {
   @ApiProperty({ description: 'Id da despesa' })
@@ -80,4 +81,22 @@ export class CashRegisterSessionDetailPresenter {
       'Lucro do dia: vendas − custo dos itens efetivamente vendidos − despesas',
   })
   readonly profit: number;
+}
+
+/** Detalhe individual do caixa (Histórico de Caixa): base + vendas por forma de pagamento + movimentos. */
+export class FindCashRegisterSessionDetailPresenter extends CashRegisterSessionDetailPresenter {
+  @ApiProperty({ description: 'Valor vendido em dinheiro nesta sessão (só vendas)' })
+  readonly salesCash: number;
+
+  @ApiProperty({ description: 'Valor vendido em pix nesta sessão' })
+  readonly salesPix: number;
+
+  @ApiProperty({ description: 'Valor vendido em cartão nesta sessão' })
+  readonly salesCard: number;
+
+  @ApiProperty({
+    description: 'Sangrias e incrementos registrados nesta sessão',
+    type: [CashRegisterMovementPresenter],
+  })
+  readonly movements: CashRegisterMovementPresenter[];
 }

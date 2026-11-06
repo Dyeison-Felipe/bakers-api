@@ -6,6 +6,7 @@ import { CashRegisterMovementOutput } from '@/shared/application/output/cash-reg
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
+import { toCashRegisterMovementOutput } from '../helpers/to-cash-register-movement-output';
 
 type Input = {
   cashRegisterSessionId: string;
@@ -42,15 +43,6 @@ export class FindCashRegisterMovementsUseCase
         cashRegisterSessionId,
       );
 
-    return movements.map((movement) => ({
-      id: movement.id,
-      type: movement.type,
-      reason: movement.reason,
-      description: movement.description,
-      amount: movement.amount,
-      balanceBefore: movement.balanceBefore,
-      balanceAfter: movement.balanceAfter,
-      createdAt: movement.auditable!.createdAt,
-    }));
+    return movements.map(toCashRegisterMovementOutput);
   }
 }

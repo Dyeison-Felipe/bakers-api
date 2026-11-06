@@ -16,7 +16,7 @@ import { OpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-registe
 import { FindOpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/find-open-cash-register.presenter';
 import { CloseCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/close-cash-register.presenter';
 import { FindAllCashRegisterSessionsItemPresenter } from '@/shared/infra/presenter/cash-register/find-all-cash-register-sessions-item.presenter';
-import { CashRegisterSessionDetailPresenter } from '@/shared/infra/presenter/cash-register/cash-register-session-detail.presenter';
+import { FindCashRegisterSessionDetailPresenter } from '@/shared/infra/presenter/cash-register/cash-register-session-detail.presenter';
 import { CashRegisterMovementPresenter } from '@/shared/infra/presenter/cash-register/cash-register-movement.presenter';
 import { OpenCashRegisterDto } from '../dtos/open-cash-register.dto';
 import { CreateCashRegisterMovementDto } from '../dtos/create-cash-register-movement.dto';
@@ -115,13 +115,13 @@ export class CashRegisterController {
   @ApiOperation({
     summary: 'Detalha uma sessão de caixa',
     description:
-      'Traz abertura/fechamento, total vendido, custo de produção do dia, despesas do dia e o lucro apurado.',
+      'Traz abertura/fechamento, total vendido (e por forma de pagamento), custo de produção do dia, despesas do dia, sangrias/incrementos e o lucro apurado.',
   })
   @ApiParam({ name: 'id', description: 'Id do caixa' })
-  @ApiOkResponse({ type: CashRegisterSessionDetailPresenter })
+  @ApiOkResponse({ type: FindCashRegisterSessionDetailPresenter })
   async findDetail(
     @Param('id') id: string,
-  ): Promise<CashRegisterSessionDetailPresenter> {
+  ): Promise<FindCashRegisterSessionDetailPresenter> {
     return await this.findCashRegisterSessionDetailUseCase.execute({ id });
   }
 

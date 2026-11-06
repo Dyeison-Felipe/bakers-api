@@ -8,4 +8,7 @@ export type DashboardSummaryOutput = {
   salesRevenueCashToday?: number;
   salesRevenuePixToday?: number;
   salesRevenueCardToday?: number;
+  // Soma do preço de custo dos itens vendidos no dia (CPV) — usado no lucro
+  // estimado: (vendas − custo dos vendidos) − produção − despesas.
+  costOfSoldToday?: number;
 };
