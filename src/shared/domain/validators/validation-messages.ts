@@ -118,6 +118,7 @@ export const FIELD_LABELS: Record<string, string> = {
 
   // estoque
   reasonDescription: 'Observação',
+  inputUnit: 'Unidade da quantidade',
 };
 
 export function fieldLabel(path: string): string {

@@ -7,9 +7,14 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { RegisterManualStockMovementOutput } from '@/shared/application/output/stock-movement/register-manual-stock-movement.output';
 import { Transactional } from 'typeorm-transactional';
 import {
+  TypeStockInputUnit,
   TypeStockMovement,
   TypeStockMovementReason,
 } from '@/shared/infra/enums/stock-movement';
+import {
+  convertToStockQuantity,
+  describeStockInput,
+} from '@/core/product/domain/services/stock-unit-conversion';
 import { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import { AdjustProductStockUseCase } from './adjust-product-stock.usecase';
 
@@ -17,6 +22,8 @@ type Input = {
   productId: string;
   type: TypeStockMovement;
   quantity: number;
+  // Unidade em que `quantity` foi digitada; padrão = unidade do estoque.
+  inputUnit?: TypeStockInputUnit;
   reasonDescription?: string | null;
 };
 
@@ -60,12 +67,27 @@ export class RegisterManualStockMovementUseCase
       );
     }
 
+    // Matéria-prima: o estoque é guardado na unidade de consumo (kg/ml/un),
+    // mas a entrada pode ser digitada em latas/pacotes — converte aqui.
+    const inputUnit = input.inputUnit ?? TypeStockInputUnit.STOCK;
+    const quantity = convertToStockQuantity(product, input.quantity, inputUnit);
+
+    if (quantity <= 0) {
+      throw new BadRequestError('Quantidade convertida deve ser maior que zero');
+    }
+
+    const informed = describeStockInput(product, input.quantity, inputUnit);
+    const note = input.reasonDescription?.trim() || null;
+    const reasonDescription = informed
+      ? [note, `informado: ${informed}`].filter(Boolean).join(' · ').slice(0, 500)
+      : note;
+
     await this.adjustProductStockUseCase.execute({
       productId: product.id,
-      quantity: input.quantity,
+      quantity,
       type: input.type,
       reason: TypeStockMovementReason.MANUAL_ADJUSTMENT,
-      reasonDescription: input.reasonDescription?.trim() || null,
+      reasonDescription,
     });
 
     const updated = await this.productRepository.findProductByIdAndCompanyId(

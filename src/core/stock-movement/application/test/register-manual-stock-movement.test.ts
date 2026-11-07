@@ -2,9 +2,15 @@ import { RegisterManualStockMovementUseCase } from '../usecase/register-manual-s
 import { NotFoundError } from '@/shared/application/errors/not-found-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import {
+  TypeStockInputUnit,
   TypeStockMovement,
   TypeStockMovementReason,
 } from '@/shared/infra/enums/stock-movement';
+import {
+  TypeConsumptionUnit,
+  TypeProduct,
+  TypeUnitOfPurchase,
+} from '@/shared/infra/enums/product';
 import type { ProductRepository } from '@/core/product/domain/repositories/product.repository';
 import type { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
 import type { AdjustProductStockUseCase } from '../usecase/adjust-product-stock.usecase';
@@ -117,5 +123,104 @@ describe('RegisterManualStockMovementUseCase', () => {
         quantity: 999,
       }),
     ).rejects.toThrow('Estoque insuficiente');
+  });
+
+  describe('inputUnit (matéria-prima guardada em kg)', () => {
+    // Lata de milho: comprada em pacote com 6, 200 g cada, consumida em kg.
+    const cornCan = makeProduct({
+      name: 'Milho em lata',
+      typeProduct: TypeProduct.RAW_MATERIAL,
+      consumerUnit: TypeConsumptionUnit.KG,
+      purchaseUnit: TypeUnitOfPurchase.PCT,
+      quantity: 6,
+      weight: 0.2,
+    });
+
+    beforeEach(() => {
+      productRepository.findProductByIdAndCompanyId.mockReset();
+      productRepository.findProductByIdAndCompanyId.mockResolvedValue(
+        cornCan as never,
+      );
+    });
+
+    it('should convert units (cans) to kg using the weight per unit', async () => {
+      await sut.execute({
+        productId: 'product-1',
+        type: TypeStockMovement.ENTRY,
+        quantity: 20,
+        inputUnit: TypeStockInputUnit.ITEM,
+      });
+
+      expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          quantity: 4,
+          reasonDescription: 'informado: 20 unidade(s)',
+        }),
+      );
+    });
+
+    it('should convert purchase packages to kg (items per package x weight)', async () => {
+      await sut.execute({
+        productId: 'product-1',
+        type: TypeStockMovement.ENTRY,
+        quantity: 3,
+        inputUnit: TypeStockInputUnit.PURCHASE,
+        reasonDescription: 'compra',
+      });
+
+      expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          quantity: 3.6,
+          reasonDescription: 'compra · informado: 3 pacote(s) de 6 un',
+        }),
+      );
+    });
+
+    it('should keep the quantity as-is when typed in the stock unit', async () => {
+      await sut.execute({
+        productId: 'product-1',
+        type: TypeStockMovement.ENTRY,
+        quantity: 1.5,
+      });
+
+      expect(adjustProductStockUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ quantity: 1.5, reasonDescription: null }),
+      );
+    });
+
+    it('should refuse units when the product has no weight per unit', async () => {
+      productRepository.findProductByIdAndCompanyId.mockReset();
+      productRepository.findProductByIdAndCompanyId.mockResolvedValue({
+        ...cornCan,
+        weight: null,
+      } as never);
+
+      await expect(
+        sut.execute({
+          productId: 'product-1',
+          type: TypeStockMovement.ENTRY,
+          quantity: 20,
+          inputUnit: TypeStockInputUnit.ITEM,
+        }),
+      ).rejects.toThrow(BadRequestError);
+      expect(adjustProductStockUseCase.execute).not.toHaveBeenCalled();
+    });
+
+    it('should refuse ITEM/PURCHASE for products that are not raw material', async () => {
+      productRepository.findProductByIdAndCompanyId.mockReset();
+      productRepository.findProductByIdAndCompanyId.mockResolvedValue({
+        ...cornCan,
+        typeProduct: TypeProduct.RESALE,
+      } as never);
+
+      await expect(
+        sut.execute({
+          productId: 'product-1',
+          type: TypeStockMovement.ENTRY,
+          quantity: 2,
+          inputUnit: TypeStockInputUnit.PURCHASE,
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
   });
 });

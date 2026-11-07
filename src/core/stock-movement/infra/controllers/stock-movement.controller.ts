@@ -70,6 +70,7 @@ export class StockMovementController {
       productId: dto.productId,
       type: dto.type,
       quantity: dto.quantity,
+      inputUnit: dto.inputUnit,
       reasonDescription: dto.reasonDescription,
     });
   }
