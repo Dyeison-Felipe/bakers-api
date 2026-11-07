@@ -104,7 +104,7 @@ describe('CreatePlanUseCase', () => {
       duration: 30,
       userLimit: null,
       permissions: [
-        { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
+        { id: 'permission-1', action: 'reader', subject: 'category', description: 'Ler categorias' },
       ],
     });
   });

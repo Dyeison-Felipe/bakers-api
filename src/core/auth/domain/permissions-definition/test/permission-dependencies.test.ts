@@ -1,7 +1,10 @@
 import {
   validatePermissionDependencies,
   PERMISSION_DEPENDENCIES,
+  permissionKey,
 } from '../permission-dependencies';
+import { Permissions } from '../permissions';
+import { PermissionCategory } from '../category';
 import { PermissionReport } from '../report';
 import { PermissionStockMovement } from '../stock-movement';
 import { PermissionDailyProduction } from '../daily-production';
@@ -14,7 +17,7 @@ describe('validatePermissionDependencies', () => {
   it('should not throw when the set has no permission with a dependency', () => {
     expect(() =>
       validatePermissionDependencies([
-        PermissionProduct.PRODUCT_READER,
+        PermissionCategory.CATEGORY_READER,
         PermissionSale.SALE_READER,
       ]),
     ).not.toThrow();
@@ -45,34 +48,66 @@ describe('validatePermissionDependencies', () => {
     [PermissionStockMovement.STOCK_MOVEMENT_ADJUST, PermissionStockMovement.STOCK_MOVEMENT_READER],
   ])('%o requires %o', (dependent, required) => {
     expect(() => validatePermissionDependencies([dependent])).toThrow();
+    // stock_movement.reader puxa product.reader → category.reader.
+    const transitive =
+      required === PermissionStockMovement.STOCK_MOVEMENT_READER
+        ? [PermissionProduct.PRODUCT_READER, PermissionCategory.CATEGORY_READER]
+        : [];
     expect(() =>
-      validatePermissionDependencies([dependent, required]),
+      validatePermissionDependencies([dependent, required, ...transitive]),
+    ).not.toThrow();
+  });
+
+  it.each([
+    [PermissionDailyProduction.DAILY_PRODUCTION_COMPLETE, [PermissionDailyProduction.DAILY_PRODUCTION_READER]],
+    [PermissionDailyProduction.DAILY_PRODUCTION_CANCEL, [PermissionDailyProduction.DAILY_PRODUCTION_READER]],
+    [
+      PermissionDailyProduction.DAILY_PRODUCTION_UPDATE,
+      [PermissionDailyProduction.DAILY_PRODUCTION_READER, PermissionProduct.PRODUCT_READER],
+    ],
+    [PermissionCashRegister.CASH_REGISTER_OPEN, [PermissionCashRegister.CASH_REGISTER_READER]],
+    [PermissionSale.SALE_CREATE, [PermissionCashRegister.CASH_REGISTER_READER]],
+    [PermissionStockMovement.STOCK_MOVEMENT_READER, [PermissionProduct.PRODUCT_READER]],
+    [PermissionProduct.PRODUCT_READER, [PermissionCategory.CATEGORY_READER]],
+    [PermissionExpense.EXPENSE_CREATE, [PermissionExpense.EXPENSE_READER]],
+  ])('%o requires %o', (dependent, required) => {
+    expect(() => validatePermissionDependencies([dependent])).toThrow();
+    expect(() =>
+      // category.reader entra sempre: é o fim da cadeia transitiva
+      // (… → product.reader → category.reader).
+      validatePermissionDependencies([
+        dependent,
+        ...required,
+        PermissionCategory.CATEGORY_READER,
+      ]),
     ).not.toThrow();
   });
 
   it('should report every missing dependency, not just the first one', () => {
-    // reforça a garantia de que o mapa cobre exatamente as dependências
-    // combinadas (relatórios + movimentar estoque; nenhuma sobrando, nenhuma
-    // faltando)
-    expect(Object.keys(PERMISSION_DEPENDENCIES).sort()).toEqual(
-      [
-        'report.waste_reader',
-        'report.production_reader',
-        'report.expense_reader',
-        'report.cash_register_reader',
-        'report.cpv_reader',
-        'report.contribution_margin_reader',
-        'report.abc_curve_reader',
-        'stock_movement.adjust',
-      ].sort(),
-    );
+    expect(() =>
+      validatePermissionDependencies([PermissionStockMovement.STOCK_MOVEMENT_WRITE_OFF]),
+    ).toThrow(/stock_movement\.waste_reader, product\.reader/);
+  });
+
+  it('should only reference permissions that exist', () => {
+    const all = new Set(Object.values(Permissions).map(permissionKey));
+    for (const [dependent, required] of Object.entries(PERMISSION_DEPENDENCIES)) {
+      expect(all.has(dependent)).toBe(true);
+      for (const ref of required) expect(all.has(permissionKey(ref))).toBe(true);
+    }
+  });
+
+  it('should accept a full permission set (Admin gets everything)', () => {
+    expect(() =>
+      validatePermissionDependencies(Object.values(Permissions)),
+    ).not.toThrow();
   });
 
   it('should ignore permissions that are not part of the dependency map', () => {
     expect(() =>
       validatePermissionDependencies([
-        PermissionProduct.PRODUCT_CREATE,
-        PermissionProduct.PRODUCT_UPDATE,
+        PermissionCategory.CATEGORY_READER,
+        PermissionSale.SALE_READER,
       ]),
     ).not.toThrow();
   });

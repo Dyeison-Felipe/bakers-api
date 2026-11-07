@@ -110,7 +110,7 @@ describe('UpdatePlanUseCase', () => {
     expect(plan.userLimit).toBe(10);
     expect(plan.features).toEqual(['Controle de estoque']);
     expect(output.permissions).toEqual([
-      { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
+      { id: 'permission-1', action: 'reader', subject: 'category', description: 'Ler categorias' },
     ]);
   });
 

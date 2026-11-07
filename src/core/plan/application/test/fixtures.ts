@@ -43,8 +43,8 @@ export const makePermission = (overrides: Record<string, unknown> = {}): Permiss
   const permission = {
     id: 'permission-1',
     action: 'reader',
-    subject: 'product',
-    description: 'Ler produtos',
+    subject: 'category',
+    description: 'Ler categorias',
     ...overrides,
   };
   Object.setPrototypeOf(permission, Permission.prototype);

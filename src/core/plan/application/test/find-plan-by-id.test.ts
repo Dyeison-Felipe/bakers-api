@@ -35,7 +35,7 @@ describe('FindPlanByIdUseCase', () => {
     const output = await sut.execute({ id: 'plan-1' });
 
     expect(output.permissions).toEqual([
-      { id: 'permission-1', action: 'reader', subject: 'product', description: 'Ler produtos' },
+      { id: 'permission-1', action: 'reader', subject: 'category', description: 'Ler categorias' },
     ]);
   });
 });
