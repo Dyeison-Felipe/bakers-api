@@ -29,7 +29,7 @@ export class FindAdditionalCostByIdUseCase implements UseCase<Input, Output> {
       loggedUser.company.id,
     );
     if (!additionalCost) {
-      throw new NotFoundError('Additional cost not found');
+      throw new NotFoundError('Custo adicional não encontrado');
     }
 
     return {

@@ -180,7 +180,9 @@ export class PermissionGuard implements CanActivate {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new UnauthorizedError(`Not authorized: ${error}`);
+      throw new UnauthorizedError(
+        'Não foi possível validar sua sessão. Faça login novamente.',
+      );
     }
   }
 }

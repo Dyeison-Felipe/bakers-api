@@ -27,7 +27,7 @@ export class DeleteAdditionalCostUseCase implements UseCase<Input, Output> {
       loggedUser.company.id,
     );
     if (!additionalCost) {
-      throw new NotFoundError('Additional cost not found');
+      throw new NotFoundError('Custo adicional não encontrado');
     }
 
     await this.additionalCostRepository.delete(id);

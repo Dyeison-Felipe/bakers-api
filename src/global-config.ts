@@ -9,6 +9,7 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { GlobalStringLengthPipe } from '@/shared/infra/pipes/globalmax-lenght.pipe';
 import { ValidationPipe } from '@nestjs/common';
 import fastifyCookie from '@fastify/cookie';
+import { AllExceptionsFilter } from './shared/infra/exeption-filters/all-exceptions.filter';
 import { EntityValidationErrorFilter } from './shared/infra/exeption-filters/validation-error.filter';
 import fastifyMultipart from '@fastify/multipart';
 import { EntityValidationError } from './shared/application/errors/validation-error';
@@ -75,7 +76,11 @@ export async function globalConfig(
   );
 
   // Global Errors
+  // AllExceptionsFilter fica em primeiro: o Nest avalia os filtros globais do
+  // último para o primeiro, então ele só atua quando nenhum específico casa
+  // (garante mensagens em pt-BR para erros padrão do Nest/Fastify e 500).
   app.useGlobalFilters(
+    new AllExceptionsFilter(),
     new BadRequestErrorFilter(),
     new ConflictErrorFilter(),
     new ForbiddenErrorFilter(),

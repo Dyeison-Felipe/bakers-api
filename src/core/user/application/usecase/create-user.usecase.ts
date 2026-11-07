@@ -59,7 +59,7 @@ export class CreateUserUseCase implements UseCase<Input, Output> {
     const existUser = await this.userRepository.findByEmail(input.email);
 
     if (existUser) {
-      throw new ConflictError(`E-mail invalido`);
+      throw new ConflictError(`E-mail inválido`);
     }
 
     const existUsername = await this.userRepository.findByUsernameAndCompany(
