@@ -138,6 +138,24 @@ describe('CreateCashRegisterMovementUseCase', () => {
     expect(expenseRepository.save).toHaveBeenCalledTimes(1);
     const savedExpense = expenseRepository.save.mock.calls[0][0];
     expect(savedExpense.value).toBe(20);
+    expect(savedExpense.description).toBe('Conta de luz');
+  });
+
+  it('should date the Expense on the business day (Brasília), not the server UTC day', async () => {
+    jest.useFakeTimers({ now: new Date('2026-11-09T23:30:00.000-03:00') });
+
+    try {
+      await sut.execute({
+        type: TypeCashRegisterMovement.WITHDRAWAL,
+        reason: TypeCashRegisterMovementReason.EXPENSE_PAYMENT,
+        amount: 20,
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+
+    const savedExpense = expenseRepository.save.mock.calls[0][0];
+    expect(savedExpense.date.toISOString()).toBe('2026-11-09T03:00:00.000Z');
   });
 
   it('should not create an Expense for other reasons', async () => {

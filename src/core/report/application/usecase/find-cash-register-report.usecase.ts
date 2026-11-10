@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { startOfBusinessDay } from '@/shared/infra/utils/business-date';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
@@ -26,8 +27,9 @@ type Output = CashRegisterReportOutput;
 // Mesmo teto por sessão que o detalhe individual aplicava à lista de despesas.
 const MAX_EXPENSES_PER_SESSION = 1000;
 
-const toDateOnly = (date: Date): Date =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+// Dia (meia-noite em Brasília) em que o instante cai — não o dia do fuso do
+// servidor, que em produção é UTC.
+const toDateOnly = (date: Date): Date => startOfBusinessDay(date);
 
 /**
  * Relatório de caixa por período. Cada sessão é calculada com a MESMA fórmula

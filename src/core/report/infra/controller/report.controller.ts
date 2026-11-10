@@ -4,7 +4,7 @@ import { FastifyReply } from 'fastify';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
 import { PermissionReport } from '@/core/auth/domain/permissions-definition/report';
-import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
+import { parseDateOnly, parseDateOnlyEndOfDay } from '@/shared/infra/utils/parse-date-only';
 import { WasteReportPresenter } from '@/shared/infra/presenter/report/waste-report.presenter';
 import { CashRegisterReportPresenter } from '@/shared/infra/presenter/report/cash-register-report.presenter';
 import { ProductionReportPresenter } from '@/shared/infra/presenter/report/production-report.presenter';
@@ -32,8 +32,7 @@ const parseReportDateRange = (
   dateTo: string,
 ): { dateFrom: Date; dateTo: Date } => {
   const from = parseDateOnly(dateFrom);
-  const to = parseDateOnly(dateTo);
-  to.setHours(23, 59, 59, 999);
+  const to = parseDateOnlyEndOfDay(dateTo);
 
   return { dateFrom: from, dateTo: to };
 };

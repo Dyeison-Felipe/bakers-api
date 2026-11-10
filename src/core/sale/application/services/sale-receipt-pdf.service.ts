@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { BUSINESS_TIMEZONE } from '@/shared/infra/utils/business-date';
 import { TypePaymentMethod } from '@/shared/infra/enums/sale';
 import { LOGO_PATH } from '@/shared/infra/pdf/pdf-assets';
 
@@ -113,7 +114,7 @@ export class SaleReceiptPdfService {
       doc
         .fontSize(8)
         .fillColor(MUTED)
-        .text(sale.createdAt.toLocaleString('pt-BR'), MARGIN, metaY, {
+        .text(sale.createdAt.toLocaleString('pt-BR', { timeZone: BUSINESS_TIMEZONE }), MARGIN, metaY, {
           width: CONTENT_WIDTH / 2,
           align: 'left',
         });

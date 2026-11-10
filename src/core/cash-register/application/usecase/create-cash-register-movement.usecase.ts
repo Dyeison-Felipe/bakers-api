@@ -14,6 +14,7 @@ import { CashRegisterMovementOutput } from '@/shared/application/output/cash-reg
 import { SaleRepository } from '@/core/sale/domain/repositories/sale.repository';
 import { ExpenseRepository } from '@/core/expense/domain/repositories/expense.repository';
 import { Expense } from '@/core/expense/domain/entities/expense.entity';
+import { getBusinessTodayRange } from '@/shared/infra/utils/get-business-today-range';
 import { CashRegisterSessionRepository } from '../../domain/repositories/cash-register-session.repository';
 import { CashRegisterMovementRepository } from '../../domain/repositories/cash-register-movement.repository';
 import { CashRegisterMovement } from '../../domain/entities/cash-register-movement.entity';
@@ -127,9 +128,15 @@ export class CreateCashRegisterMovementUseCase
     const saved = await this.cashRegisterMovementRepository.save(movement);
 
     if (input.reason === TypeCashRegisterMovementReason.EXPENSE_PAYMENT) {
+      // Dia de hoje no fuso de Brasília, igual ao que o dashboard consulta.
+      // Com `new Date()` o dia vinha do fuso do servidor (UTC em produção):
+      // uma sangria depois das 21h virava despesa de amanhã e não aparecia
+      // nas despesas do dia.
+      const { startOfDay: today } = getBusinessTodayRange();
+
       const expense = Expense.create({
         company: loggedUser.company,
-        date: new Date(),
+        date: today,
         value: input.amount,
         description: input.description?.trim() || 'Sangria - pagamento de despesa',
         createdBy: loggedUser.id,

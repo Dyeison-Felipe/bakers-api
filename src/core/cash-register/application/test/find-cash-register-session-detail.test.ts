@@ -202,8 +202,8 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
 
   it('should scope production, expenses and stock movements to the full session window, not just the opening day', async () => {
     const session = makeSession({
-      openedAt: new Date('2026-08-06T09:00:00'),
-      closedAt: new Date('2026-08-10T18:30:00'),
+      openedAt: new Date('2026-08-06T09:00:00-03:00'),
+      closedAt: new Date('2026-08-10T18:30:00-03:00'),
       status: 'CLOSED',
     });
     cashRegisterSessionRepository.findByIdAndCompanyId.mockResolvedValue(session);
@@ -213,14 +213,14 @@ describe('FindCashRegisterSessionDetailUseCase', () => {
     const [, productionFilters] =
       dailyProductionRepository.findAllByCompanyId.mock.calls[0];
     expect(productionFilters).toEqual({
-      productionDateFrom: new Date(2026, 7, 6),
-      productionDateTo: new Date(2026, 7, 10),
+      productionDateFrom: new Date('2026-08-06T00:00:00-03:00'),
+      productionDateTo: new Date('2026-08-10T00:00:00-03:00'),
     });
 
     const [, expenseFilters] = expenseRepository.findAllByCompanyId.mock.calls[0];
     expect(expenseFilters).toEqual({
-      dateFrom: new Date(2026, 7, 6),
-      dateTo: new Date(2026, 7, 10),
+      dateFrom: new Date('2026-08-06T00:00:00-03:00'),
+      dateTo: new Date('2026-08-10T00:00:00-03:00'),
     });
 
     const [, waitFrom, waitTo] =

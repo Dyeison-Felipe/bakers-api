@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { BUSINESS_TIMEZONE } from '@/shared/infra/utils/business-date';
 import { WasteReportOutput } from '@/shared/application/output/report/waste-report.output';
 import { CashRegisterReportOutput } from '@/shared/application/output/report/cash-register-report.output';
 import { ProductionReportOutput } from '@/shared/application/output/report/production-report.output';
@@ -30,9 +31,11 @@ type TableColumn = {
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
+const formatDate = (date: Date) =>
+  date.toLocaleDateString('pt-BR', { timeZone: BUSINESS_TIMEZONE });
 
-const formatDateTime = (date: Date) => date.toLocaleString('pt-BR');
+const formatDateTime = (date: Date) =>
+  date.toLocaleString('pt-BR', { timeZone: BUSINESS_TIMEZONE });
 
 const productionStatusLabel: Record<TypeDailyProductionItemStatus, string> = {
   [TypeDailyProductionItemStatus.PLANNED]: 'Planejado',
@@ -201,7 +204,7 @@ export class ReportPdfService {
 
   private static writeFooters(doc: PDFKit.PDFDocument): void {
     const range = doc.bufferedPageRange();
-    const generatedAt = new Date().toLocaleString('pt-BR');
+    const generatedAt = formatDateTime(new Date());
 
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);

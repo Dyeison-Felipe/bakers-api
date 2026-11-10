@@ -16,7 +16,7 @@ import {
   TypeStockMovement,
   TypeStockMovementReason,
 } from '@/shared/infra/enums/stock-movement';
-import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
+import { parseDateOnly, parseDateOnlyEndOfDay } from '@/shared/infra/utils/parse-date-only';
 
 @ApiTags('Stock Movement')
 @Controller('v1/stock-movement')
@@ -45,8 +45,7 @@ export class StockMovementController {
     @Query('reason') reason?: TypeStockMovementReason,
   ): Promise<FindStockMovementsPresenter> {
     const from = parseDateOnly(dateFrom);
-    const to = parseDateOnly(dateTo);
-    to.setHours(23, 59, 59, 999);
+    const to = parseDateOnlyEndOfDay(dateTo);
 
     return await this.findStockMovementsUseCase.execute({
       dateFrom: from,
@@ -110,8 +109,7 @@ export class StockMovementController {
     @Query('dateTo') dateTo: string,
   ): Promise<FindWasteMovementsPresenter> {
     const from = parseDateOnly(dateFrom);
-    const to = parseDateOnly(dateTo);
-    to.setHours(23, 59, 59, 999);
+    const to = parseDateOnlyEndOfDay(dateTo);
 
     return await this.findWasteMovementsUseCase.execute({
       dateFrom: from,

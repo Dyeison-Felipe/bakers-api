@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { startOfBusinessDay } from '@/shared/infra/utils/business-date';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
@@ -28,8 +29,9 @@ type Input = {
 
 type Output = FindCashRegisterSessionDetailOutput;
 
-const toDateOnly = (date: Date): Date =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+// Dia (meia-noite em Brasília) em que o instante cai — não o dia do fuso do
+// servidor, que em produção é UTC.
+const toDateOnly = (date: Date): Date => startOfBusinessDay(date);
 
 export class FindCashRegisterSessionDetailUseCase
   implements UseCase<Input, Output>

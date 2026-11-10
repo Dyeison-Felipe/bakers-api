@@ -9,7 +9,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Permission } from '@/shared/infra/decorators/permission.decorator';
-import { parseDateOnly } from '@/shared/infra/utils/parse-date-only';
+import { parseDateOnly, parseDateOnlyEndOfDay } from '@/shared/infra/utils/parse-date-only';
 import { PermissionCashRegister } from '@/core/auth/domain/permissions-definition/cash-register';
 import { Pagination } from '@/shared/infra/presenter/pagination/pagination.presenter';
 import { OpenCashRegisterPresenter } from '@/shared/infra/presenter/cash-register/open-cash-register.presenter';
@@ -99,8 +99,7 @@ export class CashRegisterController {
   ): Promise<Pagination<FindAllCashRegisterSessionsItemPresenter>> {
     // dateTo é data-only (meia-noite) — sem levar pro fim do dia, sessões
     // abertas mais tarde nesse mesmo dia ficariam de fora do filtro.
-    const parsedDateTo = dateTo ? parseDateOnly(dateTo) : undefined;
-    parsedDateTo?.setHours(23, 59, 59, 999);
+    const parsedDateTo = dateTo ? parseDateOnlyEndOfDay(dateTo) : undefined;
 
     return await this.findAllCashRegisterSessionsUseCase.execute({
       page: page ? Number(page) : undefined,

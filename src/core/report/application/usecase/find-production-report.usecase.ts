@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { toBusinessDateString } from '@/shared/infra/utils/business-date';
 import { PROVIDERS } from '@/shared/application/constants/providers';
 import { UseCase } from '@/shared/application/usecase/usecase';
 import { LoggedUserService } from '@/shared/application/logged-user/logged-user.service';
@@ -21,7 +22,9 @@ type Output = ProductionReportOutput;
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
-const toDayKey = (date: Date): string => date.toISOString().slice(0, 10);
+// Agrupa pelo dia em Brasília. toISOString() usava o dia em UTC e jogava o
+// que aconteceu depois das 21h para o dia seguinte.
+const toDayKey = (date: Date): string => toBusinessDateString(date);
 
 export class FindProductionReportUseCase implements UseCase<Input, Output> {
   constructor(
