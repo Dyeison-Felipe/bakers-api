@@ -26,6 +26,8 @@ RUN pnpm install --frozen-lockfile --prod
 FROM node:22.8.0-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# Horário de Brasília no container (o código também força em src/timezone.ts)
+ENV TZ=America/Sao_Paulo
 
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist

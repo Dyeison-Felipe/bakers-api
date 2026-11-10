@@ -12,8 +12,11 @@ export const getDatabaseConfig = (
   password: configService.getDbPassword(),
   database: configService.getDbName(),
   schema: configService.getSchema(),
-    extra: {
-    options: `-c search_path=${configService.getSchema()}`,
+  extra: {
+    // timezone: o `now()` dos defaults (created_at etc.) grava o horário de
+    // Brasília, o mesmo fuso do processo Node (src/timezone.ts). Sem isso o
+    // banco usa o fuso do servidor (UTC em produção).
+    options: `-c search_path=${configService.getSchema()} -c timezone=America/Sao_Paulo`,
   },
   entities: [
     join(__dirname, '../../../../core/**/infra/database/typeorm/schema/*.{ts,js}'),

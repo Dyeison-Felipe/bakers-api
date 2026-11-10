@@ -1,3 +1,5 @@
+// Precisa ser o primeiro import: fixa o fuso antes de qualquer data ser criada.
+import './timezone';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PROVIDERS } from './shared/application/constants/providers';
